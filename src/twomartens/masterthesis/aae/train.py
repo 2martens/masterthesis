@@ -250,15 +250,15 @@ def train_mnist(folding_id: int, inlier_classes: Sequence[int], total_classes: i
     decoder.save_weights("./weights/decoder")
     z_discriminator.save_weights("./weights/z_discriminator")
     x_discriminator.save_weights("./weights/x_discriminator")
-    with open("./results0/losses/encoder_loss.txt", "w") as file:
+    with open("./results0/losses/encoder_loss.txt", "wb") as file:
         pickle.dump(encoder_loss_history, file)
-    with open("./results0/losses/decoder_loss.txt", "w") as file:
+    with open("./results0/losses/decoder_loss.txt", "wb") as file:
         pickle.dump(decoder_loss_history, file)
-    with open("./results0/losses/enc_dec_loss.txt", "w") as file:
+    with open("./results0/losses/enc_dec_loss.txt", "wb") as file:
         pickle.dump(enc_dec_loss_history, file)
-    with open("./results0/losses/xd_loss.txt", "w") as file:
+    with open("./results0/losses/xd_loss.txt", "wb") as file:
         pickle.dump(xd_loss_history, file)
-    with open("./results0/losses/zd_loss.txt", "w") as file:
+    with open("./results0/losses/zd_loss.txt", "wb") as file:
         pickle.dump(zd_loss_history, file)
 
 
