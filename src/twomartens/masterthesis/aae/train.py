@@ -99,7 +99,7 @@ def train_mnist(folding_id: int, inlier_classes: Sequence[int], total_classes: i
     y_real_z = k.ones(batch_size)
     y_fake_z = k.zeros(batch_size)
     sample = k.expand_dims(k.expand_dims(k.random_normal((64, zsize)), axis=1), axis=1)
-    global_step = k.variable(0)
+    global_step = tf.train.get_or_create_global_step()
     
     encoder_loss_history = []
     decoder_loss_history = []
