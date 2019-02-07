@@ -110,11 +110,11 @@ def train_mnist(folding_id: int, inlier_classes: Sequence[int], total_classes: i
     
     for epoch in range(train_epoch):
         # define loss variables
-        encoder_loss_avg = tfe.metrics.Mean()
-        decoder_loss_avg = tfe.metrics.Mean()
-        enc_dec_loss_avg = tfe.metrics.Mean()
-        zd_loss_avg = tfe.metrics.Mean()
-        xd_loss_avg = tfe.metrics.Mean()
+        encoder_loss_avg = tfe.metrics.Mean(name='encoder_loss', dtype=tf.float32)
+        decoder_loss_avg = tfe.metrics.Mean(name='decoder_loss', dtype=tf.float32)
+        enc_dec_loss_avg = tfe.metrics.Mean(name='enc_dec_loss', dtype=tf.float32)
+        zd_loss_avg = tfe.metrics.Mean(name='zd_loss', dtype=tf.float32)
+        xd_loss_avg = tfe.metrics.Mean(name='xd_loss', dtype=tf.float32)
         
         epoch_start_time = time.time()
         
