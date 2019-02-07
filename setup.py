@@ -35,7 +35,7 @@ setup(
     package_data={},
     entry_points={},
     python_requires="~=3.6",
-    install_requires=["tensorflow"],
+    install_requires=["tensorflow-gpu", "Pillow", "h5py", "numpy"],
     license="Apache License 2.0",
     classifiers=[
         "Operating System :: OS Independent",
