@@ -217,6 +217,10 @@ def train(dataset: tf.data.Dataset, iteration: int,
     if last_epoch != -1:
         previous_epochs = last_epoch + 1
     
+    with summary_ops_v2.always_record_summaries():
+        summary_ops_v2.scalar(name='learning_rate', tensor=checkpointables['learning_rate_var'],
+                              step=checkpointables['global_step'])
+    
     for epoch in range(train_epoch - previous_epochs):
         _epoch = epoch + previous_epochs
         outputs = _train_one_epoch(_epoch, dataset, targets_real=y_real,
@@ -327,6 +331,8 @@ def _train_one_epoch(epoch: int, dataset: tf.data.Dataset, targets_real: tf.Tens
         # update learning rate
         if (epoch + 1) % 30 == 0:
             learning_rate_var.assign(learning_rate_var.value() / 4)
+            summary_ops_v2.scalar(name='learning_rate', tensor=learning_rate_var,
+                                  step=global_step)
             if verbose:
                 print("learning rate change!")
         
@@ -434,7 +440,8 @@ def _train_xdiscriminator_step(x_discriminator: XDiscriminator, decoder: Decoder
         xd_fake_loss = binary_crossentropy(targets_fake, xd_result_2)
         
         _xd_train_loss = xd_real_loss + xd_fake_loss
-
+    
+    xd_grads = tape.gradient(_xd_train_loss, x_discriminator.trainable_variables)
     if int(global_step % LOG_FREQUENCY) == 0:
         summary_ops_v2.scalar(name='x_discriminator_real_loss', tensor=xd_real_loss,
                               step=global_step)
@@ -442,7 +449,8 @@ def _train_xdiscriminator_step(x_discriminator: XDiscriminator, decoder: Decoder
                               step=global_step)
         summary_ops_v2.scalar(name='x_discriminator_loss', tensor=_xd_train_loss,
                               step=global_step)
-    xd_grads = tape.gradient(_xd_train_loss, x_discriminator.trainable_variables)
+        summary_ops_v2.histogram(name='x_discriminator_grads', tensor=xd_grads,
+                                 step=global_step)
     optimizer.apply_gradients(zip(xd_grads, x_discriminator.trainable_variables),
                               global_step=global_step_xd)
     
@@ -473,10 +481,12 @@ def _train_decoder_step(decoder: Decoder, x_discriminator: XDiscriminator,
         xd_result = tf.squeeze(x_discriminator(x_fake))
         _decoder_train_loss = binary_crossentropy(targets, xd_result)
     
+    grads = tape.gradient(_decoder_train_loss, decoder.trainable_variables)
     if int(global_step % LOG_FREQUENCY) == 0:
         summary_ops_v2.scalar(name='decoder_loss', tensor=_decoder_train_loss,
                               step=global_step)
-    grads = tape.gradient(_decoder_train_loss, decoder.trainable_variables)
+        summary_ops_v2.histogram(name='decoder_grads', tensor=grads,
+                                 step=global_step)
     optimizer.apply_gradients(zip(grads, decoder.trainable_variables),
                               global_step=global_step_decoder)
     
@@ -514,7 +524,8 @@ def _train_zdiscriminator_step(z_discriminator: ZDiscriminator, encoder: Encoder
         zd_fake_loss = binary_crossentropy(targets_fake, zd_result)
         
         _zd_train_loss = zd_real_loss + zd_fake_loss
-
+    
+    zd_grads = tape.gradient(_zd_train_loss, z_discriminator.trainable_variables)
     if int(global_step % LOG_FREQUENCY) == 0:
         summary_ops_v2.scalar(name='z_discriminator_real_loss', tensor=zd_real_loss,
                               step=global_step)
@@ -522,7 +533,8 @@ def _train_zdiscriminator_step(z_discriminator: ZDiscriminator, encoder: Encoder
                               step=global_step)
         summary_ops_v2.scalar(name='z_discriminator_loss', tensor=_zd_train_loss,
                               step=global_step)
-    zd_grads = tape.gradient(_zd_train_loss, z_discriminator.trainable_variables)
+        summary_ops_v2.histogram(name='z_discriminator_grads', tensor=zd_grads,
+                                 step=global_step)
     optimizer.apply_gradients(zip(zd_grads, z_discriminator.trainable_variables),
                               global_step=global_step_zd)
     
@@ -555,6 +567,8 @@ def _train_enc_dec_step(encoder: Encoder, decoder: Decoder, z_discriminator: ZDi
         reconstruction_loss = binary_crossentropy(inputs, x_decoded)
         _enc_dec_train_loss = encoder_loss + reconstruction_loss
     
+    enc_dec_grads = tape.gradient(_enc_dec_train_loss,
+                                  encoder.trainable_variables + decoder.trainable_variables)
     if int(global_step % LOG_FREQUENCY) == 0:
         summary_ops_v2.scalar(name='encoder_loss', tensor=encoder_loss,
                               step=global_step)
@@ -562,8 +576,8 @@ def _train_enc_dec_step(encoder: Encoder, decoder: Decoder, z_discriminator: ZDi
                               step=global_step)
         summary_ops_v2.scalar(name='encoder_decoder_loss', tensor=_enc_dec_train_loss,
                               step=global_step)
-    enc_dec_grads = tape.gradient(_enc_dec_train_loss,
-                                  encoder.trainable_variables + decoder.trainable_variables)
+        summary_ops_v2.histogram(name='encoder_decoder_grads', tensor=enc_dec_grads,
+                                 step=global_step)
     optimizer.apply_gradients(zip(enc_dec_grads,
                                   encoder.trainable_variables + decoder.trainable_variables),
                               global_step=global_step_enc_dec)
