@@ -24,50 +24,49 @@ import tensorflow as tf
 k = tf.keras.backend
 
 
-def save_image(tensor: tf.Tensor, filename: str, **kwargs) -> None:
-    """Save a given Tensor into an image file.
-
-    Args:
-        tensor (Tensor or list): Image to be saved. If given a mini-batch tensor,
-            saves the tensor as a grid of images by calling ``make_grid``.
-        filename (string): name of image
-        **kwargs: Other arguments are documented in ``make_grid``.
+def prepare_image(tensor: Union[tf.Tensor, Sequence[tf.Tensor]], **kwargs) -> tf.Tensor:
     """
-    from PIL import Image
+    Prepares a tensor to be saved as image and returns it.
+    
+    ``**kwargs``: Other arguments are documented in `make_grid()`.
+
+    :param tensor: Image to be saved.
+        If given a mini-batch tensor, saves the tensor as a grid of images by calling make_grid.
+    :return: the prepared tensor
+    """
     grid = make_grid(tensor, **kwargs)
     min_pixel_value = 0
     max_pixel_value = 255
     grid *= max_pixel_value
     grid = tf.clip_by_value(grid, min_pixel_value, max_pixel_value)
     grid = tf.cast(grid, tf.uint8)
-    ndarr = grid.cpu().numpy()
-    im = Image.fromarray(ndarr)
-    im.save(filename)
+    
+    return grid
 
 
 def make_grid(tensor: Union[tf.Tensor, Sequence[tf.Tensor]], nrow: int = 8, padding: int = 2,
               normalize: bool = False, range_value: Tuple[float, float] = None,
               scale_each: bool = False, pad_value: float = 0.0) -> tf.Tensor:
-    """Make a grid of images.
-
-    Args:
-        tensor (Tensor or list): 4D mini-batch Tensor of shape (B x C x H x W)
-            or a list of images all of the same size.
-        nrow (int, optional): Number of images displayed in each row of the grid.
-            The Final grid size is (B / nrow, nrow). Default is 8.
-        padding (int, optional): amount of padding. Default is 2.
-        normalize (bool, optional): If True, shift the image to the range (0, 1),
-            by subtracting the minimum and dividing by the maximum pixel value.
-        range_value (tuple, optional): tuple (min, max) where min and max are numbers,
-            then these numbers are used to normalize the image. By default, min and max
-            are computed from the tensor.
-        scale_each (bool, optional): If True, scale each image in the batch of
-            images separately rather than the (min, max) over all images.
-        pad_value (float, optional): Value for the padded pixels.
+    """
+    Make a grid of images.
 
     Example:
         See this notebook `here <https://gist.github.com/anonymous/bf16430f7750c023141c562f3e9f2a91>`_
-
+    
+    :param tensor: 4D mini-batch Tensor of shape (B x C x H x W)
+            or a list of images all of the same size.
+    :param nrow: Number of images displayed in each row of the grid.
+            The Final grid size is (B / nrow, nrow). Default is 8.
+    :param padding: amount of padding. Default is 2.
+    :param normalize: If True, shift the image to the range (0, 1),
+            by subtracting the minimum and dividing by the maximum pixel value.
+    :param range_value: tuple (min, max) where min and max are numbers,
+            then these numbers are used to normalize the image. By default, min and max
+            are computed from the tensor.
+    :param scale_each: If True, scale each image in the batch of
+            images separately rather than the (min, max) over all images.
+    :param pad_value: Value for the padded pixels.
+    :return: tensor containing image grid
     """
     if not (tf.contrib.framework.is_tensor(tensor) or
             (isinstance(tensor, list) and all(tf.contrib.framework.is_tensor(t) for t in tensor))):
