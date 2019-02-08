@@ -564,7 +564,7 @@ if __name__ == "__main__":
     tf.enable_eager_execution()
     inlier_classes = [0]
     iteration = 1
-    train_dataset, _ = prepare_training_data(test_fold_id=0, inlier_classes=[0],
+    train_dataset, _ = prepare_training_data(test_fold_id=0, inlier_classes=inlier_classes,
                                              total_classes=10)
     train_summary_writer = summary_ops_v2.create_file_writer(
         './summaries/train/number-' + str(inlier_classes[0]) + '/' + str(iteration))
