@@ -14,4 +14,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-"""masterthesis: Python package for masterthesis"""
+"""
+Masterthesis package.
+
+Subpackages:
+    ``aae``: provides an implementation of Adversarial Auto Encoders
+"""
