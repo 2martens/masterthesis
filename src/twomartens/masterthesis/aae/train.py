@@ -18,7 +18,6 @@
 import functools
 import os
 import pickle
-import random
 import time
 from typing import Callable, Sequence, Tuple
 
@@ -74,7 +73,6 @@ def train_mnist(folding_id: int, inlier_classes: Sequence[int], total_classes: i
     
     # keep only train classes
     mnist_train = [x for x in mnist_train if x[0] in inlier_classes]
-    random.shuffle(mnist_train)
     
     def list_of_pairs_to_numpy(list_of_pairs: Sequence[Tuple[int, np.ndarray]]) -> Tuple[np.ndarray, np.ndarray]:
         """
