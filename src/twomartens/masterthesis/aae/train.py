@@ -182,17 +182,11 @@ def train_mnist(folding_id: int, inlier_classes: Sequence[int], total_classes: i
 
             if int(global_step_decoder % log_frequency) == 0:
                 # log the losses every log frequency batches
-                summary_ops_v2.scalar('encoder_loss', encoder_loss_avg.result(), step=global_step_enc_dec)
-                summary_ops_v2.scalar('decoder_loss', decoder_loss_avg.result(), step=global_step_decoder)
-                summary_ops_v2.scalar('encoder_decoder_loss', enc_dec_loss_avg.result(), step=global_step_enc_dec)
-                summary_ops_v2.scalar('z_discriminator_loss', zd_loss_avg.result(), step=global_step_zd)
-                summary_ops_v2.scalar('x_discriminator_loss', xd_loss_avg.result(), step=global_step_xd)
-                # reset the metrics states
-                # encoder_loss_avg.init_variables()
-                # decoder_loss_avg.init_variables()
-                # enc_dec_loss_avg.init_variables()
-                # zd_loss_avg.init_variables()
-                # xd_loss_avg.init_variables()
+                summary_ops_v2.scalar('encoder_loss', encoder_loss_avg.result(False), step=global_step_enc_dec)
+                summary_ops_v2.scalar('decoder_loss', decoder_loss_avg.result(False), step=global_step_decoder)
+                summary_ops_v2.scalar('encoder_decoder_loss', enc_dec_loss_avg.result(False), step=global_step_enc_dec)
+                summary_ops_v2.scalar('z_discriminator_loss', zd_loss_avg.result(False), step=global_step_zd)
+                summary_ops_v2.scalar('x_discriminator_loss', xd_loss_avg.result(False), step=global_step_xd)
 
             if int(batch_iteration) == 0:
                 directory = 'results' + str(inlier_classes[0])
