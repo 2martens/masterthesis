@@ -203,10 +203,11 @@ def train_mnist(folding_id: int, inlier_classes: Sequence[int], total_classes: i
             print((
                 f"[{epoch + 1:d}/{train_epoch:d}] - "
                 f"train time: {per_epoch_time:.2f}, "
-                f"Decoder loss: {decoder_loss_avg.result()}, X Discriminator loss: {xd_loss_avg.result():.3f}, "
-                f"Z Discriminator loss: {zd_loss_avg.result():.3f}, "
-                f"Encoder + Decoder loss: {enc_dec_loss_avg.result():.3f}, "
-                f"Encoder loss: {encoder_loss_avg.result():.3f}"
+                f"Decoder loss: {decoder_loss_avg.result(False)}, "
+                f"X Discriminator loss: {xd_loss_avg.result(False):.3f}, "
+                f"Z Discriminator loss: {zd_loss_avg.result(False):.3f}, "
+                f"Encoder + Decoder loss: {enc_dec_loss_avg.result(False):.3f}, "
+                f"Encoder loss: {encoder_loss_avg.result(False):.3f}"
             ))
         
         # save sample image
