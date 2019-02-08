@@ -14,4 +14,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-"""masterthesis.aae: contains code for adversarial auto encoders"""
+"""
+Provides an AAE implementation.
+
+Modules:
+    ``model``: provides the keras models of the AAE implementation
+    
+    ``train``: provides functionality to train the AAE
+    
+    ``util``: provides helper functionality for visualization
+
+Todos:
+    - make the implementation compatible with the YCB Video dataset
+"""
