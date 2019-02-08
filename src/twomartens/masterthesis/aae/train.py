@@ -50,7 +50,6 @@ from .util import prepare_image
 k = tf.keras.backend
 AdamOptimizer = tf.train.AdamOptimizer
 tfe = tf.contrib.eager
-binary_crossentropy = tf.keras.losses.binary_crossentropy
 
 GRACE: int = 10
 TOTAL_LOSS_GRACE_CAP: int = 6
@@ -432,12 +431,12 @@ def _train_xdiscriminator_step(x_discriminator: XDiscriminator, decoder: Decoder
     """
     with tf.GradientTape() as tape:
         xd_result_1 = tf.squeeze(x_discriminator(inputs))
-        xd_real_loss = binary_crossentropy(targets_real, xd_result_1)
+        xd_real_loss = tf.losses.log_loss(targets_real, xd_result_1)
         
         z = z_generator()
         x_fake = decoder(z)
         xd_result_2 = tf.squeeze(x_discriminator(x_fake))
-        xd_fake_loss = binary_crossentropy(targets_fake, xd_result_2)
+        xd_fake_loss = tf.losses.log_loss(targets_fake, xd_result_2)
         
         _xd_train_loss = xd_real_loss + xd_fake_loss
     
@@ -482,7 +481,7 @@ def _train_decoder_step(decoder: Decoder, x_discriminator: XDiscriminator,
         
         x_fake = decoder(z)
         xd_result = tf.squeeze(x_discriminator(x_fake))
-        _decoder_train_loss = binary_crossentropy(targets, xd_result)
+        _decoder_train_loss = tf.losses.log_loss(targets, xd_result)
     
     grads = tape.gradient(_decoder_train_loss, decoder.trainable_variables)
     if int(global_step % LOG_FREQUENCY) == 0:
@@ -523,11 +522,11 @@ def _train_zdiscriminator_step(z_discriminator: ZDiscriminator, encoder: Encoder
         z = z_generator()
         
         zd_result = tf.squeeze(z_discriminator(z))
-        zd_real_loss = binary_crossentropy(targets_real, zd_result)
+        zd_real_loss = tf.losses.log_loss(targets_real, zd_result)
         
         z = tf.squeeze(encoder(inputs))
         zd_result = tf.squeeze(z_discriminator(z))
-        zd_fake_loss = binary_crossentropy(targets_fake, zd_result)
+        zd_fake_loss = tf.losses.log_loss(targets_fake, zd_result)
         
         _zd_train_loss = zd_real_loss + zd_fake_loss
     
@@ -572,8 +571,8 @@ def _train_enc_dec_step(encoder: Encoder, decoder: Decoder, z_discriminator: ZDi
         x_decoded = decoder(z)
         
         zd_result = tf.squeeze(z_discriminator(tf.squeeze(z)))
-        encoder_loss = binary_crossentropy(targets, zd_result) * 2.0
-        reconstruction_loss = binary_crossentropy(inputs, x_decoded)
+        encoder_loss = tf.losses.log_loss(targets, zd_result) * 2.0
+        reconstruction_loss = tf.losses.log_loss(inputs, x_decoded)
         _enc_dec_train_loss = encoder_loss + reconstruction_loss
     
     enc_dec_grads = tape.gradient(_enc_dec_train_loss,
