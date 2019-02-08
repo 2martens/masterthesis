@@ -192,7 +192,7 @@ def train_mnist(folding_id: int, inlier_classes: Sequence[int], total_classes: i
                     os.makedirs(directory)
                 comparison = k.concatenate([x[:64], x_decoded[:64]], axis=0)
                 grid = prepare_image(comparison.cpu(), nrow=64)
-                summary_ops_v2.image(name='reconstruction_' + str(epoch), tensor=grid, max_images=1)
+                summary_ops_v2.image(name='reconstruction_' + str(epoch), tensor=k.expand_dims(grid, axis=0), max_images=1)
                 from PIL import Image
                 filename = 'results' + str(inlier_classes[0]) + '/reconstruction_' + str(epoch) + '.png'
                 ndarr = grid.cpu().numpy()
@@ -220,7 +220,7 @@ def train_mnist(folding_id: int, inlier_classes: Sequence[int], total_classes: i
         directory = 'results' + str(inlier_classes[0])
         os.makedirs(directory, exist_ok=True)
         grid = prepare_image(resultsample)
-        summary_ops_v2.image(name='sample_' + str(epoch), tensor=grid, max_images=1)
+        summary_ops_v2.image(name='sample_' + str(epoch), tensor=k.expand_dims(grid, axis=0), max_images=1)
         from PIL import Image
         filename = 'results' + str(inlier_classes[0]) + '/sample_' + str(epoch) + '.png'
         ndarr = grid.cpu().numpy()
