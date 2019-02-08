@@ -101,8 +101,6 @@ def train_mnist(folding_id: int, inlier_classes: Sequence[int], total_classes: i
     # train
     y_real = k.ones(batch_size)
     y_fake = k.zeros(batch_size)
-    y_real_z = k.ones(batch_size)
-    y_fake_z = k.zeros(batch_size)
     sample = k.expand_dims(k.expand_dims(k.random_normal((64, zsize)), axis=1), axis=1)
 
     z_generator = functools.partial(get_z_variable, batch_size=batch_size, zsize=zsize)
