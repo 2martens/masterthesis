@@ -22,7 +22,9 @@ Functions:
 
 """
 import math
-from typing import Sequence, Tuple, Union
+from typing import Sequence
+from typing import Tuple
+from typing import Union
 
 import numpy as np
 import tensorflow as tf
