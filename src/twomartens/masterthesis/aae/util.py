@@ -14,7 +14,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-"""aae.util.py: contains utility functions"""
+"""
+Utility functionality for visualizing predictions.
+
+Functions:
+    prepare_image(...): prepares a tensor to be visualized as an image
+
+"""
 import math
 from typing import Sequence, Tuple, Union
 
@@ -24,17 +30,33 @@ import tensorflow as tf
 k = tf.keras.backend
 
 
-def prepare_image(tensor: Union[tf.Tensor, Sequence[tf.Tensor]], **kwargs) -> tf.Tensor:
+def prepare_image(tensor: Union[tf.Tensor, Sequence[tf.Tensor]], nrow: int = 8,
+                  padding: int = 2,
+                  normalize: bool = False, range_value: Tuple[float, float] = None,
+                  scale_each: bool = False, pad_value: float = 0.0) -> tf.Tensor:
     """
     Prepares a tensor to be saved as image and returns it.
-    
-    ``**kwargs``: Other arguments are documented in `make_grid()`.
 
-    :param tensor: Image to be saved.
-        If given a mini-batch tensor, saves the tensor as a grid of images by calling make_grid.
-    :return: the prepared tensor
+    Args:
+        tensor: Image to be saved.
+        given a mini-batch tensor, saves the tensor as a grid of images by calling make_grid.
+        nrow: Number of images displayed in each row of the grid.
+          The Final grid size is (B / nrow, nrow). Default is 8.
+        padding: amount of padding. Default is 2.
+        normalize: If True, shift the image to the range (0, 1),
+         by subtracting the minimum and dividing by the maximum pixel value.
+        range_value: tuple (min, max) where min and max are numbers,
+         then these numbers are used to normalize the image. By default, min and max
+         are computed from the tensor.
+        scale_each: If True, scale each image in the batch of
+         images separately rather than the (min, max) over all images.
+        pad_value: Value for the padded pixels.
+    
+    Returns:
+        the prepared tensor
     """
-    grid = make_grid(tensor, **kwargs)
+    grid = _make_grid(tensor, nrow, padding, normalize, range_value,
+                      scale_each, pad_value)
     min_pixel_value = 0
     max_pixel_value = 255
     grid *= max_pixel_value
@@ -44,9 +66,9 @@ def prepare_image(tensor: Union[tf.Tensor, Sequence[tf.Tensor]], **kwargs) -> tf
     return grid
 
 
-def make_grid(tensor: Union[tf.Tensor, Sequence[tf.Tensor]], nrow: int = 8, padding: int = 2,
-              normalize: bool = False, range_value: Tuple[float, float] = None,
-              scale_each: bool = False, pad_value: float = 0.0) -> tf.Tensor:
+def _make_grid(tensor: Union[tf.Tensor, Sequence[tf.Tensor]], nrow: int = 8, padding: int = 2,
+               normalize: bool = False, range_value: Tuple[float, float] = None,
+               scale_each: bool = False, pad_value: float = 0.0) -> tf.Tensor:
     """
     Make a grid of images.
 
