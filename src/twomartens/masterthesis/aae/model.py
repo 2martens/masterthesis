@@ -64,16 +64,7 @@ class Encoder(keras.Model):
                                          padding='valid', kernel_initializer=weight_init)
     
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
-        """
-        Overwrites the ``call`` method and is called by ``__call__``.
-        
-        Args:
-            inputs: input values
-            ``**kwargs``: additional keyword arguments - none are used
-        
-        Returns:
-            result values
-        """
+        """See base class."""
         result = self.x_padded(inputs)
         result = self.conv1(result)
         result = self.conv1_a(result)
@@ -120,16 +111,7 @@ class Decoder(keras.Model):
         self.deconv4_cropped = keras.layers.Cropping2D(cropping=1)
     
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
-        """
-        Overwrites the ``call`` method and is called by ``__call__``.
-        
-        Args:
-            inputs: input values
-            ``**kwargs``: additional keyword arguments - none are used
-        
-        Returns:
-            result values
-        """
+        """See base class."""
         result = self.deconv1(inputs)
         result = self.deconv1_bn(result)
         result = self.deconv1_a(result)
@@ -167,16 +149,7 @@ class ZDiscriminator(keras.Model):
                                       kernel_initializer=weight_init)
     
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
-        """
-        Overwrites the ``call`` method and is called by ``__call__``.
-        
-        Args:
-            inputs: input values
-            ``**kwargs``: additional keyword arguments - none are used
-        
-        Returns:
-            result values
-        """
+        """See base class."""
         result = self.zd1(inputs)
         result = self.zd1_a(result)
         result = self.zd2(result)
@@ -213,16 +186,7 @@ class XDiscriminator(keras.Model):
                                        activation='sigmoid')
     
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
-        """
-        Overwrites the ``call`` method and is called by ``__call__``.
-        
-        Args:
-            inputs: input values
-            ``**kwargs``: additional keyword arguments - none are used
-        
-        Returns:
-            result values
-        """
+        """See base class."""
         result = self.x_padded(inputs)
         result = self.xd1(result)
         result = self.xd1_a(result)
