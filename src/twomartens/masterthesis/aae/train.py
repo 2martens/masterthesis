@@ -198,6 +198,12 @@ def train_mnist(folding_id: int, inlier_classes: Sequence[int], total_classes: i
                 summary_ops_v2.scalar('encoder_decoder_loss', enc_dec_loss_avg.result(), step=global_step_enc_dec)
                 summary_ops_v2.scalar('z_discriminator_loss', zd_loss_avg.result(), step=global_step_zd)
                 summary_ops_v2.scalar('x_discriminator_loss', xd_loss_avg.result(), step=global_step_xd)
+                # reset the metrics states
+                encoder_loss_avg.reset_states()
+                decoder_loss_avg.reset_states()
+                enc_dec_loss_avg.reset_states()
+                zd_loss_avg.reset_states()
+                xd_loss_avg.reset_states()
             
             if it == 0:
                 directory = 'results' + str(inlier_classes[0])
