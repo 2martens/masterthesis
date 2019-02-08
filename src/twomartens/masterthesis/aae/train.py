@@ -449,8 +449,9 @@ def _train_xdiscriminator_step(x_discriminator: XDiscriminator, decoder: Decoder
                               step=global_step)
         summary_ops_v2.scalar(name='x_discriminator_loss', tensor=_xd_train_loss,
                               step=global_step)
-        summary_ops_v2.histogram(name='x_discriminator_grads', tensor=xd_grads,
-                                 step=global_step)
+        for variable, grad in xd_grads:
+            summary_ops_v2.histogram(name='x_discriminator_grads/' + variable.name, tensor=tf.math.l2_normalize(grad),
+                                     step=global_step)
     optimizer.apply_gradients(zip(xd_grads, x_discriminator.trainable_variables),
                               global_step=global_step_xd)
     
@@ -485,8 +486,9 @@ def _train_decoder_step(decoder: Decoder, x_discriminator: XDiscriminator,
     if int(global_step % LOG_FREQUENCY) == 0:
         summary_ops_v2.scalar(name='decoder_loss', tensor=_decoder_train_loss,
                               step=global_step)
-        summary_ops_v2.histogram(name='decoder_grads', tensor=grads,
-                                 step=global_step)
+        for variable, grad in grads:
+            summary_ops_v2.histogram(name='decoder_grads/' + variable.name, tensor=tf.math.l2_normalize(grad),
+                                     step=global_step)
     optimizer.apply_gradients(zip(grads, decoder.trainable_variables),
                               global_step=global_step_decoder)
     
@@ -533,8 +535,9 @@ def _train_zdiscriminator_step(z_discriminator: ZDiscriminator, encoder: Encoder
                               step=global_step)
         summary_ops_v2.scalar(name='z_discriminator_loss', tensor=_zd_train_loss,
                               step=global_step)
-        summary_ops_v2.histogram(name='z_discriminator_grads', tensor=zd_grads,
-                                 step=global_step)
+        for variable, grad in zd_grads:
+            summary_ops_v2.histogram(name='z_discriminator_grads/' + variable.name, tensor=tf.math.l2_normalize(grad),
+                                     step=global_step)
     optimizer.apply_gradients(zip(zd_grads, z_discriminator.trainable_variables),
                               global_step=global_step_zd)
     
@@ -576,8 +579,9 @@ def _train_enc_dec_step(encoder: Encoder, decoder: Decoder, z_discriminator: ZDi
                               step=global_step)
         summary_ops_v2.scalar(name='encoder_decoder_loss', tensor=_enc_dec_train_loss,
                               step=global_step)
-        summary_ops_v2.histogram(name='encoder_decoder_grads', tensor=enc_dec_grads,
-                                 step=global_step)
+        for variable, grad in enc_dec_grads:
+            summary_ops_v2.histogram(name='encoder_decoder_grads/' + variable.name, tensor=tf.math.l2_normalize(grad),
+                                     step=global_step)
     optimizer.apply_gradients(zip(enc_dec_grads,
                                   encoder.trainable_variables + decoder.trainable_variables),
                               global_step=global_step_enc_dec)
