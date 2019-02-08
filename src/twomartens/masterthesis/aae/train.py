@@ -227,7 +227,7 @@ def train_mnist(folding_id: int, inlier_classes: Sequence[int], total_classes: i
             print((
                 f"[{epoch + 1:d}/{train_epoch:d}] - "
                 f"train time: {per_epoch_time:.2f}, "
-                f"Decoder loss: {decoder_loss}, "
+                f"Decoder loss: {decoder_loss:.3f}, "
                 f"X Discriminator loss: {xd_loss:.3f}, "
                 f"Z Discriminator loss: {zd_loss:.3f}, "
                 f"Encoder + Decoder loss: {enc_dec_loss:.3f}, "
