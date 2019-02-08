@@ -127,7 +127,7 @@ def train_mnist(folding_id: int, inlier_classes: Sequence[int], total_classes: i
     total_lowest_loss = math.inf
     grace_period = GRACE
     
-    checkpoint_dir = os.path.abspath('./weights/' + str(inlier_classes[0]) + '/' + str(iteration) + '/')
+    checkpoint_dir = './weights/' + str(inlier_classes[0]) + '/' + str(iteration) + '/'
     os.makedirs(checkpoint_dir, exist_ok=True)
     checkpoint_prefix = os.path.join(checkpoint_dir, 'ckpt')
     latest_checkpoint = tf.train.latest_checkpoint(checkpoint_dir)
