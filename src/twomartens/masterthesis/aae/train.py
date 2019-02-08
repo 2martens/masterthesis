@@ -507,19 +507,6 @@ def normalize(feature: tf.Tensor, label: tf.Tensor) -> Tuple[tf.Tensor, tf.Tenso
     return k.expand_dims(tf.divide(feature, 255.0)), label
 
 
-def extract_batch(data: np.ndarray, it: int, batch_size: int) -> tfe.Variable:
-    """
-    Extracts a batch from data.
-    
-    :param data: numpy array of data
-    :param it: current iteration in epoch (or batch number)
-    :param batch_size: size of batch
-    :return: tensor
-    """
-    x = data[it * batch_size:(it + 1) * batch_size, :, :] / 255.0
-    return k.variable(x)
-
-
 if __name__ == "__main__":
     tf.enable_eager_execution()
     inlier_classes = [0]
