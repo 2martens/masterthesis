@@ -15,12 +15,6 @@
 #  limitations under the License.
 
 """
-Masterthesis package.
-
-Subpackages:
-    ``aae``: provides an implementation of Adversarial Auto Encoders
-    ``ssd_keras``: provides an implementation of SSD
-    
-Modules:
-    ``ssd``: provides functionality to use the SSD models
+Provides functionality to use the SSD Keras implementation.
 """
+
