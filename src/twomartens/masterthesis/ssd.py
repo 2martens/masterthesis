@@ -45,7 +45,7 @@ from twomartens.masterthesis.ssd_keras.models import keras_ssd300_dropout
 K = tf.keras.backend
 tfe = tf.contrib.eager
 
-IMAGE_SIZE = (240, 320, 3)  # TODO check with SceneNet RGB-D
+IMAGE_SIZE = (300, 300, 3)
 N_CLASSES = 80
 DROPOUT_RATE = 0.5
 IOU_THRESHOLD = 0.45
