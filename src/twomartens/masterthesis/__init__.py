@@ -19,4 +19,5 @@ Masterthesis package.
 
 Subpackages:
     ``aae``: provides an implementation of Adversarial Auto Encoders
+    ``ssd_keras``: provides an implementation of SSD
 """
