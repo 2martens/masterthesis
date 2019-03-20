@@ -16,5 +16,59 @@
 
 """
 Provides functionality to use the SSD Keras implementation.
-"""
 
+Attributes:
+    IMAGE_SIZE: tuple of (height, width, channels)
+    N_CLASSES: number of known classes (without background)
+    DROPOUT_RATE: rate for dropping weights
+    IOU_THRESHOLD: threshold for required overlap with ground truth bounding box
+    TOP_K: maximum number of predictions kept for each batch item after non-maximum suppression
+    
+Classes:
+    ``DropoutSSD``: wraps Dropout SSD 300 model
+    
+    ``SSD``: wraps vanilla SSD 300 model
+"""
+import tensorflow as tf
+
+from twomartens.masterthesis.ssd_keras.models import keras_ssd300
+from twomartens.masterthesis.ssd_keras.models import keras_ssd300_dropout
+
+IMAGE_SIZE = (240, 320, 3)  # TODO check with SceneNet RGB-D
+N_CLASSES = 80
+DROPOUT_RATE = 0.5
+IOU_THRESHOLD = 0.45
+TOP_K = 200
+
+
+class SSD:
+    """
+    Wraps vanilla SSD 300 model.
+    
+    Args:
+        mode: one of training, inference, and inference_fast
+    """
+    
+    def __init__(self, mode: str) -> None:
+        self._model = keras_ssd300.ssd_300(image_size=IMAGE_SIZE, n_classes=N_CLASSES, mode=mode)
+        self.mode = mode
+    
+    def __call__(self, inputs: tf.Tensor, *args, **kwargs) -> tf.Tensor:
+        return self._model(inputs)
+
+
+class DropoutSSD:
+    """
+    Wraps Dropout SSD 300 model.
+    
+    Args:
+        mode: one of training, inference, and inference_fast
+    """
+    
+    def __init__(self, mode: str) -> None:
+        self._model = keras_ssd300_dropout.ssd_300_dropout(image_size=IMAGE_SIZE, n_classes=N_CLASSES,
+                                                           dropout_rate=DROPOUT_RATE, mode=mode)
+        self.mode = mode
+    
+    def __call__(self, inputs: tf.Tensor, *args, **kwargs) -> tf.Tensor:
+        return self._model(inputs)
