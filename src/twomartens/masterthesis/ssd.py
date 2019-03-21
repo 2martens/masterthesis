@@ -29,6 +29,10 @@ Classes:
     ``DropoutSSD``: wraps Dropout SSD 300 model
     
     ``SSD``: wraps vanilla SSD 300 model
+    
+Functions:
+    predict(...): runs trained SSD/DropoutSSD on a given data set
+    train(...): trains the SSD/DropoutSSD on a given data set
 """
 import os
 import pickle
