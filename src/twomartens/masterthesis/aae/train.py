@@ -136,7 +136,6 @@ def train_simple(dataset: tf.data.Dataset,
                  channels: int = 1,
                  zsize: int = 32,
                  lr: float = 0.002,
-                 batch_size: int = 128,
                  train_epoch: int = 80,
                  verbose: bool = True,
                  early_stopping: bool = False) -> None:
@@ -157,7 +156,6 @@ def train_simple(dataset: tf.data.Dataset,
         channels: number of channels in input image (default: 1)
         zsize: size of the intermediary z (default: 32)
         lr: initial learning rate (default: 0.002)
-        batch_size: the size of each batch (default: 128)
         train_epoch: number of epochs to train (default: 80)
         verbose: if True prints train progress info to console (default: True)
         early_stopping: if True the early stopping mechanic is enabled (default: False)
@@ -174,7 +172,6 @@ def train_simple(dataset: tf.data.Dataset,
     """
     
     # non-preserved tensors
-    y_real = K.ones(batch_size)
     sample = K.expand_dims(K.expand_dims(K.random_normal((64, zsize)), axis=1), axis=1)
     
     # non-preserved python variables
@@ -221,7 +218,7 @@ def train_simple(dataset: tf.data.Dataset,
     
     for epoch in range(train_epoch - previous_epochs):
         _epoch = epoch + previous_epochs
-        outputs = _train_one_epoch_simple(_epoch, dataset, targets_real=y_real,
+        outputs = _train_one_epoch_simple(_epoch, dataset,
                                           verbose=verbose,
                                           **checkpointables)
         
@@ -300,7 +297,6 @@ def train_simple(dataset: tf.data.Dataset,
 
 def _train_one_epoch_simple(epoch: int,
                             dataset: tf.data.Dataset,
-                            targets_real: tf.Tensor,
                             verbose: bool,
                             learning_rate_var: tf.Variable,
                             decoder: model.Decoder,
