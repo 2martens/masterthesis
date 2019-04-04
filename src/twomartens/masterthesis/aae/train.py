@@ -17,14 +17,12 @@
 """
 Training functionality for my AAE implementation.
 
-This module provides functions to prepare the training data and subsequently
-train a simple auto-encoder.
+This module provides a function to train a simple auto-encoder.
 
 Attributes:
     LOG_FREQUENCY: number of steps that must pass before logging happens
 
 Functions:
-    prepare_training_data(...): prepares the mnist training data
     train_simple(...): trains a simple auto-encoder only with reconstruction loss
 
 """

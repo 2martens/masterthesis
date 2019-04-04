@@ -14,6 +14,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+"""
+Data functionality for my AAE implementation.
+
+This module provides a function to prepare the training data.
+
+Functions:
+    prepare_training_data(...): prepares the mnist training data
+"""
 import pickle
 from typing import Sequence
 from typing import Tuple
