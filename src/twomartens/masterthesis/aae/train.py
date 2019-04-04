@@ -55,7 +55,7 @@ def train_simple(dataset: tf.data.Dataset,
     """
     Trains auto-encoder for given data set.
 
-    This function provides early stopping and creates checkpoints after every
+    This function creates checkpoints after every
     epoch as well as after finishing training (or stopping early). When starting
     this function with the same ``iteration`` then the training will try to
     continue where it ended last time by restoring a saved checkpoint.
