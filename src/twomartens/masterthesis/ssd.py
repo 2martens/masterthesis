@@ -168,7 +168,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
     # prepare filename
     filename = 'ssd_predictions'
     if use_dropout:
-        filename = 'dropout-' + filename
+        filename = f"dropout-{filename}"
     output_file = os.path.join(output_path, filename)
     
     # go through the data set
@@ -183,7 +183,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
             decoded_predictions_batch.append(ssd(inputs))
 
         # save predictions batch-wise to prevent memory problems
-        with open(output_file + '-' + counter + '.npy', 'wb') as file:
+        with open(f"{output_file}-{counter:d}.npy", 'wb') as file:
             np.save(file, decoded_predictions_batch, allow_pickle=False, fix_imports=False)
         
         counter += 1
