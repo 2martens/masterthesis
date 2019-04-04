@@ -35,6 +35,7 @@ setup(
     package_data={},
     entry_points={},
     python_requires="~=3.6",
+    setup_requires=['cython'],
     install_requires=["tensorflow-gpu", "Pillow", "h5py", "numpy", 'opencv-python', 'scikit-learn', 'tqdm',
                       'beautifulsoup4'],
     license="Apache License 2.0",
