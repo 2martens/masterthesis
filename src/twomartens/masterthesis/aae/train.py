@@ -71,16 +71,6 @@ def train_simple(dataset: tf.data.Dataset,
         lr: initial learning rate (default: 0.002)
         train_epoch: number of epochs to train (default: 80)
         verbose: if True prints train progress info to console (default: True)
-
-    Notes:
-        The training stops early if for ``GRACE`` number of epochs the loss is not
-        decreasing. Specifically all individual losses are accounted for and any one
-        of those not decreasing triggers a ``strike``. If the total loss, which is
-        a sum of all individual losses, is also not decreasing and has a total
-        value of more than ``TOTAL_LOSS_GRACE_CAP``, the counter for the remaining grace period is
-        decreased. If in any epoch afterwards all losses are decreasing the grace
-        period is reset to ``GRACE``. Lastly the training loop will be stopped early
-        if the grace counter reaches ``0`` at the end of an epoch.
     """
     
     # non-preserved tensors
