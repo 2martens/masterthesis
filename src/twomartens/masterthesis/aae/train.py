@@ -53,7 +53,7 @@ def train_simple(dataset: tf.data.Dataset,
                  train_epoch: int = 80,
                  verbose: bool = True) -> None:
     """
-    Trains aut-encoder for given data set.
+    Trains auto-encoder for given data set.
 
     This function provides early stopping and creates checkpoints after every
     epoch as well as after finishing training (or stopping early). When starting
