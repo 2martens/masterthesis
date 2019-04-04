@@ -15,10 +15,11 @@
 #  limitations under the License.
 
 """
-Functionality to load COCO data into Tensorflow data sets.
+Functionality to load data into Tensorflow data sets.
 
 Functions:
     load_coco(...): loads the COCO data into a Tensorflow data set
+    load_scenenet(...): loads the SceneNet RGB-D data into a Tensorflow data set
 """
 from typing import Tuple
 
@@ -64,3 +65,19 @@ def load_coco(data_path: str, data_type: str, num_epochs: int, batch_size: int =
     dataset = dataset.map(_load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     
     return dataset
+
+
+def load_scenenet(data_path: str, num_epochs: int, batch_size: int = 32) -> tf.data.Dataset:
+    """
+    Loads the SceneNet RGB-D data and returns a data set.
+    
+    Args:
+        data_path: path to the SceneNet RGB-D data set
+        num_epochs: number of epochs
+        batch_size: batch size
+    Returns:
+        Tensorflow data set
+    """
+    pass
+
+
