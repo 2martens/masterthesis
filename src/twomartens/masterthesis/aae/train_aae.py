@@ -46,9 +46,11 @@ from tensorflow.python.ops import summary_ops_v2
 
 from twomartens.masterthesis.aae import model
 from twomartens.masterthesis.aae import util
-from twomartens.masterthesis.aae.train import K
 from twomartens.masterthesis.aae.train import LOG_FREQUENCY
-from twomartens.masterthesis.aae.train import tfe
+
+# shortcuts for tensorflow sub packages and classes
+K = tf.keras.backend
+tfe = tf.contrib.eager
 
 GRACE: int = 10
 TOTAL_LOSS_GRACE_CAP: int = 6
