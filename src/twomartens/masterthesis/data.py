@@ -34,7 +34,7 @@ def load_coco(data_path: str, data_type: str, num_epochs: int, batch_size: int =
         data_path: path to the COCO data set
         data_type: type of the COCO data (e.g. 'val2014')
         num_epochs: number of epochs
-        batch_size: batch size
+        batch_size: batch size (default: 32)
     Returns:
         Tensorflow data set
     """
