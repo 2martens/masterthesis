@@ -35,12 +35,9 @@ Functions:
     train(...): trains the SSD/DropoutSSD on a given data set
 """
 import os
-import pickle
 import time
 from typing import Dict
-from typing import List
 from typing import Optional
-from typing import Union
 
 import numpy as np
 import tensorflow as tf
