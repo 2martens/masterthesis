@@ -34,7 +34,9 @@ setup(
     packages=find_packages('src', exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     package_dir={'': 'src'},
     package_data={},
-    entry_points={},
+    entry_points={
+        "console_scripts": ["tm-masterthesis = twomartens.masterthesis.main:main"]
+    },
     python_requires="~=3.6",
     install_requires=["tensorflow-gpu", "Pillow", "h5py", "numpy", "opencv-python", "scikit-learn", "tqdm",
                       "beautifulsoup4", "matplotlib"],
