@@ -15,7 +15,8 @@
 #  limitations under the License.
 
 """setup file for masterthesis"""
-from setuptools import find_packages, setup
+from setuptools import find_packages
+from setuptools import setup
 
 with open("README.md", "rb") as f:
     long_desc = f.read().decode()
@@ -35,9 +36,8 @@ setup(
     package_data={},
     entry_points={},
     python_requires="~=3.6",
-    setup_requires=['cython'],
-    install_requires=["tensorflow-gpu", "Pillow", "h5py", "numpy", 'opencv-python', 'scikit-learn', 'tqdm',
-                      'beautifulsoup4'],
+    install_requires=["tensorflow-gpu", "Pillow", "h5py", "numpy", "opencv-python", "scikit-learn", "tqdm",
+                      "beautifulsoup4", "matplotlib"],
     license="Apache License 2.0",
     classifiers=[
         "Operating System :: OS Independent",
