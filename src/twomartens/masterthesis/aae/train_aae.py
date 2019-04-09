@@ -167,7 +167,7 @@ def train(dataset: tf.data.Dataset,
         _epoch = epoch + previous_epochs
         outputs = _train_one_epoch(_epoch, dataset, targets_real=y_real,
                                    targets_fake=y_fake, z_generator=z_generator,
-                                   verbose=verbose,
+                                   verbose=verbose, batch_size=batch_size,
                                    **checkpointables)
         
         if verbose:
@@ -249,6 +249,7 @@ def _train_one_epoch(epoch: int,
                      dataset: tf.data.Dataset,
                      targets_real: tf.Tensor,
                      verbose: bool,
+                     batch_size: int,
                      targets_fake: tf.Tensor,
                      z_generator: Callable[[], tf.Variable],
                      learning_rate_var: tf.Variable,
@@ -335,8 +336,8 @@ def _train_one_epoch(epoch: int,
             encoder_loss_avg(encoder_loss)
             
             if int(global_step % LOG_FREQUENCY) == 0:
-                comparison = K.concatenate([x[:64], x_decoded[:64]], axis=0)
-                grid = util.prepare_image(comparison.cpu(), nrow=64)
+                comparison = K.concatenate([x[:batch_size/2], x_decoded[:batch_size/2]], axis=0)
+                grid = util.prepare_image(comparison.cpu(), nrow=int(batch_size/2))
                 summary_ops_v2.image(name='reconstruction',
                                      tensor=K.expand_dims(grid, axis=0), max_images=1,
                                      step=global_step)
