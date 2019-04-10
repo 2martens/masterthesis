@@ -49,41 +49,32 @@ def load_coco(data_path: str, category: int,
     coco_train = coco.COCO(annotation_file_train)
     img_ids = coco_train.getImgIds(catIds=[category])  # return all image IDs belonging to given category
     images = coco_train.loadImgs(img_ids)  # load all images
-    annotation_ids = coco_train.getAnnIds(img_ids)
+    annotation_ids = coco_train.getAnnIds(img_ids, catIds=[category])
     annotations = coco_train.loadAnns(annotation_ids)  # load all image annotations
-    file_names = [f"{data_path}/images/train2014/{image['file_name']}" for image in images]
-    sizes = [(image['width'], image['height']) for image in images]
-    bboxes = [annotation['bbox'] for annotation in annotations]
+    file_names = {image['id']: f"{data_path}/images/train2014/{image['file_name']}" for image in images}
     
     # load validation images
     coco_val = coco.COCO(annotation_file_val)
     img_ids = coco_val.getImgIds(catIds=[category])  # return all image IDs belonging to given category
-    images = coco_val.loadImgs(img_ids)  # load all images
-    annotation_ids = coco_val.getAnnIds(img_ids)
-    annotations = coco_val.loadAnns(annotation_ids)  # load all image annotations
-    file_names_val = [f"{data_path}/images/val2014/{image['file_name']}" for image in images]
-    sizes_val = [(image['width'], image['height']) for image in images]
-    bboxes_val = [annotation['bbox'] for annotation in annotations]
+    images_val = coco_val.loadImgs(img_ids)  # load all images
+    annotation_ids = coco_val.getAnnIds(img_ids, catIds=[category])
+    annotations_val = coco_val.loadAnns(annotation_ids)  # load all image annotations
+    file_names_val = {image['id']: f"{data_path}/images/val2014/{image['file_name']}" for image in images_val}
 
-    sizes.extend(sizes_val)
-
-    # remove memory-heavy things
-    del annotations
-    del images
-    del annotation_ids
-    del img_ids
-    del coco_train
-    del coco_val
-    
-    file_names.extend(file_names_val)
-    bboxes.extend(bboxes_val)
+    images.extend(images_val)
+    annotations.extend(annotations_val)
+    ids_to_images = {image['id']: image for image in images}
 
     checked_file_names = []
     checked_bboxes = []
-    for file_name, bbox, size in zip(file_names, bboxes, sizes):
+    for annotation in annotations:
+        img_id = annotation['image_id']
+        image = ids_to_images[img_id]
+        file_name = file_names[img_id] if img_id in file_names else file_names_val[img_id]
+        bbox = annotation['bbox']
         target_height = round(bbox[3])
         target_width = round(bbox[2])
-        image_width, image_height = size
+        image_width, image_height = image['width'], image['height']
         y1 = round(bbox[1])
         x1 = round(bbox[0])
         y2 = round(bbox[1] + bbox[3])
@@ -111,8 +102,6 @@ def load_coco(data_path: str, category: int,
         checked_bboxes.append(bbox)
 
     length_dataset = len(checked_file_names)
-    length_original_dataset = len(file_names)
-    removed_images = length_original_dataset - length_dataset
 
     def _load_image(paths: Sequence[str], labels: Sequence[Sequence[float]]):
         _images = tf.map_fn(lambda path: tf.read_file(path), paths)
