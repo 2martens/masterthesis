@@ -52,6 +52,7 @@ def load_coco(data_path: str, category: int,
     annotation_ids = coco_train.getAnnIds(img_ids)
     annotations = coco_train.loadAnns(annotation_ids)  # load all image annotations
     file_names = [f"{data_path}/images/train2014/{image['file_name']}" for image in images]
+    sizes = [(image['width'], image['height']) for image in images]
     bboxes = [annotation['bbox'] for annotation in annotations]
     
     # load validation images
@@ -61,12 +62,57 @@ def load_coco(data_path: str, category: int,
     annotation_ids = coco_val.getAnnIds(img_ids)
     annotations = coco_val.loadAnns(annotation_ids)  # load all image annotations
     file_names_val = [f"{data_path}/images/val2014/{image['file_name']}" for image in images]
+    sizes_val = [(image['width'], image['height']) for image in images]
     bboxes_val = [annotation['bbox'] for annotation in annotations]
+
+    sizes.extend(sizes_val)
+
+    # remove memory-heavy things
+    del annotations
+    del images
+    del annotation_ids
+    del img_ids
+    del coco_train
+    del coco_val
     
     file_names.extend(file_names_val)
     bboxes.extend(bboxes_val)
+
+    checked_file_names = []
+    checked_bboxes = []
+    for file_name, bbox, size in zip(file_names, bboxes, sizes):
+        target_height = round(bbox[3])
+        target_width = round(bbox[2])
+        image_width, image_height = size
+        y1 = round(bbox[1])
+        x1 = round(bbox[0])
+        y2 = round(bbox[1] + bbox[3])
+        x2 = round(bbox[0] + bbox[2])
+        if target_width <= 0 or target_height <= 0:
+            continue
+        if x2 <= 0 or y2 <= 0:
+            continue
+        if x1 < 0 or y1 < 0:
+            continue
+        if x2 + 1 - x1 <= 0 or y2 + 1 - y1 <= 0:
+            continue
+        if image_width < x2:
+            target_width = image_width - x1
+        if image_height < y2:
+            target_height = image_height - y1
+        if target_width <= 0:
+            continue
+        if target_height <= 0:
+            continue
+        bbox[2] = target_width
+        bbox[3] = target_height
     
-    length_dataset = len(file_names)
+        checked_file_names.append(file_name)
+        checked_bboxes.append(bbox)
+
+    length_dataset = len(checked_file_names)
+    length_original_dataset = len(file_names)
+    removed_images = length_original_dataset - length_dataset
 
     def _load_image(paths: Sequence[str], labels: Sequence[Sequence[float]]):
         _images = tf.map_fn(lambda path: tf.read_file(path), paths)
@@ -76,12 +122,11 @@ def load_coco(data_path: str, category: int,
             image_shape = tf.shape(image)
             image = tf.reshape(image, [image_shape[0], image_shape[1], 3])
             label = image_data[1]
-            x1, x2, y1, y2 = tf.cast(tf.round(label[0]), dtype=tf.int32), \
-                             tf.cast(tf.round(label[0] + label[2]), dtype=tf.int32), \
-                             tf.cast(tf.round(label[1]), dtype=tf.int32), \
-                             tf.cast(tf.round(label[1] + label[3]), dtype=tf.int32)
-            # image_cut = image[x1:x2 + 1, y1:y2 + 1]
-            image_resized = tf.image.resize_image_with_pad(image, resized_shape[0], resized_shape[1])
+            image_cut = tf.image.crop_to_bounding_box(image, tf.cast(tf.floor(label[1]), dtype=tf.int32),
+                                                      tf.cast(tf.floor(label[0]), dtype=tf.int32),
+                                                      tf.cast(tf.floor(label[3]), dtype=tf.int32),
+                                                      tf.cast(tf.floor(label[2]), dtype=tf.int32))
+            image_resized = tf.image.resize_image_with_pad(image_cut, resized_shape[0], resized_shape[1])
         
             return [image_resized, label]
     
@@ -92,8 +137,8 @@ def load_coco(data_path: str, category: int,
         return processed_images
     
     # build image data set
-    path_dataset = tf.data.Dataset.from_tensor_slices(file_names)
-    label_dataset = tf.data.Dataset.from_tensor_slices(bboxes)
+    path_dataset = tf.data.Dataset.from_tensor_slices(checked_file_names)
+    label_dataset = tf.data.Dataset.from_tensor_slices(checked_bboxes)
     dataset = tf.data.Dataset.zip((path_dataset, label_dataset))
     dataset = dataset.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=length_dataset, count=num_epochs))
     dataset = dataset.batch(batch_size=batch_size)
