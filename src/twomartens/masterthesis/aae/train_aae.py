@@ -121,14 +121,14 @@ def train(dataset: tf.data.Dataset,
     }
     checkpointables.update({
         # get models
-        'encoder':                   model.Encoder(zsize),
-        'decoder':                   model.Decoder(channels),
-        'z_discriminator':           model.ZDiscriminator(),
-        'x_discriminator':           model.XDiscriminator(),
+        'encoder':           model.Encoder(zsize),
+        'decoder':           model.Decoder(channels, zsize),
+        'z_discriminator':   model.ZDiscriminator(),
+        'x_discriminator':   model.XDiscriminator(),
         # define optimizers
-        'decoder_optimizer':         tf.train.AdamOptimizer(learning_rate=checkpointables['learning_rate_var'],
+        'decoder_optimizer': tf.train.AdamOptimizer(learning_rate=checkpointables['learning_rate_var'],
                                                             beta1=0.5, beta2=0.999),
-        'enc_dec_optimizer':         tf.train.AdamOptimizer(learning_rate=checkpointables['learning_rate_var'],
+        'enc_dec_optimizer': tf.train.AdamOptimizer(learning_rate=checkpointables['learning_rate_var'],
                                                             beta1=0.5, beta2=0.999),
         'z_discriminator_optimizer': tf.train.AdamOptimizer(learning_rate=checkpointables['learning_rate_var'],
                                                             beta1=0.5, beta2=0.999),

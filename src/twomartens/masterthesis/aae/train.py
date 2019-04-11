@@ -82,7 +82,7 @@ def train_simple(dataset: tf.data.Dataset,
     checkpointables.update({
         # get models
         'encoder':             model.Encoder(zsize),
-        'decoder':             model.Decoder(channels),
+        'decoder':             model.Decoder(channels, zsize),
         # define optimizers
         'enc_dec_optimizer':   tf.train.AdamOptimizer(learning_rate=checkpointables['learning_rate_var'],
                                                       beta1=0.5, beta2=0.999),
