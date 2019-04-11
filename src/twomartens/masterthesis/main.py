@@ -111,6 +111,7 @@ def _auto_encoder_train(args: argparse.Namespace) -> None:
     with train_summary_writer.as_default():
         train.train_simple(coco_data, iteration=args.iteration,
                            weights_prefix=f"{args.weights_path}/category-{category}",
+                           zsize=24, lr=0.005,
                            channels=3, train_epoch=args.num_epochs, batch_size=batch_size)
 
 
