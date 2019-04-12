@@ -51,10 +51,6 @@ class Encoder(keras.Model):
         self.conv1_a = keras.layers.ReLU()
         self.dropout = keras.layers.Dropout(rate=0.25)
         self.pool1 = keras.layers.MaxPool2D(pool_size=(2, 2), padding='same', name='pool1')
-        self.conv2 = keras.layers.Conv2D(filters=zsize * 2, kernel_size=7, strides=1, name='conv2',
-                                         padding='same', kernel_initializer=weight_init)
-        self.conv2_a = keras.layers.ReLU()
-        self.pool2 = keras.layers.MaxPool2D(pool_size=(2, 2), padding='same', name='pool2')
         self.conv3 = keras.layers.Conv2D(filters=zsize * 2, kernel_size=7, strides=1, name='conv3',
                                          padding='same', kernel_initializer=weight_init)
         self.conv3_a = keras.layers.ReLU()
@@ -70,9 +66,6 @@ class Encoder(keras.Model):
         result = self.conv1_a(result)
         result = self.dropout(result)
         result = self.pool1(result)
-        # result = self.conv2(result)
-        # result = self.conv2_a(result)
-        # result = self.pool2(result)
         result = self.conv3(result)
         result = self.conv3_a(result)
         result = self.pool3(result)
@@ -107,10 +100,6 @@ class Decoder(keras.Model):
                                            padding='same', kernel_initializer=weight_init)
         self.deconv3_a = keras.layers.ReLU()
         self.upsample3 = keras.layers.UpSampling2D(size=(2, 2), name='upsample3')
-        self.deconv4 = keras.layers.Conv2D(filters=zsize * 3, kernel_size=7, strides=1, name='deconv4',
-                                           padding='same', kernel_initializer=weight_init)
-        self.deconv4_a = keras.layers.ReLU()
-        self.upsample4 = keras.layers.UpSampling2D(size=(2, 2), name='upsample4')
         self.deconv5 = keras.layers.Conv2D(filters=channels, kernel_size=7, strides=1, name='deconv5',
                                            padding='same', kernel_initializer=weight_init)
     
@@ -125,9 +114,6 @@ class Decoder(keras.Model):
         result = self.deconv3(result)
         result = self.deconv3_a(result)
         result = self.upsample3(result)
-        # result = self.deconv4(result)
-        # result = self.deconv4_a(result)
-        # result = self.upsample4(result)
         result = self.deconv5(result)
         result = k.sigmoid(result)
         
