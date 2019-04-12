@@ -65,13 +65,13 @@ class Encoder(keras.Model):
         result = self.conv1(inputs)
         result = self.conv1_a(result)
         # result = self.dropout(result)
-        result = self.pool1(result)
+        # result = self.pool1(result)
         result = self.conv3(result)
         result = self.conv3_a(result)
-        result = self.pool3(result)
+        # result = self.pool3(result)
         result = self.conv4(result)
         result = self.conv4_a(result)
-        result = self.pool4(result)
+        # result = self.pool4(result)
         
         return result
 
@@ -107,13 +107,13 @@ class Decoder(keras.Model):
         """See base class."""
         result = self.deconv1(inputs)
         result = self.deconv1_a(result)
-        result = self.upsample1(result)
+        # result = self.upsample1(result)
         result = self.deconv2(result)
         result = self.deconv2_a(result)
-        result = self.upsample2(result)
+        # result = self.upsample2(result)
         result = self.deconv3(result)
         result = self.deconv3_a(result)
-        result = self.upsample3(result)
+        # result = self.upsample3(result)
         result = self.deconv5(result)
         result = k.sigmoid(result)
         
