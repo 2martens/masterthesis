@@ -64,7 +64,7 @@ class Encoder(keras.Model):
         """See base class."""
         result = self.conv1(inputs)
         result = self.conv1_a(result)
-        result = self.dropout(result)
+        # result = self.dropout(result)
         result = self.pool1(result)
         result = self.conv3(result)
         result = self.conv3_a(result)
