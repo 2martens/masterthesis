@@ -80,16 +80,13 @@ class Decoder(keras.Model):
     def __init__(self, channels: int, zsize: int) -> None:
         super().__init__(name='decoder')
         weight_init = keras.initializers.RandomNormal(mean=0, stddev=0.02)
-        self.deconv1 = keras.layers.Conv2D(filters=zsize, kernel_size=7, strides=1, name='deconv1',
+        self.deconv1 = keras.layers.Conv2D(filters=zsize * 2, kernel_size=7, strides=1, name='deconv1',
                                            padding='same', kernel_initializer=weight_init)
         self.deconv1_a = keras.layers.ReLU()
         self.deconv2 = keras.layers.Conv2D(filters=zsize * 2, kernel_size=7, strides=1, name='deconv2',
                                            padding='same', kernel_initializer=weight_init)
         self.deconv2_a = keras.layers.ReLU()
-        self.deconv3 = keras.layers.Conv2D(filters=zsize * 2, kernel_size=7, strides=1, name='deconv3',
-                                           padding='same', kernel_initializer=weight_init)
-        self.deconv3_a = keras.layers.ReLU()
-        self.deconv4 = keras.layers.Conv2D(filters=channels, kernel_size=7, strides=1, name='deconv4',
+        self.deconv3 = keras.layers.Conv2D(filters=channels, kernel_size=7, strides=1, name='deconv3',
                                            padding='same', kernel_initializer=weight_init)
     
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
@@ -99,8 +96,6 @@ class Decoder(keras.Model):
         result = self.deconv2(result)
         result = self.deconv2_a(result)
         result = self.deconv3(result)
-        result = self.deconv3_a(result)
-        result = self.deconv4(result)
         result = k.sigmoid(result)
         
         return result
