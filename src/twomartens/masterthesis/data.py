@@ -51,7 +51,7 @@ def load_coco(data_path: str, category: int,
     images = coco_train.loadImgs(img_ids)  # load all images
     annotation_ids = coco_train.getAnnIds(img_ids, catIds=[category])
     annotations = coco_train.loadAnns(annotation_ids)  # load all image annotations
-    file_names = {image['id']: f"{data_path}/images/train2014/{image['file_name']}" for image in images}
+    file_names = {image['id']: f"{data_path}/train2014/{image['file_name']}" for image in images}
     
     # load validation images
     coco_val = coco.COCO(annotation_file_val)
@@ -59,7 +59,7 @@ def load_coco(data_path: str, category: int,
     images_val = coco_val.loadImgs(img_ids)  # load all images
     annotation_ids = coco_val.getAnnIds(img_ids, catIds=[category])
     annotations_val = coco_val.loadAnns(annotation_ids)  # load all image annotations
-    file_names_val = {image['id']: f"{data_path}/images/val2014/{image['file_name']}" for image in images_val}
+    file_names_val = {image['id']: f"{data_path}/val2014/{image['file_name']}" for image in images_val}
 
     images.extend(images_val)
     annotations.extend(annotations_val)
