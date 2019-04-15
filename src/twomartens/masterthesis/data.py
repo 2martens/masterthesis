@@ -131,7 +131,7 @@ def load_coco(data_path: str, category: int,
     dataset = tf.data.Dataset.zip((path_dataset, label_dataset))
     dataset = dataset.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=length_dataset, count=num_epochs))
     dataset = dataset.batch(batch_size=batch_size)
-    dataset = dataset.map(_load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    dataset = dataset.map(_load_image)
     
     return dataset
 
