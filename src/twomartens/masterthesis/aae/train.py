@@ -169,7 +169,7 @@ def _train_one_epoch_simple(epoch: int,
                                                                         global_step=global_step)
             enc_dec_loss_avg(reconstruction_loss)
             
-            if int(global_step % LOG_FREQUENCY) == 0:
+            if int(global_step % LOG_FREQUENCY) == 0 and verbose:
                 comparison = K.concatenate([x[:int(batch_size / 2)], x_decoded[:int(batch_size / 2)]], axis=0)
                 grid = util.prepare_image(comparison.cpu(), nrow=int(batch_size/2))
                 summary_ops_v2.image(name='reconstruction',
