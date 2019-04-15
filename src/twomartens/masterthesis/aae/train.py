@@ -210,14 +210,11 @@ def _train_enc_dec_step_simple(encoder: model.Encoder, decoder: model.Decoder,
         x_decoded = decoder(z)
         
         reconstruction_loss = tf.losses.log_loss(inputs, x_decoded)
-        _enc_dec_train_loss = reconstruction_loss
     
     enc_dec_grads = tape.gradient(_enc_dec_train_loss,
                                   encoder.trainable_variables + decoder.trainable_variables)
     if int(global_step % LOG_FREQUENCY) == 0:
         summary_ops_v2.scalar(name='reconstruction_loss', tensor=reconstruction_loss,
-                              step=global_step)
-        summary_ops_v2.scalar(name='encoder_decoder_loss', tensor=_enc_dec_train_loss,
                               step=global_step)
         for grad, variable in zip(enc_dec_grads, encoder.trainable_variables + decoder.trainable_variables):
             summary_ops_v2.histogram(name='gradients/' + variable.name, tensor=tf.math.l2_normalize(grad),
