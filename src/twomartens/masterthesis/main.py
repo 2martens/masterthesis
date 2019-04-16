@@ -42,6 +42,7 @@ def main() -> None:
     
     # build sub parsers
     _build_train(train_parser)
+    _build_use(use_parser)
     
     args = parser.parse_args()
     
@@ -62,16 +63,37 @@ def _build_train(parser: argparse.ArgumentParser) -> None:
     
     # build sub parsers
     # _build_bayesian_ssd(ssd_bayesian_parser)
-    _build_auto_encoder(auto_encoder_parser)
+    _build_auto_encoder_train(auto_encoder_parser)
+    
+
+def _build_use(parser: argparse.ArgumentParser) -> None:
+    sub_parsers = parser.add_subparsers(dest="network")
+    sub_parsers.required = True
+    
+    # ssd_bayesian_parser = sub_parsers.add_parser("bayesian_ssd", help="SSD with dropout layers")
+    auto_encoder_parser = sub_parsers.add_parser("auto_encoder", help="Auto-encoder network")
+    
+    # build sub parsers
+    _build_auto_encoder_use(auto_encoder_parser)
 
 
-def _build_auto_encoder(parser: argparse.ArgumentParser) -> None:
+def _build_auto_encoder_train(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--coco_path", type=str, help="the path to the COCO data set")
     parser.add_argument("--weights_path", type=str, help="path to the weights directory")
     parser.add_argument("--summary_path", type=str, help="path to the summaries directory")
     parser.add_argument("category", type=int, help="the COCO category to use")
     parser.add_argument("num_epochs", type=int, help="the number of epochs to train", default=80)
     parser.add_argument("iteration", type=int, help="the training iteration")
+
+
+def _build_auto_encoder_use(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--coco_path", type=str, help="the path to the COCO data set")
+    parser.add_argument("--weights_path", type=str, help="path to the weights directory")
+    parser.add_argument("--summary_path", type=str, help="path to the summaries directory")
+    parser.add_argument("category", type=int, help="the COCO category to use")
+    parser.add_argument("category_trained", type=int, help="the trained COCO category")
+    parser.add_argument("iteration", type=int, help="the use iteration")
+    parser.add_argument("iteration_trained", type=int, help="the training iteration")
 
 
 def _build_bayesian_ssd(parser: argparse.ArgumentParser) -> None:
@@ -90,7 +112,25 @@ def _test(args: argparse.Namespace) -> None:
 
 
 def _use(args: argparse.Namespace) -> None:
-    raise NotImplementedError
+    from twomartens.masterthesis import data
+    from twomartens.masterthesis.aae import run
+    import tensorflow as tf
+    from tensorflow.python.ops import summary_ops_v2
+    
+    tf.enable_eager_execution()
+    coco_path = args.coco_path
+    category = args.category
+    category_trained = args.category_trained
+    batch_size = 16
+    coco_data = data.load_coco(coco_path, category, num_epochs=1,
+                               batch_size=batch_size, resized_shape=(256, 256))
+    use_summary_writer = summary_ops_v2.create_file_writer(
+        f"{args.summary_path}/use/category-{category}/{args.iteration}"
+    )
+    with use_summary_writer.as_default():
+        run.run_simple(coco_data, iteration=args.iteration_trained,
+                       weights_prefix=f"{args.weights_path}/category-{category_trained}",
+                       zsize=64, verbose=args.verbose, channels=3, batch_size=batch_size)
 
 
 def _auto_encoder_train(args: argparse.Namespace) -> None:
