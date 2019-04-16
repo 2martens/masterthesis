@@ -46,13 +46,13 @@ class Encoder(keras.Model):
     def __init__(self, zsize: int) -> None:
         super().__init__(name='encoder')
         weight_init = keras.initializers.RandomNormal(mean=0, stddev=0.02)
-        self.conv1 = keras.layers.Conv2D(filters=zsize * 2, kernel_size=7, strides=2, name='conv1',
+        self.conv1 = keras.layers.Conv2D(filters=zsize * 2, kernel_size=5, strides=2, name='conv1',
                                          padding='same', kernel_initializer=weight_init)
         self.conv1_a = keras.layers.ReLU()
-        self.conv2 = keras.layers.Conv2D(filters=zsize * 2, kernel_size=7, strides=2, name='conv2',
+        self.conv2 = keras.layers.Conv2D(filters=zsize * 2, kernel_size=5, strides=2, name='conv2',
                                          padding='same', kernel_initializer=weight_init)
         self.conv2_a = keras.layers.ReLU()
-        self.conv3 = keras.layers.Conv2D(filters=zsize, kernel_size=7, strides=2, name='conv3',
+        self.conv3 = keras.layers.Conv2D(filters=zsize, kernel_size=5, strides=2, name='conv3',
                                          padding='same', kernel_initializer=weight_init)
         self.conv3_a = keras.layers.ReLU()
     
@@ -80,13 +80,13 @@ class Decoder(keras.Model):
     def __init__(self, channels: int, zsize: int) -> None:
         super().__init__(name='decoder')
         weight_init = keras.initializers.RandomNormal(mean=0, stddev=0.02)
-        self.deconv1 = keras.layers.Conv2DTranspose(filters=zsize * 2, kernel_size=7, strides=2, name='deconv1',
+        self.deconv1 = keras.layers.Conv2DTranspose(filters=zsize * 2, kernel_size=5, strides=2, name='deconv1',
                                                     padding='same', kernel_initializer=weight_init)
         self.deconv1_a = keras.layers.ReLU()
-        self.deconv2 = keras.layers.Conv2DTranspose(filters=zsize * 2, kernel_size=7, strides=2, name='deconv2',
+        self.deconv2 = keras.layers.Conv2DTranspose(filters=zsize * 2, kernel_size=5, strides=2, name='deconv2',
                                                     padding='same', kernel_initializer=weight_init)
         self.deconv2_a = keras.layers.ReLU()
-        self.deconv3 = keras.layers.Conv2DTranspose(filters=channels, kernel_size=7, strides=2, name='deconv3',
+        self.deconv3 = keras.layers.Conv2DTranspose(filters=channels, kernel_size=5, strides=2, name='deconv3',
                                                     padding='same', kernel_initializer=weight_init)
     
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
