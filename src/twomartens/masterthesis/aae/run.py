@@ -39,9 +39,9 @@ tfe = tf.contrib.eager
 def run_simple(dataset: tf.data.Dataset,
                iteration: int,
                weights_prefix: str,
-               channels: int = 1,
-               zsize: int = 32,
-               batch_size: int = 128,
+               channels: int = 3,
+               zsize: int = 64,
+               batch_size: int = 16,
                verbose: bool = False,
                debug: bool = False) -> None:
     """
@@ -53,9 +53,9 @@ def run_simple(dataset: tf.data.Dataset,
         dataset: run dataset
         iteration: identifier for the used training run
         weights_prefix: prefix for trained weights directory
-        channels: number of channels in input image (default: 1)
-        zsize: size of the intermediary z (default: 32)
-        batch_size: size of each batch (default: 128)
+        channels: number of channels in input image (default: 3)
+        zsize: size of the intermediary z (default: 64)
+        batch_size: size of each batch (default: 16)
         verbose: if True training progress is printed to console (default: False)
         debug: if True summaries are collected (default: False)
     """
