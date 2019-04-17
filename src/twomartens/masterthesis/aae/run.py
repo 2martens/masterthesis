@@ -109,8 +109,8 @@ def _run_one_epoch_simple(dataset: tf.data.Dataset,
             enc_dec_loss_avg(reconstruction_loss)
             
             if int(global_step % train.LOG_FREQUENCY) == 0 and debug:
-                comparison = K.concatenate([x[:int(batch_size / 2)], x_decoded[:int(batch_size / 2),
-                                                                     z[:int(batch_size / 2)]]], axis=0)
+                comparison = K.concatenate([x[:int(batch_size / 2)], x_decoded[:int(batch_size / 2)],
+                                                                     z[:int(batch_size / 2)]], axis=0)
                 grid = util.prepare_image(comparison.cpu(), nrow=int(batch_size / 2))
                 summary_ops_v2.image(name='reconstruction',
                                      tensor=K.expand_dims(grid, axis=0), max_images=1,
