@@ -99,14 +99,14 @@ def load_coco_val(data_path: str, category: int,
     Returns:
         Tensorflow data set
     """
-    annotation_file_minival = f"{data_path}/annotations/instances_val2017.json"
+    annotation_file_minival = f"{data_path}/annotations/instances_minival2014.json"
     
     coco_val = coco.COCO(annotation_file_minival)
     img_ids = coco_val.getImgIds(catIds=[category])  # return all image IDs belonging to given category
     images = coco_val.loadImgs(img_ids)  # load all images
     annotation_ids = coco_val.getAnnIds(img_ids, catIds=[category])
     annotations = coco_val.loadAnns(annotation_ids)  # load all image annotations
-    file_names = {image['id']: f"{data_path}/val2014/{image['file_name']}" for image in images}
+    file_names = {image['id']: f"{data_path}/minival2014/{image['file_name']}" for image in images}
     ids_to_images = {image['id']: image for image in images}
     
     checked_file_names, checked_bboxes = _clean_dataset(annotations, file_names, ids_to_images)
