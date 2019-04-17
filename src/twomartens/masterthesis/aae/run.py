@@ -104,7 +104,8 @@ def _run_one_epoch_simple(dataset: tf.data.Dataset,
             reconstruction_loss, x_decoded, z = _run_enc_dec_step_simple(encoder=encoder,
                                                                          decoder=decoder,
                                                                          inputs=x,
-                                                                         global_step=global_step)
+                                                                         global_step=global_step,
+                                                                         debug=debug)
             enc_dec_loss_avg(reconstruction_loss)
             
             if int(global_step % train.LOG_FREQUENCY) == 0 and debug:
