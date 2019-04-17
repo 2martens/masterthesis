@@ -122,8 +122,8 @@ def _use(args: argparse.Namespace) -> None:
     category = args.category
     category_trained = args.category_trained
     batch_size = 16
-    coco_data = data.load_coco(coco_path, category, num_epochs=1,
-                               batch_size=batch_size, resized_shape=(256, 256))
+    coco_data = data.load_coco_train(coco_path, category, num_epochs=1,
+                                     batch_size=batch_size, resized_shape=(256, 256))
     use_summary_writer = summary_ops_v2.create_file_writer(
         f"{args.summary_path}/use/category-{category}/{args.iteration}"
     )
@@ -143,8 +143,8 @@ def _auto_encoder_train(args: argparse.Namespace) -> None:
     coco_path = args.coco_path
     category = args.category
     batch_size = 16
-    coco_data = data.load_coco(coco_path, category, num_epochs=args.num_epochs, batch_size=batch_size,
-                               resized_shape=(256, 256))
+    coco_data = data.load_coco_train(coco_path, category, num_epochs=args.num_epochs, batch_size=batch_size,
+                                     resized_shape=(256, 256))
     train_summary_writer = summary_ops_v2.create_file_writer(
         f"{args.summary_path}/train/category-{category}/{args.iteration}"
     )
