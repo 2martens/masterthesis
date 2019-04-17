@@ -99,7 +99,7 @@ def load_coco_val(data_path: str, category: int,
     Returns:
         Tensorflow data set
     """
-    annotation_file_minival = f"{data_path}/annotations/instances/val2017.json"
+    annotation_file_minival = f"{data_path}/annotations/instances_val2017.json"
     
     coco_val = coco.COCO(annotation_file_minival)
     img_ids = coco_val.getImgIds(catIds=[category])  # return all image IDs belonging to given category
