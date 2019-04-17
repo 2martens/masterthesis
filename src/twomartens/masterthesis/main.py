@@ -32,6 +32,7 @@ def main() -> None:
     )
     
     parser.add_argument("--verbose", default=False, action="store_true", help="provide to get extra output")
+    parser.add_argument("--debug", default=False, action="store_true", help="provide to collect tensorboard summaries")
     parser.add_argument('--version', action='version', version='2martens Masterthesis 0.1.0')
     sub_parsers = parser.add_subparsers(dest="action")
     sub_parsers.required = True
@@ -128,7 +129,7 @@ def _use(args: argparse.Namespace) -> None:
         f"{args.summary_path}/use/category-{category}/{args.iteration}"
     )
     with use_summary_writer.as_default():
-        run.run_simple(coco_data, iteration=args.iteration_trained,
+        run.run_simple(coco_data, iteration=args.iteration_trained, debug=args.debug,
                        weights_prefix=f"{args.weights_path}/category-{category_trained}",
                        zsize=64, verbose=args.verbose, channels=3, batch_size=batch_size)
 
@@ -151,7 +152,7 @@ def _auto_encoder_train(args: argparse.Namespace) -> None:
     with train_summary_writer.as_default():
         train.train_simple(coco_data, iteration=args.iteration,
                            weights_prefix=f"{args.weights_path}/category-{category}",
-                           zsize=64, lr=0.0001, verbose=args.verbose,
+                           zsize=64, lr=0.0001, verbose=args.verbose, debug=args.debug,
                            channels=3, train_epoch=args.num_epochs, batch_size=batch_size)
 
 

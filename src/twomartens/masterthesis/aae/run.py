@@ -42,7 +42,8 @@ def run_simple(dataset: tf.data.Dataset,
                channels: int = 1,
                zsize: int = 32,
                batch_size: int = 128,
-               verbose: bool = True) -> None:
+               verbose: bool = False,
+               debug: bool = False) -> None:
     """
     Runs the trained auto-encoder for given data set.
 
@@ -55,7 +56,8 @@ def run_simple(dataset: tf.data.Dataset,
         channels: number of channels in input image (default: 1)
         zsize: size of the intermediary z (default: 32)
         batch_size: size of each batch (default: 128)
-        verbose: if True prints train progress info to console (default: True)
+        verbose: if True training progress is printed to console (default: False)
+        debug: if True summaries are collected (default: False)
     """
     
     # checkpointed tensors and variables
@@ -77,6 +79,7 @@ def run_simple(dataset: tf.data.Dataset,
     outputs = _run_one_epoch_simple(dataset,
                                     batch_size=batch_size,
                                     global_step=global_step,
+                                    debug=debug,
                                     **checkpointables)
     
     if verbose:
@@ -88,6 +91,7 @@ def run_simple(dataset: tf.data.Dataset,
 
 def _run_one_epoch_simple(dataset: tf.data.Dataset,
                           batch_size: int,
+                          debug: bool,
                           encoder: model.Encoder,
                           decoder: model.Decoder,
                           global_step: tf.Variable) -> Dict[str, float]:
@@ -98,12 +102,12 @@ def _run_one_epoch_simple(dataset: tf.data.Dataset,
         
         for x in dataset:
             reconstruction_loss, x_decoded, z = _run_enc_dec_step_simple(encoder=encoder,
-                                                                        decoder=decoder,
-                                                                        inputs=x,
-                                                                        global_step=global_step)
+                                                                         decoder=decoder,
+                                                                         inputs=x,
+                                                                         global_step=global_step)
             enc_dec_loss_avg(reconstruction_loss)
             
-            if int(global_step % train.LOG_FREQUENCY) == 0:
+            if int(global_step % train.LOG_FREQUENCY) == 0 and debug:
                 comparison = K.concatenate([x[:int(batch_size / 2)], x_decoded[:int(batch_size / 2),
                                                                      z[:int(batch_size / 2)]]], axis=0)
                 grid = util.prepare_image(comparison.cpu(), nrow=int(batch_size / 2))
@@ -126,7 +130,8 @@ def _run_one_epoch_simple(dataset: tf.data.Dataset,
 
 def _run_enc_dec_step_simple(encoder: model.Encoder, decoder: model.Decoder,
                              inputs: tf.Tensor,
-                             global_step: tf.Variable) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
+                             global_step: tf.Variable,
+                             debug: bool) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
     """
     Runs the encoder and decoder jointly for one step (one batch).
     
@@ -135,6 +140,7 @@ def _run_enc_dec_step_simple(encoder: model.Encoder, decoder: model.Decoder,
         decoder: instance of decoder model
         inputs: inputs from data set
         global_step: the global step variable
+        debug: if True summaries are collected
 
     Returns:
         tuple of reconstruction loss, reconstructed input, latent space value
@@ -144,7 +150,7 @@ def _run_enc_dec_step_simple(encoder: model.Encoder, decoder: model.Decoder,
     
     reconstruction_loss = tf.losses.log_loss(inputs, x_decoded)
     
-    if int(global_step % train.LOG_FREQUENCY) == 0:
+    if int(global_step % train.LOG_FREQUENCY) == 0 and debug:
         summary_ops_v2.scalar(name='reconstruction_loss', tensor=reconstruction_loss,
                               step=global_step)
         
