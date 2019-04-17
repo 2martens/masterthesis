@@ -132,11 +132,11 @@ def _val(args: argparse.Namespace) -> None:
         with use_summary_writer.as_default():
             run.run_simple(coco_data, iteration=args.iteration_trained,
                            weights_prefix=f"{args.weights_path}/category-{category_trained}",
-                           zsize=64, verbose=args.verbose, channels=3, batch_size=batch_size)
+                           zsize=32, verbose=args.verbose, channels=3, batch_size=batch_size)
     else:
         run.run_simple(coco_data, iteration=args.iteration_trained,
                        weights_prefix=f"{args.weights_path}/category-{category_trained}",
-                       zsize=64, verbose=args.verbose, channels=3, batch_size=batch_size)
+                       zsize=32, verbose=args.verbose, channels=3, batch_size=batch_size)
 
 
 def _auto_encoder_train(args: argparse.Namespace) -> None:
