@@ -52,8 +52,7 @@ def train_simple(dataset: tf.data.Dataset,
                  lr: float = 0.0001,
                  train_epoch: int = 1,
                  batch_size: int = 16,
-                 verbose: bool = False,
-                 debug: bool = False) -> None:
+                 verbose: bool = False) -> None:
     """
     Trains auto-encoder for given data set.
 
@@ -74,7 +73,6 @@ def train_simple(dataset: tf.data.Dataset,
         train_epoch: number of epochs to train (default: 1)
         batch_size: size of each batch (default: 16)
         verbose: if True training progress is printed to console (default: False)
-        debug: if True summaries are collected (default: False)
     """
     
     # checkpointed tensors and variables
@@ -117,7 +115,6 @@ def train_simple(dataset: tf.data.Dataset,
         _epoch = epoch + previous_epochs
         outputs = _train_one_epoch_simple(_epoch, dataset,
                                           verbose=verbose,
-                                          debug=debug,
                                           batch_size=batch_size,
                                           **checkpointables)
         
@@ -141,7 +138,6 @@ def train_simple(dataset: tf.data.Dataset,
 def _train_one_epoch_simple(epoch: int,
                             dataset: tf.data.Dataset,
                             verbose: bool,
-                            debug: bool,
                             batch_size: int,
                             learning_rate_var: tf.Variable,
                             decoder: model.Decoder,
@@ -170,11 +166,10 @@ def _train_one_epoch_simple(epoch: int,
                                                                            optimizer=enc_dec_optimizer,
                                                                            inputs=x,
                                                                            global_step_enc_dec=global_step_enc_dec,
-                                                                           global_step=global_step,
-                                                                           debug=debug)
+                                                                           global_step=global_step)
             enc_dec_loss_avg(reconstruction_loss)
             
-            if int(global_step % LOG_FREQUENCY) == 0 and debug:
+            if int(global_step % LOG_FREQUENCY) == 0:
                 comparison = K.concatenate([x[:int(batch_size / 2)], x_decoded[:int(batch_size / 2)],
                                             z[:int(batch_size/2)]], axis=0)
                 grid = util.prepare_image(comparison.cpu(), nrow=int(batch_size/2))
@@ -211,7 +206,6 @@ def _train_enc_dec_step_simple(encoder: model.Encoder, decoder: model.Decoder,
         inputs: inputs from data set
         global_step: the global step variable
         global_step_enc_dec: global step variable for enc_dec
-        debug: if True summaries are collected
     
     Returns:
         tuple of reconstruction loss, reconstructed input, z value
@@ -224,7 +218,7 @@ def _train_enc_dec_step_simple(encoder: model.Encoder, decoder: model.Decoder,
     
     enc_dec_grads = tape.gradient(reconstruction_loss,
                                   encoder.trainable_variables + decoder.trainable_variables)
-    if int(global_step % LOG_FREQUENCY) == 0 and debug:
+    if int(global_step % LOG_FREQUENCY) == 0:
         summary_ops_v2.scalar(name='reconstruction_loss', tensor=reconstruction_loss,
                               step=global_step)
         for grad, variable in zip(enc_dec_grads, encoder.trainable_variables + decoder.trainable_variables):

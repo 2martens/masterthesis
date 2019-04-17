@@ -128,8 +128,13 @@ def _val(args: argparse.Namespace) -> None:
     use_summary_writer = summary_ops_v2.create_file_writer(
         f"{args.summary_path}/val/category-{category}/{args.iteration}"
     )
-    with use_summary_writer.as_default():
-        run.run_simple(coco_data, iteration=args.iteration_trained, debug=args.debug,
+    if args.debug:
+        with use_summary_writer.as_default():
+            run.run_simple(coco_data, iteration=args.iteration_trained,
+                           weights_prefix=f"{args.weights_path}/category-{category_trained}",
+                           zsize=64, verbose=args.verbose, channels=3, batch_size=batch_size)
+    else:
+        run.run_simple(coco_data, iteration=args.iteration_trained,
                        weights_prefix=f"{args.weights_path}/category-{category_trained}",
                        zsize=64, verbose=args.verbose, channels=3, batch_size=batch_size)
 
@@ -149,10 +154,16 @@ def _auto_encoder_train(args: argparse.Namespace) -> None:
     train_summary_writer = summary_ops_v2.create_file_writer(
         f"{args.summary_path}/train/category-{category}/{args.iteration}"
     )
-    with train_summary_writer.as_default():
+    if args.debug:
+        with train_summary_writer.as_default():
+            train.train_simple(coco_data, iteration=args.iteration,
+                               weights_prefix=f"{args.weights_path}/category-{category}",
+                               zsize=64, lr=0.0001, verbose=args.verbose,
+                               channels=3, train_epoch=args.num_epochs, batch_size=batch_size)
+    else:
         train.train_simple(coco_data, iteration=args.iteration,
                            weights_prefix=f"{args.weights_path}/category-{category}",
-                           zsize=64, lr=0.0001, verbose=args.verbose, debug=args.debug,
+                           zsize=64, lr=0.0001, verbose=args.verbose,
                            channels=3, train_epoch=args.num_epochs, batch_size=batch_size)
 
 
