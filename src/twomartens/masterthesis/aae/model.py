@@ -90,7 +90,7 @@ class Decoder(keras.Model):
         weight_init = keras.initializers.RandomNormal(mean=0, stddev=0.02)
         # calculate dimension of last conv layer in encoder
         conv_image_size = image_size / (2 ** 3)
-        dimensions = zsize * conv_image_size
+        dimensions = zsize * conv_image_size * conv_image_size
         self.conv_shape = (-1, conv_image_size, conv_image_size, zsize)
         self.transform = keras.layers.Dense(units=dimensions, name='input_transform')
         self.deconv1 = keras.layers.Conv2DTranspose(filters=zsize, kernel_size=3, strides=1, name='deconv1',
