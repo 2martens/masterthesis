@@ -39,6 +39,7 @@ tfe = tf.contrib.eager
 def run_simple(dataset: tf.data.Dataset,
                iteration: int,
                weights_prefix: str,
+               image_size: int,
                channels: int = 3,
                zsize: int = 64,
                batch_size: int = 16,
@@ -52,6 +53,7 @@ def run_simple(dataset: tf.data.Dataset,
         dataset: run dataset
         iteration: identifier for the used training run
         weights_prefix: prefix for trained weights directory
+        image_size: height/width of input image
         channels: number of channels in input image (default: 3)
         zsize: size of the intermediary z (default: 64)
         batch_size: size of each batch (default: 16)
@@ -62,7 +64,7 @@ def run_simple(dataset: tf.data.Dataset,
     checkpointables = {
         # get models
         'encoder':             model.Encoder(zsize),
-        'decoder':             model.Decoder(channels, zsize),
+        'decoder':             model.Decoder(channels, zsize, image_size),
     }
     
     global_step = tf.train.get_or_create_global_step()

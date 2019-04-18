@@ -46,7 +46,7 @@ class Encoder(keras.Model):
     def __init__(self, zsize: int) -> None:
         super().__init__(name='encoder')
         weight_init = keras.initializers.RandomNormal(mean=0, stddev=0.02)
-        self.conv1 = keras.layers.Conv2D(filters=zsize * 2, kernel_size=3, strides=2, name='conv1',
+        self.conv1 = keras.layers.Conv2D(filters=zsize * 4, kernel_size=3, strides=2, name='conv1',
                                          padding='same', kernel_initializer=weight_init)
         self.conv1_a = keras.layers.ReLU()
         self.conv2 = keras.layers.Conv2D(filters=zsize * 2, kernel_size=3, strides=2, name='conv2',
@@ -55,6 +55,8 @@ class Encoder(keras.Model):
         self.conv3 = keras.layers.Conv2D(filters=zsize, kernel_size=3, strides=2, name='conv3',
                                          padding='same', kernel_initializer=weight_init)
         self.conv3_a = keras.layers.ReLU()
+        self.flatten = keras.layers.Flatten(name='flatten')
+        self.latent = keras.layers.Dense(units=zsize * (2 ** 5), name='latent')
     
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
         """See base class."""
@@ -64,6 +66,8 @@ class Encoder(keras.Model):
         result = self.conv2_a(result)
         result = self.conv3(result)
         result = self.conv3_a(result)
+        result = self.flatten(result)
+        result = self.latent(result)
         
         return result
 
@@ -71,31 +75,47 @@ class Encoder(keras.Model):
 class Decoder(keras.Model):
     """
     Generates input data from latent space values.
-    
-    Args:
-        channels: number of channels in the input image
-        zsize: size of the latent space
     """
 
-    def __init__(self, channels: int, zsize: int) -> None:
+    def __init__(self, channels: int, zsize: int, image_size: int) -> None:
+        """
+        Initializes the Decoder class.
+        
+        Args:
+            channels: number of channels in the input image
+            zsize: size of the latent space
+            image_size: size of height/width of input image
+        """
         super().__init__(name='decoder')
         weight_init = keras.initializers.RandomNormal(mean=0, stddev=0.02)
-        self.deconv1 = keras.layers.Conv2DTranspose(filters=zsize * 2, kernel_size=3, strides=2, name='deconv1',
+        # calculate dimension of last conv layer in encoder
+        conv_image_size = image_size / (2 ** 3)
+        dimensions = zsize * conv_image_size
+        self.conv_shape = (-1, conv_image_size, conv_image_size, zsize)
+        self.transform = keras.layers.Dense(units=dimensions, name='input_transform')
+        self.deconv1 = keras.layers.Conv2DTranspose(filters=zsize, kernel_size=3, strides=1, name='deconv1',
                                                     padding='same', kernel_initializer=weight_init)
         self.deconv1_a = keras.layers.ReLU()
         self.deconv2 = keras.layers.Conv2DTranspose(filters=zsize * 2, kernel_size=3, strides=2, name='deconv2',
                                                     padding='same', kernel_initializer=weight_init)
         self.deconv2_a = keras.layers.ReLU()
-        self.deconv3 = keras.layers.Conv2DTranspose(filters=channels, kernel_size=3, strides=2, name='deconv3',
+        self.deconv3 = keras.layers.Conv2DTranspose(filters=zsize * 4, kernel_size=3, strides=2, name='deconv3',
+                                                    padding='same', kernel_initializer=weight_init)
+        self.deconv3_a = keras.layers.ReLU()
+        self.deconv4 = keras.layers.Conv2DTranspose(filters=channels, kernel_size=3, strides=2, name='deconv4',
                                                     padding='same', kernel_initializer=weight_init)
     
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
         """See base class."""
-        result = self.deconv1(inputs)
+        result = self.transform(inputs)
+        result = tf.reshape(result, self.conv_shape)
+        result = self.deconv1(result)
         result = self.deconv1_a(result)
         result = self.deconv2(result)
         result = self.deconv2_a(result)
         result = self.deconv3(result)
+        result = self.deconv3_a(result)
+        result = self.deconv4(result)
         result = k.sigmoid(result)
         
         return result

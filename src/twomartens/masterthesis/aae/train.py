@@ -47,6 +47,7 @@ LOG_FREQUENCY: int = 10
 def train_simple(dataset: tf.data.Dataset,
                  iteration: int,
                  weights_prefix: str,
+                 image_size: int,
                  channels: int = 3,
                  zsize: int = 64,
                  lr: float = 0.0001,
@@ -67,6 +68,7 @@ def train_simple(dataset: tf.data.Dataset,
         dataset: train dataset
         iteration: identifier for the current training run
         weights_prefix: prefix for weights directory
+        image_size: height/width of input image
         channels: number of channels in input image (default: 3)
         zsize: size of the intermediary z (default: 64)
         lr: initial learning rate (default: 0.0001)
@@ -82,7 +84,7 @@ def train_simple(dataset: tf.data.Dataset,
     checkpointables.update({
         # get models
         'encoder':             model.Encoder(zsize),
-        'decoder':             model.Decoder(channels, zsize),
+        'decoder':             model.Decoder(channels, zsize, image_size),
         # define optimizers
         'enc_dec_optimizer':   tf.train.AdamOptimizer(learning_rate=checkpointables['learning_rate_var']),
         # global step counter

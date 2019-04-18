@@ -123,8 +123,9 @@ def _val(args: argparse.Namespace) -> None:
     category = args.category
     category_trained = args.category_trained
     batch_size = 16
+    image_size = 256
     coco_data = data.load_coco_val(coco_path, category, num_epochs=1,
-                                   batch_size=batch_size, resized_shape=(256, 256))
+                                   batch_size=batch_size, resized_shape=(image_size, image_size))
     use_summary_writer = summary_ops_v2.create_file_writer(
         f"{args.summary_path}/val/category-{category}/{args.iteration}"
     )
@@ -132,11 +133,13 @@ def _val(args: argparse.Namespace) -> None:
         with use_summary_writer.as_default():
             run.run_simple(coco_data, iteration=args.iteration_trained,
                            weights_prefix=f"{args.weights_path}/category-{category_trained}",
-                           zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size)
+                           zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size,
+                           image_size=image_size)
     else:
         run.run_simple(coco_data, iteration=args.iteration_trained,
                        weights_prefix=f"{args.weights_path}/category-{category_trained}",
-                       zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size)
+                       zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size,
+                       image_size=image_size)
 
 
 def _auto_encoder_train(args: argparse.Namespace) -> None:
@@ -149,8 +152,9 @@ def _auto_encoder_train(args: argparse.Namespace) -> None:
     coco_path = args.coco_path
     category = args.category
     batch_size = 16
+    image_size = 256
     coco_data = data.load_coco_train(coco_path, category, num_epochs=args.num_epochs, batch_size=batch_size,
-                                     resized_shape=(256, 256))
+                                     resized_shape=(image_size, image_size))
     train_summary_writer = summary_ops_v2.create_file_writer(
         f"{args.summary_path}/train/category-{category}/{args.iteration}"
     )
@@ -158,12 +162,12 @@ def _auto_encoder_train(args: argparse.Namespace) -> None:
         with train_summary_writer.as_default():
             train.train_simple(coco_data, iteration=args.iteration,
                                weights_prefix=f"{args.weights_path}/category-{category}",
-                               zsize=16, lr=0.0001, verbose=args.verbose,
+                               zsize=16, lr=0.0001, verbose=args.verbose, image_size=image_size,
                                channels=3, train_epoch=args.num_epochs, batch_size=batch_size)
     else:
         train.train_simple(coco_data, iteration=args.iteration,
                            weights_prefix=f"{args.weights_path}/category-{category}",
-                           zsize=16, lr=0.0001, verbose=args.verbose,
+                           zsize=16, lr=0.0001, verbose=args.verbose, image_size=image_size,
                            channels=3, train_epoch=args.num_epochs, batch_size=batch_size)
 
 
