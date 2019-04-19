@@ -22,11 +22,13 @@ Functions:
     load_coco_val(...): loads the COCO validation data into a Tensorflow data set
     load_scenenet(...): loads the SceneNet RGB-D data into a Tensorflow data set
 """
-from typing import Callable, List, Mapping, Tuple
+from typing import Callable, List, Mapping, Tuple, Any, Dict
 from typing import Sequence
 
+import cv2
+import numpy as np
 import tensorflow as tf
-from pycocotools import coco
+from scipy import ndimage
 
 
 def load_coco_train(data_path: str, category: int,
@@ -49,6 +51,7 @@ def load_coco_train(data_path: str, category: int,
     annotation_file_val = f"{data_path}/annotations/instances_valminusminival2014.json"
     
     # load training images
+    from pycocotools import coco
     coco_train = coco.COCO(annotation_file_train)
     img_ids = coco_train.getImgIds(catIds=[category])  # return all image IDs belonging to given category
     images = coco_train.loadImgs(img_ids)  # load all images
@@ -100,7 +103,8 @@ def load_coco_val(data_path: str, category: int,
         Tensorflow data set
     """
     annotation_file_minival = f"{data_path}/annotations/instances_minival2014.json"
-    
+
+    from pycocotools import coco
     coco_val = coco.COCO(annotation_file_minival)
     img_ids = coco_val.getImgIds(catIds=[category])  # return all image IDs belonging to given category
     images = coco_val.loadImgs(img_ids)  # load all images
@@ -222,15 +226,74 @@ def _load_images_callback(resized_shape: Sequence[int]) -> Callable[
     return _load_images
 
 
-def load_scenenet(data_path: str, num_epochs: int, batch_size: int = 32) -> tf.data.Dataset:
+def prepare_scenenet_val(data_path: str, protobuf_path: str) -> Tuple[List[List[str]],
+                                                                      List[List[str]],
+                                                                      List[Dict[int, dict]]]:
     """
-    Loads the SceneNet RGB-D data and returns a data set.
+    Prepares the SceneNet RGB-D data and returns it in Python format.
     
     Args:
-        data_path: path to the SceneNet RGB-D data set
-        num_epochs: number of epochs
-        batch_size: batch size
+        data_path: path to the SceneNet RGB-D val data set
+        protobuf_path: path to the SceneNet RGB-D val protobuf
     Returns:
-        Tensorflow data set
+        file names photos, file names instances, instances
     """
-    pass
+    from twomartens.masterthesis import definitions
+    from twomartens.masterthesis import scenenet_pb2
+    
+    trajectories = scenenet_pb2.Trajectories()
+    with open(protobuf_path, 'rb') as file:
+        trajectories.ParseFromString(file.read())
+    
+    file_names_photos = []
+    file_names_instances = []
+    instances = []
+    for trajectory in trajectories.trajectories:
+        path = f"{data_path}/{trajectory.render_path}"
+        file_names_photos_traj = []
+        file_names_instances_traj = []
+        instances_traj = {}
+        
+        for instance in trajectory.instances:
+            instance_type = instance.instance_type
+            instance_id = instance.instance_id
+            instance_dict = {}
+            if instance_type != scenenet_pb2.Instance.BACKGROUND:
+                wnid = instance.semantic_wordnet_id
+                instance_dict['wordnet_id'] = wnid
+                if wnid in definitions.WNID_TO_COCO:
+                    instance_dict['coco_id'] = definitions.WNID_TO_COCO[wnid]
+                else:
+                    instance_dict['coco_id'] = 0  # if no COCO id is found, the correct COCO class is background
+            if instance_type == scenenet_pb2.Instance.LIGHT_OBJECT:
+                instance_dict['light_type'] = instance.light_type
+            if instance_type == scenenet_pb2.Instance.RANDOM_OBJECT:
+                instance_dict['object_info'] = instance.object_info
+            
+            instances_traj[instance_id] = instance_dict
+        
+        # iterate through images/frames
+        for view in trajectory.views:
+            frame_num = view.frame_num
+            instance_file = f"{path}/instance/{frame_num}.jpg"
+            file_names_photos_traj.append(f"{path}/photo/{frame_num}.jpg")
+            file_names_instances_traj.append(instance_file)
+            
+            # load instance file
+            instance_image = np.array(cv2.imread(instance_file))
+            for instance_id in instances_traj:
+                instance_local = np.copy(instance_image)
+                instance_local[instance_local != instance_id] = 0
+                instance_local[instance_local == instance_id] = 1
+                coordinates = ndimage.find_objects(instance_local)[0]
+                x = coordinates[0]
+                y = coordinates[1]
+                xmin, xmax = x.start, x.stop
+                ymin, ymax = y.start, y.stop
+                instances_traj[instance_id]['bbox'] = (xmin, ymin, xmax, ymax)
+        
+        file_names_photos.append(file_names_photos_traj)
+        file_names_instances.append(file_names_instances_traj)
+        instances.append(instances_traj)
+    
+    return file_names_photos, file_names_instances, instances

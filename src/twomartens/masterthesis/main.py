@@ -37,11 +37,13 @@ def main() -> None:
     sub_parsers = parser.add_subparsers(dest="action")
     sub_parsers.required = True
     
+    prepare_parser = sub_parsers.add_parser("prepare", help="Prepare SceneNet RGB-D ground truth")
     train_parser = sub_parsers.add_parser("train", help="Train a network")
     test_parser = sub_parsers.add_parser("test", help="Test a network")
     val_parser = sub_parsers.add_parser("val", help="Validate a network")
     
     # build sub parsers
+    _build_prepare(prepare_parser)
     _build_train(train_parser)
     _build_val(val_parser)
     
@@ -53,7 +55,15 @@ def main() -> None:
         _test(args)
     elif args.action == "val":
         _val(args)
+    elif args.action == "prepare":
+        _prepare(args)
 
+
+def _build_prepare(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("scenenet_path", type=str, help="the path to the SceneNet RGB-D validation data set")
+    parser.add_argument("protobuf_path", type=str, help="the path to the SceneNet RGB-D validation protobuf file")
+    parser.add_argument("ground_truth_path", type=str, help="the path where the ground truth should be stored")
+    
 
 def _build_train(parser: argparse.ArgumentParser) -> None:
     sub_parsers = parser.add_subparsers(dest="network")
@@ -173,6 +183,20 @@ def _auto_encoder_train(args: argparse.Namespace) -> None:
 
 def _bayesian_ssd_train(args: argparse.Namespace) -> None:
     raise NotImplementedError
+
+
+def _prepare(args: argparse.Namespace) -> None:
+    import pickle
+    
+    from twomartens.masterthesis import data
+    
+    file_names_photos, file_names_instances, instances = data.prepare_scenenet_val(args.scenenet_path, args.protobuf_path)
+    with open(f"{args.ground_truth_path}/photo_paths.bin", "wb") as file:
+        pickle.dump(file_names_photos, file)
+    with open(f"{args.ground_truth_path}/instance_paths.bin", "wb") as file:
+        pickle.dump(file_names_instances, file)
+    with open(f"{args.ground_truth_path}/instances.bin", "wb") as file:
+        pickle.dump(instances, file)
 
 
 if __name__ == "__main__":
