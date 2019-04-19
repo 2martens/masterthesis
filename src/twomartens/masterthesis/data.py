@@ -275,7 +275,7 @@ def prepare_scenenet_val(data_path: str, protobuf_path: str) -> Tuple[List[List[
         # iterate through images/frames
         for view in trajectory.views:
             frame_num = view.frame_num
-            instance_file = f"{path}/instance/{frame_num}.jpg"
+            instance_file = f"{path}/instance/{frame_num}.png"
             file_names_photos_traj.append(f"{path}/photo/{frame_num}.jpg")
             file_names_instances_traj.append(instance_file)
             
