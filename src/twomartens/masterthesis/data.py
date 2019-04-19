@@ -266,7 +266,7 @@ def prepare_scenenet_val(data_path: str, protobuf_path: str) -> Tuple[List[List[
                 else:
                     instance_dict['coco_id'] = 0  # if no COCO id is found, the correct COCO class is background
             if instance_type == scenenet_pb2.Instance.LIGHT_OBJECT:
-                instance_dict['light_type'] = instance.light_type
+                instance_dict['light_info'] = instance.light_info
             if instance_type == scenenet_pb2.Instance.RANDOM_OBJECT:
                 instance_dict['object_info'] = instance.object_info
             
