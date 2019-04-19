@@ -25,8 +25,8 @@ Functions:
 from typing import Callable, List, Mapping, Tuple, Any, Dict
 from typing import Sequence
 
-import cv2
 import numpy as np
+import scipy
 import tensorflow as tf
 from scipy import ndimage
 
@@ -280,11 +280,12 @@ def prepare_scenenet_val(data_path: str, protobuf_path: str) -> Tuple[List[List[
             file_names_instances_traj.append(instance_file)
             
             # load instance file
-            instance_image = np.array(cv2.imread(instance_file))
+            instance_image = scipy.misc.imread(instance_file)
             for instance_id in instances_traj:
                 instance_local = np.copy(instance_image)
                 instance_local[instance_local != instance_id] = 0
                 instance_local[instance_local == instance_id] = 1
+                print(instance_local)
                 coordinates = ndimage.find_objects(instance_local)[0]
                 x = coordinates[0]
                 y = coordinates[1]
