@@ -228,7 +228,7 @@ def _load_images_callback(resized_shape: Sequence[int]) -> Callable[
 
 def prepare_scenenet_val(data_path: str, protobuf_path: str) -> Tuple[List[List[str]],
                                                                       List[List[str]],
-                                                                      List[Dict[int, dict]]]:
+                                                                      List[List[List[dict]]]]:
     """
     Prepares the SceneNet RGB-D data and returns it in Python format.
     
@@ -252,7 +252,8 @@ def prepare_scenenet_val(data_path: str, protobuf_path: str) -> Tuple[List[List[
         path = f"{data_path}/{trajectory.render_path}"
         file_names_photos_traj = []
         file_names_instances_traj = []
-        instances_traj = {}
+        instances_traj = []
+        instances_traj_dict = {}
         
         for instance in trajectory.instances:
             instance_type = instance.instance_type
@@ -264,13 +265,13 @@ def prepare_scenenet_val(data_path: str, protobuf_path: str) -> Tuple[List[List[
                 if wnid in definitions.WNID_TO_COCO:
                     instance_dict['coco_id'] = definitions.WNID_TO_COCO[wnid]
                 else:
-                    instance_dict['coco_id'] = 0  # if no COCO id is found, the correct COCO class is background
+                    continue  # only save instances that are positive instances and not background
             if instance_type == scenenet_pb2.Instance.LIGHT_OBJECT:
                 instance_dict['light_info'] = instance.light_info
             if instance_type == scenenet_pb2.Instance.RANDOM_OBJECT:
                 instance_dict['object_info'] = instance.object_info
             
-            instances_traj[instance_id] = instance_dict
+            instances_traj_dict[instance_id] = instance_dict
         
         # iterate through images/frames
         for view in trajectory.views:
@@ -278,20 +279,29 @@ def prepare_scenenet_val(data_path: str, protobuf_path: str) -> Tuple[List[List[
             instance_file = f"{path}/instance/{frame_num}.png"
             file_names_photos_traj.append(f"{path}/photo/{frame_num}.jpg")
             file_names_instances_traj.append(instance_file)
+            instances_view = []
             
             # load instance file
             instance_image = scipy.misc.imread(instance_file)
-            for instance_id in instances_traj:
+            for instance_id in instances_traj_dict:
                 instance_local = np.copy(instance_image)
                 instance_local[instance_local != instance_id] = 0
                 instance_local[instance_local == instance_id] = 1
-                print(instance_local)
-                coordinates = ndimage.find_objects(instance_local)[0]
+                coordinates = ndimage.find_objects(instance_local)
+                if not coordinates:  # the current instance was not in this frame
+                    continue
+                else:
+                    coordinates = coordinates[0]  # extract the coords of the one object
+                
                 x = coordinates[0]
                 y = coordinates[1]
                 xmin, xmax = x.start, x.stop
                 ymin, ymax = y.start, y.stop
-                instances_traj[instance_id]['bbox'] = (xmin, ymin, xmax, ymax)
+                instance = instances_traj_dict[instance_id].copy()
+                instance['bbox'] = (xmin, ymin, xmax, ymax)
+                instances_view.append(instance)
+            
+            instances_traj.append(instances_view)
         
         file_names_photos.append(file_names_photos_traj)
         file_names_instances.append(file_names_instances_traj)
