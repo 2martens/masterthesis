@@ -266,10 +266,6 @@ def prepare_scenenet_val(data_path: str, protobuf_path: str) -> Tuple[List[List[
                     instance_dict['coco_id'] = definitions.WNID_TO_COCO[wnid]
                 else:
                     continue  # only save instances that are positive instances and not background
-            if instance_type == scenenet_pb2.Instance.LIGHT_OBJECT:
-                instance_dict['light_info'] = instance.light_info
-            if instance_type == scenenet_pb2.Instance.RANDOM_OBJECT:
-                instance_dict['object_info'] = instance.object_info
             
             instances_traj_dict[instance_id] = instance_dict
         
