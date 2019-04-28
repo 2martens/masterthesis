@@ -226,6 +226,117 @@ def _load_images_callback(resized_shape: Sequence[int]) -> Callable[
     return _load_images
 
 
+def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
+                      instances: Sequence[Sequence[Sequence[dict]]],
+                      coco_path: str,
+                      num_epochs: int = 1, batch_size: int = 32,
+                      resized_shape: Sequence[int] = (256, 256)) -> tf.data.Dataset:
+    """
+    Loads the SceneNet RGB-D data and returns a data set.
+    
+    Args:
+        photo_paths: contains a list of image paths per trajectory
+        instances: instance data per frame per trajectory
+        coco_path: path to the COCO data set
+        num_epochs: number of epochs to use
+        batch_size: size of every batch
+        resized_shape: shape of input images to SSD
+
+    Returns:
+        scenenet val data set
+    """
+    trajectories = zip(photo_paths, instances)
+    final_image_paths = []
+    final_labels = []
+
+    from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
+    
+    annotation_file_train = f"{coco_path}/annotations/instances_train2014.json"
+    cats_to_classes, _, _, _ = coco_utils.get_coco_category_maps(annotation_file_train)
+    
+    for trajectory in trajectories:
+        traj_image_paths, traj_instances = trajectory
+        for image_path, frame_instances in zip(traj_image_paths, traj_instances):
+            final_image_paths.append(image_path)
+            labels = []
+            for instance in frame_instances:
+                bbox = instance['bbox']
+                labels.append((
+                    cats_to_classes[instance['coco_id']],
+                    bbox[0],
+                    bbox[1],
+                    bbox[2],
+                    bbox[3]
+                ))
+            
+            final_labels.append(labels)
+        
+    length_dataset = len(final_image_paths)
+    
+    path_dataset = tf.data.Dataset.from_tensor_slices(final_image_paths)
+    label_dataset = tf.data.Dataset.from_sparse_tensor_slices(final_labels)
+    dataset = tf.data.Dataset.zip((path_dataset, label_dataset))
+    dataset = dataset.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=length_dataset, count=num_epochs))
+    dataset = dataset.batch(batch_size=batch_size)
+    dataset = dataset.map(_load_images_ssd_callback(resized_shape))
+    
+    return dataset
+
+
+def _load_images_ssd_callback(resized_shape: Sequence[int]) \
+        -> Callable[[Sequence[str], Sequence[Sequence[Tuple[int, int, int, int, int]]]],
+                    Tuple[tf.Tensor, Sequence[Sequence[Tuple[int, int, int, int, int]]]]]:
+    """
+    Returns the callback function to load images for SSD.
+
+    Args:
+        resized_shape: shape of resized image (height, width)
+
+    Returns:
+        callback function
+    """
+
+    def _load_images_ssd(paths: Sequence[str],
+                         labels: Sequence[Sequence[Tuple[int, int, int, int, int]]]) \
+            -> Tuple[tf.Tensor, Sequence[Sequence[Tuple[int, int, int, int, int]]]]:
+        """
+        Callback function to load images for SSD.
+        
+        Args:
+            paths: paths to the images
+            labels: ground truth data for the images
+    
+        Returns:
+            loaded images
+        """
+        _images = tf.map_fn(lambda path: tf.read_file(path), paths)
+    
+        def _get_images(image_data: Sequence[tf.Tensor]) -> List[tf.Tensor]:
+            image = tf.image.decode_image(image_data[0], channels=3, dtype=tf.float32)
+            image_shape = tf.shape(image)
+            image = tf.reshape(image, [image_shape[0], image_shape[1], 3])
+            label = image_data[1]
+            xmin = label[1]
+            ymin = label[2]
+            xmax = label[3]
+            ymax = label[4]
+            image_resized = tf.image.resize(image, resized_shape[0], resized_shape[1])
+            # also resize labels
+            processed_label = label[:]
+            processed_label[:, [xmin, xmax]] = tf.round(label[:, [xmin, xmax]] * (resized_shape[0] / image_shape[0]))
+            processed_label[:, [ymin, ymax]] = tf.round(label[:, [ymin, ymax]] * (resized_shape[1] / image_shape[1]))
+            
+            return [image_resized, processed_label]
+    
+        processed = tf.map_fn(_get_images, [_images, labels], dtype=[tf.float32, tf.float32])
+        processed_images = processed[0]
+        processed_images = tf.reshape(processed_images, [-1, resized_shape[0], resized_shape[1], 3])
+    
+        return processed_images, processed[1]
+    
+    return _load_images_ssd
+
+
 def prepare_scenenet_val(data_path: str, protobuf_path: str) -> Tuple[List[List[str]],
                                                                       List[List[str]],
                                                                       List[List[List[dict]]]]:
