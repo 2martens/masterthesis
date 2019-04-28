@@ -378,7 +378,7 @@ def prepare_scenenet_val(data_path: str, protobuf_path: str) -> Tuple[List[List[
                 else:
                     continue  # only save instances that are positive instances and not background
             
-            instances_traj_dict[instance_id] = instance_dict
+                instances_traj_dict[instance_id] = instance_dict
         
         # iterate through images/frames
         for view in trajectory.views:
