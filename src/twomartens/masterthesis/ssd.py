@@ -70,7 +70,8 @@ class SSD:
     
     def __init__(self, mode: str, weights_path: Optional[str] = None) -> None:
         self._model = keras_ssd300.ssd_300(image_size=IMAGE_SIZE, n_classes=N_CLASSES,
-                                           mode=mode, iou_threshold=IOU_THRESHOLD, top_k=TOP_K)
+                                           mode=mode, iou_threshold=IOU_THRESHOLD, top_k=TOP_K,
+                                           scales=[0.07, 0.15, 0.33, 0.51, 0.69, 0.87, 1.05])
         self.mode = mode
         
         # load existing weights
@@ -93,7 +94,8 @@ class DropoutSSD:
     def __init__(self, mode: str, weights_path: Optional[str] = None) -> None:
         self._model = keras_ssd300_dropout.ssd_300_dropout(image_size=IMAGE_SIZE, n_classes=N_CLASSES,
                                                            dropout_rate=DROPOUT_RATE, mode=mode,
-                                                           iou_threshold=IOU_THRESHOLD, top_k=TOP_K)
+                                                           iou_threshold=IOU_THRESHOLD, top_k=TOP_K,
+                                                           scales=[0.07, 0.15, 0.33, 0.51, 0.69, 0.87, 1.05])
         self.mode = mode
 
         # load existing weights
