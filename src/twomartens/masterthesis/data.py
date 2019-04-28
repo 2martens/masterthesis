@@ -277,7 +277,7 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
     length_dataset = len(final_image_paths)
     
     path_dataset = tf.data.Dataset.from_tensor_slices(final_image_paths)
-    label_dataset = tf.data.Dataset.from_tensor_slices(final_labels)
+    label_dataset = tf.data.Dataset.from_tensor_slices(np.ndarray(final_labels))
     dataset = tf.data.Dataset.zip((path_dataset, label_dataset))
     dataset = dataset.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=length_dataset, count=num_epochs))
     dataset = dataset.batch(batch_size=batch_size)
