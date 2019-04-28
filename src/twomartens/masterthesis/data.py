@@ -312,7 +312,7 @@ def _load_images_ssd_callback(resized_shape: Sequence[int]) \
             image = tf.image.decode_image(image_data, channels=3, dtype=tf.float32)
             image_shape = tf.shape(image)
             image = tf.reshape(image, [image_shape[0], image_shape[1], 3])
-            image_resized = tf.image.resize_images(image, resized_shape[0], resized_shape[1])
+            image_resized = tf.image.resize_images(image, [resized_shape[0], resized_shape[1]])
             
             return image_resized
     
