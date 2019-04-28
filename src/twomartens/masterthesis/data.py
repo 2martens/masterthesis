@@ -260,13 +260,13 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
             labels = []
             for instance in frame_instances:
                 bbox = instance['bbox']
-                labels.append((
+                labels.append([
                     cats_to_classes[instance['coco_id']],
                     bbox[0],
                     bbox[1],
                     bbox[2],
                     bbox[3]
-                ))
+                ])
             
             if not labels:
                 continue
