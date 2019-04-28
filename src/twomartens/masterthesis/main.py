@@ -176,7 +176,7 @@ def _ssd_val(args: argparse.Namespace) -> None:
     batch_size = 16
     image_size = 256
     use_dropout = False
-    weights_file = f"{args.weights_path}/VGG_coco_SSD_300x300.h5"
+    weights_file = f"{args.weights_path}/VGG_coco_SSD_300x300_iter_400000.h5"
     
     # load prepared ground truth
     with open(f"{args.ground_truth_path}/photo_paths.bin", "rb") as file:
