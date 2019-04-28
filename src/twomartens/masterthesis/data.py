@@ -257,8 +257,9 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
     for trajectory in trajectories:
         traj_image_paths, traj_instances = trajectory
         for image_path, frame_instances in zip(traj_image_paths, traj_instances):
-            final_image_paths.append(image_path)
             labels = []
+            if not frame_instances:  # skip frames without instances
+                continue
             for instance in frame_instances:
                 bbox = instance['bbox']
                 labels.append((
@@ -268,7 +269,8 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
                     bbox[2],
                     bbox[3]
                 ))
-            
+    
+            final_image_paths.append(image_path)
             final_labels.append(labels)
         
     length_dataset = len(final_image_paths)
