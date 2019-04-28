@@ -173,6 +173,7 @@ def _ssd_val(args: argparse.Namespace) -> None:
     from twomartens.masterthesis import ssd
     
     tf.enable_eager_execution()
+    tf.enable_v2_tensorshape()
     batch_size = 16
     image_size = 256
     use_dropout = False
