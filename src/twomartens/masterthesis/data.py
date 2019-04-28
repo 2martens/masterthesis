@@ -395,7 +395,7 @@ def prepare_scenenet_val(data_path: str, protobuf_path: str) -> Tuple[List[List[
                 instance_local[instance_local != instance_id] = 0
                 instance_local[instance_local == instance_id] = 1
                 coordinates = ndimage.find_objects(instance_local)
-                if not coordinates:  # the current instance was not in this frame
+                if coordinates is None:  # the current instance was not in this frame
                     continue
                 else:
                     coordinates = coordinates[0]  # extract the coords of the one object
