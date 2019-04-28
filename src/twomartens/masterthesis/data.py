@@ -267,21 +267,16 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
                     bbox[2],
                     bbox[3]
                 ])
-            
-            if not labels:
-                continue
     
             final_image_paths.append(image_path)
-            final_labels.extend(labels)
+            final_labels.append(labels)
         
     length_dataset = len(final_image_paths)
-    labels_np = np.array(final_labels)
-    print(labels_np.shape)
     
     path_dataset = tf.data.Dataset.from_tensor_slices(final_image_paths)
-    label_dataset = tf.data.Dataset.from_tensor_slices(final_labels)
-    dataset = tf.data.Dataset.zip((path_dataset, label_dataset))
-    dataset = dataset.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=length_dataset, count=num_epochs))
+    # label_dataset = tf.data.Dataset.from_tensor_slices(final_labels)
+    # dataset = tf.data.Dataset.zip((path_dataset, label_dataset))
+    dataset = path_dataset.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=length_dataset, count=num_epochs))
     dataset = dataset.batch(batch_size=batch_size)
     dataset = dataset.map(_load_images_ssd_callback(resized_shape))
     
@@ -289,8 +284,8 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
 
 
 def _load_images_ssd_callback(resized_shape: Sequence[int]) \
-        -> Callable[[Sequence[str], Sequence[Sequence[Tuple[int, int, int, int, int]]]],
-                    Tuple[tf.Tensor, Sequence[Sequence[Tuple[int, int, int, int, int]]]]]:
+        -> Callable[[Sequence[str]],
+                    Tuple[tf.Tensor]]:
     """
     Returns the callback function to load images for SSD.
 
@@ -301,43 +296,30 @@ def _load_images_ssd_callback(resized_shape: Sequence[int]) \
         callback function
     """
 
-    def _load_images_ssd(paths: Sequence[str],
-                         labels: Sequence[Sequence[Tuple[int, int, int, int, int]]]) \
-            -> Tuple[tf.Tensor, Sequence[Sequence[Tuple[int, int, int, int, int]]]]:
+    def _load_images_ssd(paths: Sequence[str]) -> Tuple[tf.Tensor]:
         """
         Callback function to load images for SSD.
         
         Args:
             paths: paths to the images
-            labels: ground truth data for the images
     
         Returns:
             loaded images
         """
         _images = tf.map_fn(lambda path: tf.read_file(path), paths)
     
-        def _get_images(image_data: Sequence[tf.Tensor]) -> List[tf.Tensor]:
-            image = tf.image.decode_image(image_data[0], channels=3, dtype=tf.float32)
+        def _get_images(image_data: tf.Tensor) -> List[tf.Tensor]:
+            image = tf.image.decode_image(image_data, channels=3, dtype=tf.float32)
             image_shape = tf.shape(image)
             image = tf.reshape(image, [image_shape[0], image_shape[1], 3])
-            label = image_data[1]
-            xmin = label[1]
-            ymin = label[2]
-            xmax = label[3]
-            ymax = label[4]
             image_resized = tf.image.resize(image, resized_shape[0], resized_shape[1])
-            # also resize labels
-            processed_label = label[:]
-            processed_label[:, [xmin, xmax]] = tf.round(label[:, [xmin, xmax]] * (resized_shape[0] / image_shape[0]))
-            processed_label[:, [ymin, ymax]] = tf.round(label[:, [ymin, ymax]] * (resized_shape[1] / image_shape[1]))
             
-            return [image_resized, processed_label]
+            return image_resized
     
-        processed = tf.map_fn(_get_images, [_images, labels], dtype=[tf.float32, tf.float32])
-        processed_images = processed[0]
-        processed_images = tf.reshape(processed_images, [-1, resized_shape[0], resized_shape[1], 3])
+        processed = tf.map_fn(_get_images, _images, dtype=[tf.float32, tf.float32])
+        processed_images = tf.reshape(processed, [-1, resized_shape[0], resized_shape[1], 3])
     
-        return processed_images, processed[1]
+        return processed_images
     
     return _load_images_ssd
 

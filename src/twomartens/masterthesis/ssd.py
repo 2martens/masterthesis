@@ -173,7 +173,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
     
     # go through the data set
     counter = 0
-    for inputs, _ in dataset:
+    for inputs in dataset:
         decoded_predictions_batch = []
         if use_dropout:
             for _ in range(forward_passes_per_image):
