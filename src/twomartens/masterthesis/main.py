@@ -77,17 +77,6 @@ def _build_train(parser: argparse.ArgumentParser) -> None:
     _build_auto_encoder_train(auto_encoder_parser)
     
 
-def _build_val(parser: argparse.ArgumentParser) -> None:
-    sub_parsers = parser.add_subparsers(dest="network")
-    sub_parsers.required = True
-    
-    # ssd_bayesian_parser = sub_parsers.add_parser("bayesian_ssd", help="SSD with dropout layers")
-    auto_encoder_parser = sub_parsers.add_parser("auto_encoder", help="Auto-encoder network")
-    
-    # build sub parsers
-    _build_auto_encoder_val(auto_encoder_parser)
-
-
 def _build_auto_encoder_train(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--coco_path", type=str, help="the path to the COCO data set")
     parser.add_argument("--weights_path", type=str, help="path to the weights directory")
@@ -95,7 +84,29 @@ def _build_auto_encoder_train(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("category", type=int, help="the COCO category to use")
     parser.add_argument("num_epochs", type=int, help="the number of epochs to train", default=80)
     parser.add_argument("iteration", type=int, help="the training iteration")
+    
 
+def _build_val(parser: argparse.ArgumentParser) -> None:
+    sub_parsers = parser.add_subparsers(dest="network")
+    sub_parsers.required = True
+    
+    # ssd_bayesian_parser = sub_parsers.add_parser("bayesian_ssd", help="SSD with dropout layers")
+    ssd_parser = sub_parsers.add_parser("ssd", help="SSD")
+    auto_encoder_parser = sub_parsers.add_parser("auto_encoder", help="Auto-encoder network")
+    
+    # build sub parsers
+    _build_ssd_val(ssd_parser)
+    _build_auto_encoder_val(auto_encoder_parser)
+
+
+def _build_ssd_val(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--coco_path", type=str, help="the path to the COCO data set")
+    parser.add_argument("--weights_path", type=str, help="path to the weights directory")
+    parser.add_argument("--ground_truth_path", type=str, help="path to the prepared ground truth directory")
+    parser.add_argument("--summary_path", type=str, help="path to the summaries directory")
+    parser.add_argument("--output_path", type=str, help="path to the output directory")
+    parser.add_argument("iteration", type=int, help="the validation iteration")
+    
 
 def _build_auto_encoder_val(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--coco_path", type=str, help="the path to the COCO data set")
@@ -107,49 +118,9 @@ def _build_auto_encoder_val(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("iteration_trained", type=int, help="the training iteration")
 
 
-def _build_bayesian_ssd(parser: argparse.ArgumentParser) -> None:
-    raise NotImplementedError
-
-
 def _train(args: argparse.Namespace) -> None:
-    if args.network == "bayesian_ssd":
-        _bayesian_ssd_train(args)
-    elif args.network == "auto_encoder":
+    if args.network == "auto_encoder":
         _auto_encoder_train(args)
-
-
-def _test(args: argparse.Namespace) -> None:
-    raise NotImplementedError
-
-
-def _val(args: argparse.Namespace) -> None:
-    from twomartens.masterthesis import data
-    from twomartens.masterthesis.aae import run
-    import tensorflow as tf
-    from tensorflow.python.ops import summary_ops_v2
-    
-    tf.enable_eager_execution()
-    coco_path = args.coco_path
-    category = args.category
-    category_trained = args.category_trained
-    batch_size = 16
-    image_size = 256
-    coco_data = data.load_coco_val(coco_path, category, num_epochs=1,
-                                   batch_size=batch_size, resized_shape=(image_size, image_size))
-    use_summary_writer = summary_ops_v2.create_file_writer(
-        f"{args.summary_path}/val/category-{category}/{args.iteration}"
-    )
-    if args.debug:
-        with use_summary_writer.as_default():
-            run.run_simple(coco_data, iteration=args.iteration_trained,
-                           weights_prefix=f"{args.weights_path}/category-{category_trained}",
-                           zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size,
-                           image_size=image_size)
-    else:
-        run.run_simple(coco_data, iteration=args.iteration_trained,
-                       weights_prefix=f"{args.weights_path}/category-{category_trained}",
-                       zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size,
-                       image_size=image_size)
 
 
 def _auto_encoder_train(args: argparse.Namespace) -> None:
@@ -181,8 +152,79 @@ def _auto_encoder_train(args: argparse.Namespace) -> None:
                            channels=3, train_epoch=args.num_epochs, batch_size=batch_size)
 
 
-def _bayesian_ssd_train(args: argparse.Namespace) -> None:
+def _test(args: argparse.Namespace) -> None:
     raise NotImplementedError
+
+
+def _val(args: argparse.Namespace) -> None:
+    if args.network == "ssd":
+        _ssd_val(args)
+    elif args.network == "auto_encoder":
+        _auto_encoder_val(args)
+
+
+def _ssd_val(args: argparse.Namespace) -> None:
+    import pickle
+    
+    import tensorflow as tf
+    from tensorflow.python.ops import summary_ops_v2
+    
+    from twomartens.masterthesis import data
+    from twomartens.masterthesis import ssd
+    
+    tf.enable_eager_execution()
+    batch_size = 16
+    image_size = 256
+    use_dropout = False
+    
+    # load prepared ground truth
+    with open(f"{args.ground_truth_path}/photo_paths.bin", "rb") as file:
+        file_names_photos = pickle.load(file)
+    with open(f"{args.ground_truth_path}/instances.bin", "rb") as file:
+        instances = pickle.load(file)
+    
+    scenenet_data = data.load_scenenet_val(file_names_photos, instances, args.coco_path,
+                                           batch_size=batch_size, resized_shape=(image_size, image_size))
+
+
+    use_summary_writer = summary_ops_v2.create_file_writer(
+        f"{args.summary_path}/val/ssd/{args.iteration}"
+    )
+    if args.debug:
+        with use_summary_writer.as_default():
+            ssd.predict(scenenet_data, use_dropout, args.output_path, args.weights_path)
+    else:
+        ssd.predict(scenenet_data, use_dropout, args.output_path, args.weights_path)
+
+
+def _auto_encoder_val(args: argparse.Namespace) -> None:
+    from twomartens.masterthesis import data
+    from twomartens.masterthesis.aae import run
+    import tensorflow as tf
+    from tensorflow.python.ops import summary_ops_v2
+    
+    tf.enable_eager_execution()
+    coco_path = args.coco_path
+    category = args.category
+    category_trained = args.category_trained
+    batch_size = 16
+    image_size = 256
+    coco_data = data.load_coco_val(coco_path, category, num_epochs=1,
+                                   batch_size=batch_size, resized_shape=(image_size, image_size))
+    use_summary_writer = summary_ops_v2.create_file_writer(
+        f"{args.summary_path}/val/category-{category}/{args.iteration}"
+    )
+    if args.debug:
+        with use_summary_writer.as_default():
+            run.run_simple(coco_data, iteration=args.iteration_trained,
+                           weights_prefix=f"{args.weights_path}/category-{category_trained}",
+                           zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size,
+                           image_size=image_size)
+    else:
+        run.run_simple(coco_data, iteration=args.iteration_trained,
+                       weights_prefix=f"{args.weights_path}/category-{category_trained}",
+                       zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size,
+                       image_size=image_size)
 
 
 def _prepare(args: argparse.Namespace) -> None:
