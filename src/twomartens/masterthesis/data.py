@@ -258,8 +258,6 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
         traj_image_paths, traj_instances = trajectory
         for image_path, frame_instances in zip(traj_image_paths, traj_instances):
             labels = []
-            if not frame_instances:  # skip frames without instances
-                continue
             for instance in frame_instances:
                 bbox = instance['bbox']
                 labels.append((
@@ -269,6 +267,9 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
                     bbox[2],
                     bbox[3]
                 ))
+            
+            if not labels:
+                continue
     
             final_image_paths.append(image_path)
             final_labels.append(labels)
@@ -276,7 +277,7 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
     length_dataset = len(final_image_paths)
     
     path_dataset = tf.data.Dataset.from_tensor_slices(final_image_paths)
-    label_dataset = tf.data.Dataset.from_sparse_tensor_slices(final_labels)
+    label_dataset = tf.data.Dataset.from_tensor_slices(final_labels)
     dataset = tf.data.Dataset.zip((path_dataset, label_dataset))
     dataset = dataset.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=length_dataset, count=num_epochs))
     dataset = dataset.batch(batch_size=batch_size)
