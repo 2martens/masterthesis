@@ -272,7 +272,7 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
                 continue
     
             final_image_paths.append(image_path)
-            final_labels.append(labels)
+            final_labels.extend(labels)
         
     length_dataset = len(final_image_paths)
     labels_np = np.array(final_labels)
