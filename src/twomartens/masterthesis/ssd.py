@@ -191,7 +191,8 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
 
         # save predictions batch-wise to prevent memory problems
         if nr_digits is not None:
-            filename = f"{output_file}-{counter:{nr_digits}d}.npy"
+            counter = str(counter).zfill(nr_digits)
+            filename = f"{output_file}-{counter}.npy"
         else:
             filename = f"{output_file}-{counter:d}.npy"
         
