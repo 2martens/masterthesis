@@ -282,7 +282,7 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
     dataset = dataset.batch(batch_size=batch_size)
     dataset = dataset.map(_load_images_ssd_callback(resized_shape))
     
-    nr_digits = math.ceil((length_dataset * num_epochs) / batch_size)
+    nr_digits = math.ceil(math.log10(math.ceil((length_dataset * num_epochs) / batch_size)))
     
     return dataset, nr_digits
 
