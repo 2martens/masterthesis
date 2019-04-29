@@ -165,6 +165,7 @@ def _val(args: argparse.Namespace) -> None:
 
 def _ssd_val(args: argparse.Namespace) -> None:
     import pickle
+    import os
     
     import tensorflow as tf
     from tensorflow.python.ops import summary_ops_v2
@@ -178,6 +179,7 @@ def _ssd_val(args: argparse.Namespace) -> None:
     use_dropout = False
     weights_file = f"{args.weights_path}/VGG_coco_SSD_300x300_iter_400000.h5"
     output_path = f"{args.output_path}/val/ssd/{args.iteration}/"
+    os.makedirs(output_path, exist_ok=True)
     
     # load prepared ground truth
     with open(f"{args.ground_truth_path}/photo_paths.bin", "rb") as file:
