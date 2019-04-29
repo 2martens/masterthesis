@@ -25,6 +25,7 @@ Functions:
 from typing import Callable, List, Mapping, Tuple
 from typing import Sequence
 
+import math
 import numpy as np
 import scipy
 import tensorflow as tf
@@ -230,7 +231,7 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
                       instances: Sequence[Sequence[Sequence[dict]]],
                       coco_path: str,
                       num_epochs: int = 1, batch_size: int = 32,
-                      resized_shape: Sequence[int] = (256, 256)) -> tf.data.Dataset:
+                      resized_shape: Sequence[int] = (256, 256)) -> Tuple[tf.data.Dataset, int]:
     """
     Loads the SceneNet RGB-D data and returns a data set.
     
@@ -244,6 +245,7 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
 
     Returns:
         scenenet val data set
+        number of digits required to print largest batch number
     """
     trajectories = zip(photo_paths, instances)
     final_image_paths = []
@@ -280,7 +282,9 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
     dataset = dataset.batch(batch_size=batch_size)
     dataset = dataset.map(_load_images_ssd_callback(resized_shape))
     
-    return dataset
+    nr_digits = math.ceil((length_dataset * num_epochs) / batch_size)
+    
+    return dataset, nr_digits
 
 
 def _load_images_ssd_callback(resized_shape: Sequence[int]) \

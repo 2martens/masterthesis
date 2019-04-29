@@ -113,7 +113,8 @@ def predict(dataset: tf.data.Dataset,
             weights_path: Optional[str] = None,
             checkpoint_path: Optional[str] = None,
             verbose: Optional[bool] = False,
-            forward_passes_per_image: Optional[int] = 42) -> None:
+            forward_passes_per_image: Optional[int] = 42,
+            nr_digits: Optional[int] = None) -> None:
     """
     Run trained SSD on the given data set.
     
@@ -123,14 +124,15 @@ def predict(dataset: tf.data.Dataset,
     The prediction results are saved to the output path.
     
     Args:
-         dataset: the testing data set
-         use_dropout: if True, DropoutSSD will be used
-         output_path: the path in which the results should be saved
-         weights_path: the path to the trained Keras weights (h5 file)
-         checkpoint_path: the path to the stored checkpoints (Tensorflow checkpoints)
-         verbose: if True, progress is printed to the standard output
-         forward_passes_per_image: specifies number of forward passes per image
+        dataset: the testing data set
+        use_dropout: if True, DropoutSSD will be used
+        output_path: the path in which the results should be saved
+        weights_path: the path to the trained Keras weights (h5 file)
+        checkpoint_path: the path to the stored checkpoints (Tensorflow checkpoints)
+        verbose: if True, progress is printed to the standard output
+        forward_passes_per_image: specifies number of forward passes per image
             used by DropoutSSD
+        nr_digits: number of digits needed to print largest batch number
     """
     if weights_path is None and checkpoint_path is None:
         raise ValueError("Either 'weights_path' or 'checkpoint_path' must be given.")
@@ -151,7 +153,8 @@ def predict(dataset: tf.data.Dataset,
         checkpoint = tf.train.Checkpoint(**checkpointables)
         checkpoint.restore(latest_checkpoint)
 
-    outputs = _predict_one_epoch(dataset, use_dropout, output_path, forward_passes_per_image, **checkpointables)
+    outputs = _predict_one_epoch(dataset, use_dropout, output_path, forward_passes_per_image,
+                                 nr_digits, **checkpointables)
     
     if verbose:
         print((
@@ -164,6 +167,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
                        use_dropout: bool,
                        output_path: str,
                        forward_passes_per_image: int,
+                       nr_digits: int,
                        ssd: tf.keras.Model) -> Dict[str, float]:
     
     epoch_start_time = time.time()
@@ -176,7 +180,6 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
     
     # go through the data set
     counter = 0
-    nr_digits = math.ceil(math.log10(len(dataset)))
     for inputs in dataset:
         decoded_predictions_batch = []
         if use_dropout:
@@ -187,7 +190,12 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
             decoded_predictions_batch.append(np.array(ssd(inputs)))
 
         # save predictions batch-wise to prevent memory problems
-        with open(f"{output_file}-{counter:{nr_digits}d}.npy", 'wb') as file:
+        if nr_digits is not None:
+            filename = f"{output_file}-{counter:{nr_digits}d}.npy"
+        else:
+            filename = f"{output_file}-{counter:d}.npy"
+        
+        with open(filename, 'wb') as file:
             np.save(file, decoded_predictions_batch, allow_pickle=False, fix_imports=False)
         
         counter += 1

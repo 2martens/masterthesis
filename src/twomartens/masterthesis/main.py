@@ -185,9 +185,8 @@ def _ssd_val(args: argparse.Namespace) -> None:
     with open(f"{args.ground_truth_path}/instances.bin", "rb") as file:
         instances = pickle.load(file)
     
-    scenenet_data = data.load_scenenet_val(file_names_photos, instances, args.coco_path,
-                                           batch_size=batch_size, resized_shape=(image_size, image_size))
-
+    scenenet_data, nr_digits = data.load_scenenet_val(file_names_photos, instances, args.coco_path,
+                                                      batch_size=batch_size, resized_shape=(image_size, image_size))
 
     use_summary_writer = summary_ops_v2.create_file_writer(
         f"{args.summary_path}/val/ssd/{args.iteration}"
