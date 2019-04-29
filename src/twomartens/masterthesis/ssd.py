@@ -185,7 +185,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
             decoded_predictions_batch.append(ssd(inputs))
 
         # save predictions batch-wise to prevent memory problems
-        print(decoded_predictions_batch)
+        print(decoded_predictions_batch[0])
         with open(f"{output_file}-{counter:d}.npy", 'wb') as file:
             np.save(file, decoded_predictions_batch, allow_pickle=False, fix_imports=False)
         
