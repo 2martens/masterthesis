@@ -177,6 +177,7 @@ def _ssd_val(args: argparse.Namespace) -> None:
     image_size = 300
     use_dropout = False
     weights_file = f"{args.weights_path}/VGG_coco_SSD_300x300_iter_400000.h5"
+    output_path = f"{args.output_path}/val/ssd/{args.iteration}/"
     
     # load prepared ground truth
     with open(f"{args.ground_truth_path}/photo_paths.bin", "rb") as file:
@@ -193,9 +194,9 @@ def _ssd_val(args: argparse.Namespace) -> None:
     )
     if args.debug:
         with use_summary_writer.as_default():
-            ssd.predict(scenenet_data, use_dropout, args.output_path, weights_file)
+            ssd.predict(scenenet_data, use_dropout, output_path, weights_file)
     else:
-        ssd.predict(scenenet_data, use_dropout, args.output_path, weights_file)
+        ssd.predict(scenenet_data, use_dropout, output_path, weights_file)
 
 
 def _auto_encoder_val(args: argparse.Namespace) -> None:
