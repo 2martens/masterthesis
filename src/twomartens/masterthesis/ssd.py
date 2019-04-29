@@ -39,6 +39,7 @@ import time
 from typing import Dict
 from typing import Optional
 
+import math
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.ops import summary_ops_v2
@@ -175,6 +176,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
     
     # go through the data set
     counter = 0
+    nr_digits = math.ceil(math.log10(len(dataset)))
     for inputs in dataset:
         decoded_predictions_batch = []
         if use_dropout:
@@ -185,7 +187,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
             decoded_predictions_batch.append(np.array(ssd(inputs)))
 
         # save predictions batch-wise to prevent memory problems
-        with open(f"{output_file}-{counter:d}.npy", 'wb') as file:
+        with open(f"{output_file}-{counter:{nr_digits}d}.npy", 'wb') as file:
             np.save(file, decoded_predictions_batch, allow_pickle=False, fix_imports=False)
         
         counter += 1
