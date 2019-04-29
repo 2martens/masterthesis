@@ -195,9 +195,9 @@ def _ssd_val(args: argparse.Namespace) -> None:
     )
     if args.debug:
         with use_summary_writer.as_default():
-            ssd.predict(scenenet_data, use_dropout, output_path, weights_file)
+            ssd.predict(scenenet_data, use_dropout, output_path, weights_file, nr_digits=nr_digits)
     else:
-        ssd.predict(scenenet_data, use_dropout, output_path, weights_file)
+        ssd.predict(scenenet_data, use_dropout, output_path, weights_file, nr_digits=nr_digits)
 
 
 def _auto_encoder_val(args: argparse.Namespace) -> None:
