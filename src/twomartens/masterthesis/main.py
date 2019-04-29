@@ -174,7 +174,7 @@ def _ssd_val(args: argparse.Namespace) -> None:
     
     tf.enable_eager_execution()
     batch_size = 16
-    image_size = 256
+    image_size = 300
     use_dropout = False
     weights_file = f"{args.weights_path}/VGG_coco_SSD_300x300_iter_400000.h5"
     
