@@ -180,9 +180,9 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
         if use_dropout:
             for _ in range(forward_passes_per_image):
                 decoded_predictions_pass = ssd(inputs)
-                decoded_predictions_batch.append(decoded_predictions_pass)
+                decoded_predictions_batch.append(np.array(decoded_predictions_pass))
         else:
-            decoded_predictions_batch.append(ssd(inputs))
+            decoded_predictions_batch.append(np.array(ssd(inputs)))
 
         # save predictions batch-wise to prevent memory problems
         print(decoded_predictions_batch[0])
