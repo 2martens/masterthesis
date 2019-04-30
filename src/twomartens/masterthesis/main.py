@@ -22,6 +22,8 @@ Functions:
 """
 import argparse
 
+import gc
+
 
 def main() -> None:
     """
@@ -245,4 +247,5 @@ def _prepare(args: argparse.Namespace) -> None:
 
 
 if __name__ == "__main__":
+    gc.set_debug(gc.DEBUG_LEAK)
     main()
