@@ -197,7 +197,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
             filename = f"{output_file}-{counter:d}.npy"
         
         with open(filename, 'wb') as file:
-            np.save(file, decoded_predictions_batch, allow_pickle=False, fix_imports=False)
+            np.save(file, np.array(decoded_predictions_batch), allow_pickle=False, fix_imports=False)
         
         counter += 1
     
