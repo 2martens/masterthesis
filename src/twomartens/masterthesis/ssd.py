@@ -200,6 +200,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
             np.save(file, np.array(decoded_predictions_batch), allow_pickle=False, fix_imports=False)
         
         counter += 1
+        tf.set_random_seed(1)
     
     epoch_end_time = time.time()
     per_epoch_time = epoch_end_time - epoch_start_time
