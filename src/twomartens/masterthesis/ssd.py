@@ -212,6 +212,13 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
         tf.set_random_seed(1)
         context.context()._clear_caches()
         gc.collect()
+
+        from pympler import muppy, summary
+        all_objects = muppy.get_objects()
+        sum1 = summary.summarize(all_objects)
+
+        # Prints out a summary of the large objects
+        summary.print_(sum1)
     
     epoch_end_time = time.time()
     per_epoch_time = epoch_end_time - epoch_start_time
