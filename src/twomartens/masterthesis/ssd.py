@@ -185,7 +185,6 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
     
     from tensorflow.python.eager import context
     
-    tr = tracker.ObjectTracker()
     trs = tracker.SummaryTracker()
     
     for inputs in dataset:
@@ -218,7 +217,6 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
         context.context()._clear_caches()
         gc.collect()
 
-        tr.print_diff()
         trs.print_diff()
     
     epoch_end_time = time.time()
