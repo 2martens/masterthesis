@@ -181,7 +181,6 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
     # go through the data set
     counter = 0
     import gc
-    import sys
     from tensorflow.python.eager import context
     
     for inputs in dataset:
@@ -210,23 +209,9 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
         
         counter += 1
         
-        print((
-            f"counter: {counter}"
-            f"list: {sys.getrefcount(decoded_predictions_batch)}"
-            f"result: {sys.getrefcount(result)}"
-            f"np list: {sys.getrefcount(decoded_predictions_batch_np)}"
-        ))
-        
         tf.set_random_seed(1)
         context.context()._clear_caches()
         gc.collect()
-
-        print((
-            f"counter: {counter}"
-            f"list: {sys.getrefcount(decoded_predictions_batch)}"
-            f"result: {sys.getrefcount(result)}"
-            f"np list: {sys.getrefcount(decoded_predictions_batch_np)}"
-        ))
     
     epoch_end_time = time.time()
     per_epoch_time = epoch_end_time - epoch_start_time
