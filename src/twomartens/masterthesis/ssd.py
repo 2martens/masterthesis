@@ -181,9 +181,12 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
     # go through the data set
     counter = 0
     import gc
+    from pympler import tracker
+    
     from tensorflow.python.eager import context
-    tr = None
-    trs = None
+    
+    tr = tracker.ObjectTracker()
+    trs = tracker.SummaryTracker()
     
     for inputs in dataset:
         decoded_predictions_batch = []
@@ -215,16 +218,8 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
         context.context()._clear_caches()
         gc.collect()
 
-        from pympler import tracker
-        if tr is None:
-            tr = tracker.ObjectTracker()
-        else:
-            tr.print_diff()
-        
-        if trs is None:
-            trs = tracker.SummaryTracker()
-        else:
-            trs.print_diff()
+        tr.print_diff()
+        trs.print_diff()
     
     epoch_end_time = time.time()
     per_epoch_time = epoch_end_time - epoch_start_time
