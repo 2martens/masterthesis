@@ -174,8 +174,11 @@ def _ssd_val(args: argparse.Namespace) -> None:
     
     from twomartens.masterthesis import data
     from twomartens.masterthesis import ssd
-    
-    tf.enable_eager_execution()
+
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    config.log_device_placement = True
+    tf.enable_eager_execution(config=config)
     batch_size = 16
     image_size = 300
     use_dropout = False
@@ -191,6 +194,7 @@ def _ssd_val(args: argparse.Namespace) -> None:
     
     scenenet_data, nr_digits = data.load_scenenet_val(file_names_photos, instances, args.coco_path,
                                                       batch_size=batch_size, resized_shape=(image_size, image_size))
+    del file_names_photos, instances
     
     use_summary_writer = summary_ops_v2.create_file_writer(
         f"{args.summary_path}/val/ssd/{args.iteration}"
@@ -208,10 +212,7 @@ def _auto_encoder_val(args: argparse.Namespace) -> None:
     import tensorflow as tf
     from tensorflow.python.ops import summary_ops_v2
     
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    config.log_device_placement = True
-    tf.enable_eager_execution(config=config)
+    tf.enable_eager_execution()
     coco_path = args.coco_path
     category = args.category
     category_trained = args.category_trained
