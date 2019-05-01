@@ -212,6 +212,8 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
             np.save(file, decoded_predictions_batch_np, allow_pickle=False, fix_imports=False)
         
         counter += 1
+
+        trs.print_diff()
         
         tf.set_random_seed(1)
         context.context()._clear_caches()
