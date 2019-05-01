@@ -201,6 +201,10 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
         
         counter += 1
         tf.set_random_seed(1)
+        from tensorflow.python.eager import context
+        context.context()._clear_caches()
+        import gc
+        gc.collect()
     
     epoch_end_time = time.time()
     per_epoch_time = epoch_end_time - epoch_start_time
