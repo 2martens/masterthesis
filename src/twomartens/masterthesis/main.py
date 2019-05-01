@@ -208,7 +208,7 @@ def _auto_encoder_val(args: argparse.Namespace) -> None:
     import tensorflow as tf
     from tensorflow.python.ops import summary_ops_v2
     
-    tf.enable_eager_execution()
+    tf.enable_eager_execution(tf.ConfigProto(log_device_placement=True))
     coco_path = args.coco_path
     category = args.category
     category_trained = args.category_trained
