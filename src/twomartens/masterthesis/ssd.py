@@ -183,6 +183,8 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
     import gc
     from tensorflow.python.eager import context
     
+    lists = None
+    
     for inputs in dataset:
         decoded_predictions_batch = []
         if use_dropout:
@@ -216,9 +218,12 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
         from pympler import muppy, summary
         all_objects = muppy.get_objects()
         all_lists = muppy.filter(all_objects, Type=list)
-
-        for l in all_lists:
-            print(l)
+        if lists is None:
+            lists = all_lists
+        else:
+            for l in all_lists:
+                if l not in lists:
+                    print(l)
     
     epoch_end_time = time.time()
     per_epoch_time = epoch_end_time - epoch_start_time
