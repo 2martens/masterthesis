@@ -195,6 +195,8 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
                 decoded_predictions_batch.append(result)
                 del result
         else:
+            import pdb
+            pdb.set_trace()
             result = np.array(ssd(inputs))
             decoded_predictions_batch.append(result)
             del result
