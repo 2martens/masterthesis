@@ -190,9 +190,11 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
             for _ in range(forward_passes_per_image):
                 result = np.array(ssd(inputs))
                 decoded_predictions_batch.append(result)
+                del result
         else:
             result = np.array(ssd(inputs))
             decoded_predictions_batch.append(result)
+            del result
 
         # save predictions batch-wise to prevent memory problems
         if nr_digits is not None:
@@ -203,6 +205,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
         
         with open(filename, 'wb') as file:
             decoded_predictions_batch_np = np.array(decoded_predictions_batch)
+            del decoded_predictions_batch
             np.save(file, decoded_predictions_batch_np, allow_pickle=False, fix_imports=False)
         
         counter += 1
