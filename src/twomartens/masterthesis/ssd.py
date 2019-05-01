@@ -182,6 +182,8 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
     counter = 0
     import gc
     from tensorflow.python.eager import context
+    tr = None
+    trs = None
     
     for inputs in dataset:
         decoded_predictions_batch = []
@@ -213,10 +215,16 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
         context.context()._clear_caches()
         gc.collect()
 
-        from pympler import muppy, summary
-        all_objects = muppy.get_objects()
-        all_lists = muppy.filter(all_objects, Type=list)
-        summary.print_(summary.summarize(all_lists))
+        from pympler import tracker
+        if tr is None:
+            tr = tracker.ObjectTracker()
+        else:
+            tr.print_diff()
+        
+        if trs is None:
+            trs = tracker.SummaryTracker()
+        else:
+            trs.print_diff()
     
     epoch_end_time = time.time()
     per_epoch_time = epoch_end_time - epoch_start_time
