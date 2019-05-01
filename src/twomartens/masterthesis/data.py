@@ -281,6 +281,7 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
     dataset = path_dataset.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=length_dataset, count=num_epochs))
     dataset = dataset.batch(batch_size=batch_size)
     dataset = dataset.map(_load_images_ssd_callback(resized_shape))
+    dataset = dataset.prefetch(1)
     
     nr_digits = math.ceil(math.log10(math.ceil((length_dataset * num_epochs) / batch_size)))
     
