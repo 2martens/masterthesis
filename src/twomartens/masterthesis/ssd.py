@@ -217,7 +217,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
         from pympler import muppy, summary
         all_objects = muppy.get_objects()
         all_lists = muppy.filter(all_objects, Type=list)
-        muppy.summary.print_(all_lists)
+        muppy.summary.print_(all_objects)
         if lists is None:
             lists = map(id, all_lists)
         list_nr = 0
