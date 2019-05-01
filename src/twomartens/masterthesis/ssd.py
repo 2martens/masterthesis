@@ -219,11 +219,10 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
         all_objects = muppy.get_objects()
         all_lists = muppy.filter(all_objects, Type=list)
         if lists is None:
-            lists = all_lists
+            lists = set(all_lists)
         else:
-            for l in all_lists:
-                if l not in lists:
-                    print(l)
+            all_lists = set(all_lists)
+            print(all_lists.difference(lists))
     
     epoch_end_time = time.time()
     per_epoch_time = epoch_end_time - epoch_start_time
