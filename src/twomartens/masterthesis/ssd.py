@@ -223,7 +223,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
         for l in all_lists:
             if id(l) not in lists:
                 with open(f"lists/list-{counter}-{list_nr}.txt", "w") as file:
-                    file.write(l)
+                    file.write(str(l))
                     list_nr += 1
     
     epoch_end_time = time.time()
