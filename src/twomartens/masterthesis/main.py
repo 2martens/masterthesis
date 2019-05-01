@@ -177,7 +177,6 @@ def _ssd_val(args: argparse.Namespace) -> None:
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
-    config.log_device_placement = True
     tf.enable_eager_execution(config=config)
     batch_size = 16
     image_size = 300
