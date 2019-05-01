@@ -180,14 +180,19 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
     
     # go through the data set
     counter = 0
+    import gc
+    import sys
+    from tensorflow.python.eager import context
+    
     for inputs in dataset:
         decoded_predictions_batch = []
         if use_dropout:
             for _ in range(forward_passes_per_image):
-                decoded_predictions_pass = ssd(inputs)
-                decoded_predictions_batch.append(np.array(decoded_predictions_pass))
+                result = np.array(ssd(inputs))
+                decoded_predictions_batch.append(result)
         else:
-            decoded_predictions_batch.append(np.array(ssd(inputs)))
+            result = np.array(ssd(inputs))
+            decoded_predictions_batch.append(result)
 
         # save predictions batch-wise to prevent memory problems
         if nr_digits is not None:
@@ -197,14 +202,28 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
             filename = f"{output_file}-{counter:d}.npy"
         
         with open(filename, 'wb') as file:
-            np.save(file, np.array(decoded_predictions_batch), allow_pickle=False, fix_imports=False)
+            decoded_predictions_batch_np = np.array(decoded_predictions_batch)
+            np.save(file, decoded_predictions_batch_np, allow_pickle=False, fix_imports=False)
         
         counter += 1
+        
+        print((
+            f"counter: {counter}"
+            f"list: {sys.getrefcount(decoded_predictions_batch)}"
+            f"result: {sys.getrefcount(result)}"
+            f"np list: {sys.getrefcount(decoded_predictions_batch_np)}"
+        ))
+        
         tf.set_random_seed(1)
-        from tensorflow.python.eager import context
         context.context()._clear_caches()
-        import gc
         gc.collect()
+
+        print((
+            f"counter: {counter}"
+            f"list: {sys.getrefcount(decoded_predictions_batch)}"
+            f"result: {sys.getrefcount(result)}"
+            f"np list: {sys.getrefcount(decoded_predictions_batch_np)}"
+        ))
     
     epoch_end_time = time.time()
     per_epoch_time = epoch_end_time - epoch_start_time
