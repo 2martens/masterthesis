@@ -144,7 +144,7 @@ def predict(dataset: tf.data.Dataset,
         })
     else:
         checkpointables.update({
-            'ssd': SSD(mode='training', weights_path=weights_path)
+            'ssd': SSD(mode='inference_fast', weights_path=weights_path)
         })
 
     if checkpoint_path is not None:
