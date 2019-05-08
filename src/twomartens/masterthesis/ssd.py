@@ -196,9 +196,9 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
                 decoded_predictions_batch.append(result)
                 del result
         else:
-            # trs.print_diff()
+            trs.print_diff()
             result = np.array(ssd(inputs))
-            # trs.print_diff()
+            trs.print_diff()
             decoded_predictions_batch.append(result)
             del result
 
