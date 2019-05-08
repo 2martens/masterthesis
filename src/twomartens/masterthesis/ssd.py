@@ -186,7 +186,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
     from tensorflow.python.eager import context
     
     trs = tracker.SummaryTracker()
-    trs.print_diff()
+    orig_summary = trs.create_summary()
     
     for inputs in dataset:
         decoded_predictions_batch = []
@@ -196,9 +196,9 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
                 decoded_predictions_batch.append(result)
                 del result
         else:
-            trs.print_diff()
+            trs.print_diff(orig_summary)
             result = np.array(ssd(inputs))
-            trs.print_diff()
+            trs.print_diff(orig_summary)
             decoded_predictions_batch.append(result)
             del result
 
@@ -221,7 +221,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
         context.context()._clear_caches()
         gc.collect()
         
-        trs.print_diff()
+        trs.print_diff(orig_summary)
     
     epoch_end_time = time.time()
     per_epoch_time = epoch_end_time - epoch_start_time
