@@ -47,8 +47,8 @@ class Encoder(keras.Model):
         super().__init__(name='encoder')
         weight_init = keras.initializers.RandomNormal(mean=0, stddev=0.02)
         self.conv1 = keras.layers.Conv2D(filters=zsize * 4, kernel_size=3, strides=2, name='conv1',
-                                         padding='same', kernel_initializer=weight_init)
-        self.conv1_a = keras.layers.ReLU()
+                                         padding='same', kernel_initializer=weight_init,
+                                         activation=keras.activations.sigmoid)
         self.conv2 = keras.layers.Conv2D(filters=zsize * 2, kernel_size=3, strides=2, name='conv2',
                                          padding='same', kernel_initializer=weight_init)
         self.conv2_a = keras.layers.ReLU()
@@ -61,7 +61,6 @@ class Encoder(keras.Model):
     def call(self, inputs: tf.Tensor, **kwargs) -> tf.Tensor:
         """See base class."""
         result = self.conv1(inputs)
-        result = self.conv1_a(result)
         result = self.conv2(result)
         result = self.conv2_a(result)
         result = self.conv3(result)
