@@ -196,8 +196,10 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
                 decoded_predictions_batch.append(result)
                 del result
         else:
+            print("Before network call")
             trs.print_diff(orig_summary)
             result = np.array(ssd(inputs))
+            print("After network call")
             trs.print_diff(orig_summary)
             decoded_predictions_batch.append(result)
             del result
@@ -221,6 +223,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
         context.context()._clear_caches()
         gc.collect()
         
+        print("After GC")
         trs.print_diff(orig_summary)
     
     epoch_end_time = time.time()
