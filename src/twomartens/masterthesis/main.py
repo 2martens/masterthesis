@@ -176,6 +176,7 @@ def _ssd_val(args: argparse.Namespace) -> None:
     from twomartens.masterthesis import ssd
 
     config = tf.ConfigProto()
+    config.log_device_placement = True
     config.gpu_options.allow_growth = False
     tf.enable_eager_execution(config=config)
     batch_size = 16
