@@ -181,12 +181,8 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
     # go through the data set
     counter = 0
     import gc
-    from pympler import tracker
     
     from tensorflow.python.eager import context
-    
-    trs = tracker.SummaryTracker()
-    orig_summary = trs.create_summary()
     
     for inputs in dataset:
         decoded_predictions_batch = []
@@ -197,8 +193,6 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
                 del result
         else:
             result = np.array(ssd(inputs))
-            print("After network call")
-            trs.print_diff(orig_summary)
             decoded_predictions_batch.append(result)
             del result
 
