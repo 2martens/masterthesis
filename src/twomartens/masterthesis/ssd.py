@@ -213,6 +213,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
             decoded_predictions_batch_np = np.array(decoded_predictions_batch)
             del decoded_predictions_batch
             np.save(file, decoded_predictions_batch_np, allow_pickle=False, fix_imports=False)
+            del decoded_predictions_batch_np
         
         counter += 1
         
