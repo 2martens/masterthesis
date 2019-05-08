@@ -219,6 +219,8 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
         tf.set_random_seed(1)
         context.context()._clear_caches()
         gc.collect()
+        
+        trs.print_diff()
     
     epoch_end_time = time.time()
     per_epoch_time = epoch_end_time - epoch_start_time
