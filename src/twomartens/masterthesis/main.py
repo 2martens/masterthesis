@@ -254,6 +254,4 @@ def _prepare(args: argparse.Namespace) -> None:
 
 
 if __name__ == "__main__":
-    import gc
-    gc.set_debug(gc.DEBUG_LEAK | gc.DEBUG_STATS)
     main()
