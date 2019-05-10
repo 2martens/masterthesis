@@ -92,11 +92,12 @@ def _build_val(parser: argparse.ArgumentParser) -> None:
     sub_parsers = parser.add_subparsers(dest="network")
     sub_parsers.required = True
     
-    # ssd_bayesian_parser = sub_parsers.add_parser("bayesian_ssd", help="SSD with dropout layers")
+    ssd_bayesian_parser = sub_parsers.add_parser("bayesian_ssd", help="SSD with dropout layers")
     ssd_parser = sub_parsers.add_parser("ssd", help="SSD")
     auto_encoder_parser = sub_parsers.add_parser("auto_encoder", help="Auto-encoder network")
     
     # build sub parsers
+    _build_ssd_val(ssd_bayesian_parser)
     _build_ssd_val(ssd_parser)
     _build_auto_encoder_val(auto_encoder_parser)
 
@@ -159,7 +160,7 @@ def _test(args: argparse.Namespace) -> None:
 
 
 def _val(args: argparse.Namespace) -> None:
-    if args.network == "ssd":
+    if args.network == "ssd" or args.network == "bayesian_ssd":
         _ssd_val(args)
     elif args.network == "auto_encoder":
         _auto_encoder_val(args)
@@ -179,11 +180,13 @@ def _ssd_val(args: argparse.Namespace) -> None:
     config.log_device_placement = False
     config.gpu_options.allow_growth = False
     tf.enable_eager_execution(config=config)
+    
     batch_size = 16
     image_size = 300
-    use_dropout = False
+    use_dropout = False if args.network == "ssd" else True
+    
     weights_file = f"{args.weights_path}/VGG_coco_SSD_300x300_iter_400000.h5"
-    output_path = f"{args.output_path}/val/ssd/{args.iteration}/"
+    output_path = f"{args.output_path}/val/{args.network}/{args.iteration}/"
     os.makedirs(output_path, exist_ok=True)
     
     # load prepared ground truth
@@ -197,7 +200,7 @@ def _ssd_val(args: argparse.Namespace) -> None:
     del file_names_photos, instances
     
     use_summary_writer = summary_ops_v2.create_file_writer(
-        f"{args.summary_path}/val/ssd/{args.iteration}"
+        f"{args.summary_path}/val/{args.network}/{args.iteration}"
     )
     if args.debug:
         with use_summary_writer.as_default():
