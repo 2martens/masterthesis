@@ -255,6 +255,7 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
     
     annotation_file_train = f"{coco_path}/annotations/instances_train2014.json"
     cats_to_classes, _, _, _ = coco_utils.get_coco_category_maps(annotation_file_train)
+    max_nr_labels = -1
     
     for trajectory in trajectories:
         traj_image_paths, traj_instances = trajectory
@@ -269,16 +270,26 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
                     bbox[2],
                     bbox[3]
                 ])
+            
+            len_labels = len(labels)
+            if len_labels > max_nr_labels:
+                max_nr_labels = len_labels
     
             final_image_paths.append(image_path)
             final_labels.append(labels)
         
+    empty_label = [0, 0, 0, 0, 0]
+    for labels in final_labels:
+        len_labels = len(labels)
+        if len_labels < max_nr_labels:
+            labels += empty_label * (max_nr_labels - len_labels)
+        
     length_dataset = len(final_image_paths)
     
     path_dataset = tf.data.Dataset.from_tensor_slices(final_image_paths)
-    # label_dataset = tf.data.Dataset.from_tensor_slices(final_labels)
-    # dataset = tf.data.Dataset.zip((path_dataset, label_dataset))
-    dataset = path_dataset.apply(tf.data.experimental.shuffle_and_repeat(buffer_size=length_dataset, count=num_epochs))
+    label_dataset = tf.data.Dataset.from_tensor_slices(final_labels)
+    dataset = tf.data.Dataset.zip((path_dataset, label_dataset))
+    dataset = dataset.repeat(num_epochs)
     dataset = dataset.batch(batch_size=batch_size)
     dataset = dataset.map(_load_images_ssd_callback(resized_shape))
     dataset = dataset.prefetch(1)

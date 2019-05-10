@@ -196,7 +196,8 @@ def _ssd_val(args: argparse.Namespace) -> None:
         instances = pickle.load(file)
     
     scenenet_data, nr_digits = data.load_scenenet_val(file_names_photos, instances, args.coco_path,
-                                                      batch_size=batch_size, resized_shape=(image_size, image_size))
+                                                      batch_size=batch_size,
+                                                      resized_shape=(image_size, image_size))
     del file_names_photos, instances
     
     use_summary_writer = summary_ops_v2.create_file_writer(

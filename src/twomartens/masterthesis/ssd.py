@@ -174,9 +174,11 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
    
     # prepare filename
     filename = 'ssd_predictions'
+    label_filename = 'ssd_labels'
     if use_dropout:
         filename = f"dropout-{filename}"
     output_file = os.path.join(output_path, filename)
+    label_output_file = os.path.join(output_path, label_filename)
     
     # go through the data set
     counter = 0
@@ -184,7 +186,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
     
     from tensorflow.python.eager import context
     
-    for inputs in dataset:
+    for inputs, labels in dataset:
         decoded_predictions_batch = []
         if use_dropout:
             for _ in range(forward_passes_per_image):
@@ -200,14 +202,17 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
         if nr_digits is not None:
             counter_str = str(counter).zfill(nr_digits)
             filename = f"{output_file}-{counter_str}.npy"
+            label_filename = f"{label_output_file}-{counter_str}.npy"
         else:
             filename = f"{output_file}-{counter:d}.npy"
+            label_filename = f"{label_output_file}-{counter:d}.npy"
         
-        with open(filename, 'wb') as file:
+        with open(filename, 'wb') as file, open(label_filename, 'wb') as label_file:
             decoded_predictions_batch_np = np.array(decoded_predictions_batch)
             del decoded_predictions_batch
             np.save(file, decoded_predictions_batch_np, allow_pickle=False, fix_imports=False)
             del decoded_predictions_batch_np
+            np.save(label_file, labels, allow_pickle=False, fix_imports=False)
         
         counter += 1
         
