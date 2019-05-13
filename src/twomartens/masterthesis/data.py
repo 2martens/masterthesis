@@ -286,9 +286,6 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
         if len_labels < max_nr_labels:
             _labels.extend(empty_label * (max_nr_labels - len_labels))
         real_final_labels.append(_labels)
-        print(_labels)
-    
-    print(real_final_labels)
     
     length_dataset = len(final_image_paths)
     
