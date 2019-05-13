@@ -278,7 +278,7 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
             final_image_paths.append(image_path)
             final_labels.append(labels)
         
-    empty_label = [0, 0, 0, 0, 0]
+    empty_label = [[0, 0, 0, 0, 0]]
     real_final_labels = []
     for labels in final_labels:
         _labels = labels[:]
