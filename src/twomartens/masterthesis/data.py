@@ -279,15 +279,18 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
             final_labels.append(labels)
         
     empty_label = [0, 0, 0, 0, 0]
+    real_final_labels = []
     for labels in final_labels:
+        _labels = labels[:]
         len_labels = len(labels)
         if len_labels < max_nr_labels:
-            labels += empty_label * (max_nr_labels - len_labels)
+            _labels.extend(empty_label * (max_nr_labels - len_labels))
+        real_final_labels.append(_labels)
         
     length_dataset = len(final_image_paths)
     
     path_dataset = tf.data.Dataset.from_tensor_slices(final_image_paths)
-    label_dataset = tf.data.Dataset.from_tensor_slices(final_labels)
+    label_dataset = tf.data.Dataset.from_tensor_slices(real_final_labels)
     dataset = tf.data.Dataset.zip((path_dataset, label_dataset))
     dataset = dataset.repeat(num_epochs)
     dataset = dataset.batch(batch_size=batch_size)
