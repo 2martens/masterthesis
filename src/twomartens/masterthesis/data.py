@@ -315,12 +315,13 @@ def _load_images_ssd_callback(resized_shape: Sequence[int]) \
         callback function
     """
 
-    def _load_images_ssd(paths: Sequence[str]) -> Tuple[tf.Tensor]:
+    def _load_images_ssd(paths: Sequence[str], labels: Sequence[Sequence[int]]) -> Tuple[tf.Tensor]:
         """
         Callback function to load images for SSD.
         
         Args:
             paths: paths to the images
+            labels: labels for images
     
         Returns:
             loaded images
@@ -338,7 +339,7 @@ def _load_images_ssd_callback(resized_shape: Sequence[int]) \
         processed = tf.map_fn(_get_images, _images, dtype=tf.float32)
         processed_images = tf.reshape(processed, [-1, resized_shape[0], resized_shape[1], 3])
     
-        return processed_images
+        return processed_images, labels
     
     return _load_images_ssd
 
