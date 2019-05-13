@@ -303,8 +303,8 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
 
 
 def _load_images_ssd_callback(resized_shape: Sequence[int]) \
-        -> Callable[[Sequence[str]],
-                    Tuple[tf.Tensor]]:
+        -> Callable[[Sequence[str], Sequence[Sequence[int]]],
+                    Tuple[tf.Tensor, Sequence[Sequence[int]]]]:
     """
     Returns the callback function to load images for SSD.
 
@@ -315,7 +315,8 @@ def _load_images_ssd_callback(resized_shape: Sequence[int]) \
         callback function
     """
 
-    def _load_images_ssd(paths: Sequence[str], labels: Sequence[Sequence[int]]) -> Tuple[tf.Tensor]:
+    def _load_images_ssd(paths: Sequence[str],
+                         labels: Sequence[Sequence[int]]) -> Tuple[tf.Tensor, Sequence[Sequence[int]]]:
         """
         Callback function to load images for SSD.
         
