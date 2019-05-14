@@ -265,10 +265,12 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
                 bbox = instance['bbox']
                 labels.append([
                     cats_to_classes[instance['coco_id']],
-                    bbox[0],
-                    bbox[1],
-                    bbox[2],
-                    bbox[3]
+                    bbox[0],  # x min
+                    bbox[1],  # y min
+                    bbox[2],  # x max
+                    bbox[3],  # y max
+                    0.0,  # inverse factor of image resizing in x axis
+                    0.0   # inverse factor of image resizing in y axis
                 ])
             
             len_labels = len(labels)
@@ -278,7 +280,7 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
             final_image_paths.append(image_path)
             final_labels.append(labels)
         
-    empty_label = [[0, 0, 0, 0, 0]]
+    empty_label = [[0, 0, 0, 0, 0, 0.0, 0.0]]
     real_final_labels = []
     for labels in final_labels:
         _labels = labels[:]
@@ -328,19 +330,23 @@ def _load_images_ssd_callback(resized_shape: Sequence[int]) \
             loaded images
         """
         _images = tf.map_fn(lambda path: tf.read_file(path), paths)
+        image_labels = tf.stack([_images, labels], axis=1)
     
-        def _get_images(image_data: tf.Tensor) -> List[tf.Tensor]:
+        def _get_images(image_data: tf.Tensor,
+                        _labels: Sequence[int]) -> Tuple[tf.Tensor, Sequence[int]]:
             image = tf.image.decode_image(image_data, channels=3, dtype=tf.float32)
             image_shape = tf.shape(image)
+            _labels[:, 5] = tf.cast(image_shape[0], dtype=tf.float32) / resized_shape[0]
+            _labels[:, 6] = tf.cast(image_shape[1], dtype=tf.float32) / resized_shape[1]
             image = tf.reshape(image, [image_shape[0], image_shape[1], 3])
             image_resized = tf.image.resize_images(image, [resized_shape[0], resized_shape[1]])
             
-            return image_resized
+            return image_resized, _labels
     
-        processed = tf.map_fn(_get_images, _images, dtype=tf.float32)
-        processed_images = tf.reshape(processed, [-1, resized_shape[0], resized_shape[1], 3])
+        processed = tf.map_fn(_get_images, image_labels)
+        processed_images = tf.reshape(processed[:, 0], [-1, resized_shape[0], resized_shape[1], 3])
     
-        return processed_images, labels
+        return processed_images, processed[:, 1]
     
     return _load_images_ssd
 
