@@ -22,9 +22,6 @@ Functions:
 """
 import argparse
 
-import gc
-
-
 def main() -> None:
     """
     Provides command line interface.
