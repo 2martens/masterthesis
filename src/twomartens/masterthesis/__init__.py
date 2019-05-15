@@ -22,5 +22,6 @@ Subpackages:
     ``ssd_keras``: provides an implementation of SSD
     
 Modules:
+    ``data``: provides functionality to load data sets
     ``ssd``: provides functionality to use the SSD models
 """
