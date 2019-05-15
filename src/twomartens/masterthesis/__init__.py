@@ -24,6 +24,7 @@ Subpackages:
 Modules:
     ``data``: provides functionality to load data sets
     ``definitions``: contains mapper between COCO classes and WordNet IDs
+    ``evaluate``: provides functionality to evaluate networks
     ``main``: main entrance point of application
     ``ssd``: provides functionality to use the SSD models
 """
