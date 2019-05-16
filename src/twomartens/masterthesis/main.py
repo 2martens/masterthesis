@@ -247,6 +247,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
                                                                 cum_true_positives,
                                                                 cum_false_positives,
                                                                 ssd.N_CLASSES)
+    f1_scores = evaluate.get_f1_score(cum_precisions, cum_recalls, ssd.N_CLASSES)
     average_precisions = evaluate.get_mean_average_precisions(cum_precisions, cum_recalls, ssd.N_CLASSES)
     mean_average_precision = evaluate.get_mean_average_precision(average_precisions)
     
@@ -257,7 +258,8 @@ def _ssd_test(args: argparse.Namespace) -> None:
         "cumulative_false_positives": cum_false_positives,
         "cumulative_precisions": cum_precisions,
         "cumulative_recalls": cum_recalls,
-        "average precisions": average_precisions,
+        "f1_scores": f1_scores,
+        "mean_average_precisions": average_precisions,
         "mean_average_precision": mean_average_precision
     }
     
