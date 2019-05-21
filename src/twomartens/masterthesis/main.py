@@ -260,7 +260,8 @@ def _ssd_test(args: argparse.Namespace) -> None:
         "cumulative_recalls": cum_recalls,
         "f1_scores": f1_scores,
         "mean_average_precisions": average_precisions,
-        "mean_average_precision": mean_average_precision
+        "mean_average_precision": mean_average_precision,
+        "open_set_error": open_set_error
     }
     
     with open(result_file, "wb") as file:
