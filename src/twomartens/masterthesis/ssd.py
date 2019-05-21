@@ -40,7 +40,6 @@ import time
 from typing import Dict
 from typing import Optional
 
-import math
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.ops import summary_ops_v2
