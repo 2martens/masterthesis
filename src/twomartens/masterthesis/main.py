@@ -239,9 +239,9 @@ def _ssd_test(args: argparse.Namespace) -> None:
     
     # compute matches between predictions and ground truth
     true_positives, false_positives, \
-        cum_true_positives, cum_false_positives = evaluate.match_predictions(predictions_per_class,
-                                                                             labels,
-                                                                             ssd.N_CLASSES)
+        cum_true_positives, cum_false_positives, open_set_error = evaluate.match_predictions(predictions_per_class,
+                                                                                             labels,
+                                                                                             ssd.N_CLASSES)
     del labels
     cum_precisions, cum_recalls = evaluate.get_precision_recall(number_gt_per_class,
                                                                 cum_true_positives,
