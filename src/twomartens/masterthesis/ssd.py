@@ -141,7 +141,7 @@ def predict(dataset: tf.data.Dataset,
     checkpointables = {}
     if use_dropout:
         checkpointables.update({
-            'ssd': DropoutSSD(mode='inference_fast', weights_path=weights_path)
+            'ssd': DropoutSSD(mode='training', weights_path=weights_path)
         })
     else:
         checkpointables.update({
