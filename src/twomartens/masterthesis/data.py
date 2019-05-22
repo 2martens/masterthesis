@@ -330,7 +330,6 @@ def _load_images_ssd_callback(resized_shape: Sequence[int]) \
             loaded images
         """
         _images = tf.map_fn(lambda path: tf.read_file(path), paths)
-        image_labels = tf.stack([_images, labels], axis=1)
     
         def _get_images(image_data: tf.Tensor,
                         _labels: Sequence[int]) -> Tuple[tf.Tensor, Sequence[int]]:
@@ -343,7 +342,7 @@ def _load_images_ssd_callback(resized_shape: Sequence[int]) \
             
             return image_resized, _labels
     
-        processed = tf.map_fn(_get_images, image_labels)
+        processed = tf.map_fn(_get_images, (_images, labels))
         processed_images = tf.reshape(processed[:, 0], [-1, resized_shape[0], resized_shape[1], 3])
     
         return processed_images, processed[:, 1]
