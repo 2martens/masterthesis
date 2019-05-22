@@ -264,11 +264,11 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
             for instance in frame_instances:
                 bbox = instance['bbox']
                 labels.append([
-                    cats_to_classes[instance['coco_id']],
-                    bbox[0],  # x min
-                    bbox[1],  # y min
-                    bbox[2],  # x max
-                    bbox[3],  # y max
+                    float(cats_to_classes[instance['coco_id']]),
+                    float(bbox[0]),  # x min
+                    float(bbox[1]),  # y min
+                    float(bbox[2]),  # x max
+                    float(bbox[3]),  # y max
                 ])
             
             len_labels = len(labels)
@@ -278,7 +278,7 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
             final_image_paths.append(image_path)
             final_labels.append(labels)
         
-    empty_label = [[-1, 0, 0, 0, 0]]
+    empty_label = [[-1.0, 0.0, 0.0, 0.0, 0.0]]
     real_final_labels = []
     for labels in final_labels:
         _labels = labels[:]
