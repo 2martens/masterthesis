@@ -269,8 +269,6 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
                     bbox[1],  # y min
                     bbox[2],  # x max
                     bbox[3],  # y max
-                    0.0,  # inverse factor of image resizing in x axis
-                    0.0   # inverse factor of image resizing in y axis
                 ])
             
             len_labels = len(labels)
@@ -280,7 +278,7 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
             final_image_paths.append(image_path)
             final_labels.append(labels)
         
-    empty_label = [[-1, 0, 0, 0, 0, 0.0, 0.0]]
+    empty_label = [[-1, 0, 0, 0, 0]]
     real_final_labels = []
     for labels in final_labels:
         _labels = labels[:]
@@ -335,8 +333,11 @@ def _load_images_ssd_callback(resized_shape: Sequence[int]) \
             image_data, _labels = data
             image = tf.image.decode_image(image_data, channels=3, dtype=tf.float32)
             image_shape = tf.shape(image)
-            _labels[:, 5] = tf.cast(image_shape[0], dtype=tf.float32) / resized_shape[0]
-            _labels[:, 6] = tf.cast(image_shape[1], dtype=tf.float32) / resized_shape[1]
+            x_reverse = tf.expand_dims(tf.cast(image_shape[0], dtype=tf.float32) / resized_shape[0],
+                                       axis=0)
+            y_reverse = tf.expand_dims(tf.cast(image_shape[1], dtype=tf.float32) / resized_shape[1],
+                                       axis=0)
+            _labels = tf.concat([_labels, x_reverse, y_reverse], axis=1)
             image = tf.reshape(image, [image_shape[0], image_shape[1], 3])
             image_resized = tf.image.resize_images(image, [resized_shape[0], resized_shape[1]])
             
