@@ -201,6 +201,8 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
                     detections[i].extend(batch_item)
             
             observations = np.asarray(_get_observations(detections))
+            del detections
+            
             observations = ssd_output_decoder.decode_detections_fast(observations)
             result_transformed = []
             for i in range(batch_size):
