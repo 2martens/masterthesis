@@ -37,16 +37,18 @@ Functions:
 import os
 import pickle
 import time
-from typing import Dict
+from typing import Dict, List, Sequence
 from typing import Optional
 
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.ops import summary_ops_v2
 
+from twomartens.masterthesis.ssd_keras.bounding_box_utils import bounding_box_utils
 from twomartens.masterthesis.ssd_keras.keras_loss_function import keras_ssd_loss
 from twomartens.masterthesis.ssd_keras.models import keras_ssd300
 from twomartens.masterthesis.ssd_keras.models import keras_ssd300_dropout
+from twomartens.masterthesis.ssd_keras.ssd_encoder_decoder import ssd_output_decoder
 
 K = tf.keras.backend
 tfe = tf.contrib.eager
@@ -187,26 +189,34 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
     from tensorflow.python.eager import context
     
     for inputs, labels in dataset:
-        decoded_predictions_batch = []
         if use_dropout:
+            detections = None
+            batch_size = None
             for _ in range(forward_passes_per_image):
                 result = np.array(ssd(inputs))
-                result_filtered = []
-                # iterate over result of images
-                for i in range(result.shape[0]):
-                    # apply inverse transformations to predicted bounding box coordinates
-                    # filter out dummy all-zero results
-                    x_reverse = labels[i, 0, 5]
-                    y_reverse = labels[i, 0, 6]
-                    filtered = result[i][result[i, :, 0] != 0]
-                    filtered[:, 2] *= x_reverse
-                    filtered[:, 4] *= x_reverse
-                    filtered[:, 3] *= y_reverse
-                    filtered[:, 5] *= y_reverse
-                    result_filtered.append(filtered)
-                result = result_filtered
-                decoded_predictions_batch.append(result)
-                del result
+                if batch_size is None:
+                    batch_size = result.shape[0]
+                if detections is None:
+                    detections = [[] for _ in range(batch_size)]
+                
+                for i in range(batch_size):
+                    batch_item = result[i]
+                    detections[i].extend(batch_item)
+            
+            observations = np.asarray(_get_observations(detections))
+            observations = ssd_output_decoder.decode_detections_fast(observations)
+            result_transformed = []
+            for i in range(batch_size):
+                # apply inverse transformations to predicted bounding box coordinates
+                x_reverse = labels[i, 0, 5]
+                y_reverse = labels[i, 0, 6]
+                filtered = observations[i]
+                filtered[:, 2] *= x_reverse
+                filtered[:, 4] *= x_reverse
+                filtered[:, 3] *= y_reverse
+                filtered[:, 5] *= y_reverse
+                result_transformed.append(filtered)
+            decoded_predictions_batch = result_transformed
         else:
             result = np.array(ssd(inputs))
             result_filtered = []
@@ -222,9 +232,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
                 filtered[:, 3] *= y_reverse
                 filtered[:, 5] *= y_reverse
                 result_filtered.append(filtered)
-            result = result_filtered
-            decoded_predictions_batch.append(result)
-            del result
+            decoded_predictions_batch = result_filtered
         
         # save predictions batch-wise to prevent memory problems
         if nr_digits is not None:
@@ -254,6 +262,51 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
     }
 
     return outputs
+
+
+def _get_observations(detections: Sequence[Sequence[np.ndarray]]) -> List[List[np.ndarray]]:
+    batch_size = len(detections)
+    observations = [[] for _ in range(batch_size)]
+    
+    # iterate over images
+    for i in range(batch_size):
+        detections_image = np.asarray(detections[i])
+        overlaps = bounding_box_utils.iou(detections_image[:, -12:-8],
+                                          detections_image[:, -12:-8],
+                                          mode="outer_product",
+                                          border_pixels="include")
+        image_observations = []
+        used_boxes = set()
+        for j in range(overlaps.shape[0]):
+            # check if box is already in existing observation
+            if j in used_boxes:
+                continue
+            
+            box_overlaps = overlaps[j]
+            overlap_detections = np.nonzero(box_overlaps >= 0.95)
+            observation_set = set(overlap_detections)
+            for k in overlap_detections:
+                # check if box was already removed from observation, then skip
+                if k not in observation_set:
+                    continue
+                
+                # check if other found detections are also overlapping with this
+                # detection
+                second_overlaps = overlaps[k]
+                second_detections = set(np.nonzero(second_overlaps >= 0.95))
+                difference = observation_set - second_detections
+                observation_set = observation_set - difference
+            
+            used_boxes.update(observation_set)
+            image_observations.append(observation_set)
+        
+        for observation in image_observations:
+            observation_detections = detections_image[np.asarray(list(observation))]
+            # average over class probabilities
+            observation_mean = np.mean(observation_detections, axis=0)
+            observations[i].append(observation_mean)
+    
+    return observations
 
 
 def train(dataset: tf.data.Dataset,

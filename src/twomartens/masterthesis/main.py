@@ -222,8 +222,6 @@ def _ssd_test(args: argparse.Namespace) -> None:
         with open(filename, "rb") as file:
             # get predictions per batch
             _predictions = pickle.load(file)
-            # select only forward pass
-            _predictions = _predictions[0]
             predictions.extend(_predictions)
     del _predictions
     
