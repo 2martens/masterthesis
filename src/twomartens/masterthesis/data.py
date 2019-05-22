@@ -348,9 +348,9 @@ def _load_images_ssd_callback(resized_shape: Sequence[int]) \
             return image_resized, _labels
     
         processed = tf.map_fn(_get_images, (_images, labels))
-        processed_images = tf.reshape(processed[:, 0], [-1, resized_shape[0], resized_shape[1], 3])
+        processed_images = tf.reshape(processed[0], [-1, resized_shape[0], resized_shape[1], 3])
     
-        return processed_images, processed[:, 1]
+        return processed_images, processed[1]
     
     return _load_images_ssd
 
