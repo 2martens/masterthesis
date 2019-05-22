@@ -331,8 +331,8 @@ def _load_images_ssd_callback(resized_shape: Sequence[int]) \
         """
         _images = tf.map_fn(lambda path: tf.read_file(path), paths)
     
-        def _get_images(image_data: tf.Tensor,
-                        _labels: Sequence[int]) -> Tuple[tf.Tensor, Sequence[int]]:
+        def _get_images(data: tf.Tensor) -> Tuple[tf.Tensor, Sequence[int]]:
+            image_data, _labels = data
             image = tf.image.decode_image(image_data, channels=3, dtype=tf.float32)
             image_shape = tf.shape(image)
             _labels[:, 5] = tf.cast(image_shape[0], dtype=tf.float32) / resized_shape[0]
