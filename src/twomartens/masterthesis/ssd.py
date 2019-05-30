@@ -191,6 +191,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
             batch_size = None
             for _ in range(forward_passes_per_image):
                 result = np.array(ssd(inputs))
+                print(f"shape result: {result.shape}")
                 if batch_size is None:
                     batch_size = result.shape[0]
                 if detections is None:
@@ -198,6 +199,7 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
                 
                 for i in range(batch_size):
                     batch_item = result[i]
+                    print(f"batch item: {batch_item.shape}")
                     detections[i].extend(batch_item)
             
             observations = np.asarray(_get_observations(detections))
