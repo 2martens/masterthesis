@@ -203,7 +203,9 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
             observations = np.asarray(_get_observations(detections))
             del detections
             
-            observations = ssd_output_decoder.decode_detections_fast(observations)
+            observations = ssd_output_decoder.decode_detections_fast(observations,
+                                                                     img_height=IMAGE_SIZE[0],
+                                                                     img_width=IMAGE_SIZE[1])
             result_transformed = []
             for i in range(batch_size):
                 # apply inverse transformations to predicted bounding box coordinates
