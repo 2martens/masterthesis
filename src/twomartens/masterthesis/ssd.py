@@ -265,6 +265,7 @@ def _get_observations(detections: Sequence[Sequence[np.ndarray]]) -> List[List[n
     
     # iterate over images
     for i in range(batch_size):
+        print(f"{i}th batch element")
         detections_image = np.asarray(detections[i])
         overlaps = bounding_box_utils.iou(detections_image[:, -12:-8],
                                           detections_image[:, -12:-8],
