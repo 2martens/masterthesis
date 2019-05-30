@@ -262,11 +262,13 @@ def _predict_one_epoch(dataset: tf.data.Dataset,
 def _get_observations(detections: Sequence[Sequence[np.ndarray]]) -> List[List[np.ndarray]]:
     batch_size = len(detections)
     observations = [[] for _ in range(batch_size)]
+    print(f"batch size: {batch_size}")
     
     # iterate over images
     for i in range(batch_size):
         print(f"{i}th batch element")
         detections_image = np.asarray(detections[i])
+        print(detections_image.shape)
         overlaps = bounding_box_utils.iou(detections_image[:, -12:-8],
                                           detections_image[:, -12:-8],
                                           mode="outer_product",
