@@ -51,8 +51,7 @@ def get_number_gt_per_class(labels: Sequence[Sequence[Sequence[int]]],
         
         # iterate over boxes in image
         for j in range(boxes.shape[0]):
-            class_id = boxes[j, 0]
-            print(class_id)
+            class_id = int(boxes[j, 0])
             number_gt_per_class[class_id] += 1
     
     return number_gt_per_class
