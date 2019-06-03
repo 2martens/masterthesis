@@ -206,7 +206,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
     for filename in files:
         with open(filename, "rb") as file:
             # get labels per batch
-            _labels = pickle.load(file)
+            _labels = np.asarray(pickle.load(file))
             # exclude padded label entries
             real_labels = np.nonzero(_labels[:, :, 0] != -1)
             labels.extend(_labels[_labels[:, :, 0] != -1])
