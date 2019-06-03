@@ -181,6 +181,7 @@ def _test(args: argparse.Namespace) -> None:
 
 def _ssd_test(args: argparse.Namespace) -> None:
     import glob
+    import os
     import pickle
 
     import numpy as np
@@ -199,6 +200,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
     label_file = f"{output_path}/labels.bin"
     predictions_file = f"{output_path}/predictions.bin"
     predictions_per_class_file = f"{output_path}/predictions_class.bin"
+    os.makedirs(evaluation_path, exist_ok=True)
     
     # retrieve labels and un-batch them
     files = glob.glob(f"{output_path}/*ssd_labels*")
