@@ -209,7 +209,9 @@ def _ssd_test(args: argparse.Namespace) -> None:
             _labels = np.asarray(pickle.load(file))
             # exclude padded label entries
             print(_labels.shape)
-            labels.extend(_labels[_labels[:, :, 0] != -1])
+            cleaned_labels = _labels[_labels[:, :, 0] != -1]
+            print(cleaned_labels.shape)
+            labels.extend(cleaned_labels)
     # store labels for later use
     with open(label_file, "wb") as file:
         pickle.dump(labels, file)
