@@ -48,7 +48,6 @@ def get_number_gt_per_class(labels: Sequence[Sequence[Sequence[int]]],
     # iterate over images
     for i in label_range:
         boxes = np.asarray(labels[i])
-        print(boxes)
         
         # iterate over boxes in image
         for j in range(boxes.shape[0]):

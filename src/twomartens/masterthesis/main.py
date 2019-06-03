@@ -208,10 +208,10 @@ def _ssd_test(args: argparse.Namespace) -> None:
             # get labels per batch
             _labels = np.asarray(pickle.load(file))
             # exclude padded label entries
-            print(_labels.shape)
-            cleaned_labels = _labels[_labels[:, :, 0] != -1]
-            print(cleaned_labels.shape)
-            labels.extend(cleaned_labels)
+            for i in range(_labels.shape[0]):
+                image_labels = _labels[i]
+                image_labels = image_labels[image_labels[:, 0] != -1]
+                labels.append(image_labels)
     # store labels for later use
     with open(label_file, "wb") as file:
         pickle.dump(labels, file)
