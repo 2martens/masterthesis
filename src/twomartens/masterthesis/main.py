@@ -290,7 +290,7 @@ def _ssd_val(args: argparse.Namespace) -> None:
     
     batch_size = 16
     image_size = 300
-    forward_passes_per_image = 42
+    forward_passes_per_image = 10
     use_dropout = False if args.network == "ssd" else True
     
     weights_file = f"{args.weights_path}/VGG_coco_SSD_300x300_iter_400000.h5"
