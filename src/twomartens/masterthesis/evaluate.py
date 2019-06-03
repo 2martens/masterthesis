@@ -253,6 +253,8 @@ def get_precision_recall(number_gt_per_class: np.ndarray,
     """
     cumulative_precisions = [[]]
     cumulative_recalls = [[]]
+    print(len(cumulative_true_positives))
+    print(cumulative_true_positives)
 
     # Iterate over all classes.
     for class_id in range(1, nr_classes + 1):
