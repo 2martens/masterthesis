@@ -360,7 +360,8 @@ def _prepare(args: argparse.Namespace) -> None:
     
     from twomartens.masterthesis import data
     
-    file_names_photos, file_names_instances, instances = data.prepare_scenenet_val(args.scenenet_path, args.protobuf_path)
+    file_names_photos, file_names_instances, instances = data.prepare_scenenet_val(args.scenenet_path,
+                                                                                   args.protobuf_path)
     with open(f"{args.ground_truth_path}/photo_paths.bin", "wb") as file:
         pickle.dump(file_names_photos, file)
     with open(f"{args.ground_truth_path}/instance_paths.bin", "wb") as file:
