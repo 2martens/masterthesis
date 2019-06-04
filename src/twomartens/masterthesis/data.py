@@ -362,8 +362,8 @@ def prepare_scenenet_val(data_path: str, protobuf_path: str) -> Tuple[List[List[
     Prepares the SceneNet RGB-D data and returns it in Python format.
     
     Args:
-        data_path: path to the SceneNet RGB-D val data set
-        protobuf_path: path to the SceneNet RGB-D val protobuf
+        data_path: path to the SceneNet RGB-D data set
+        protobuf_path: path to the SceneNet RGB-D protobuf
     Returns:
         file names photos, file names instances, instances
     """

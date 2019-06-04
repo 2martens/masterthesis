@@ -61,8 +61,8 @@ def main() -> None:
 
 
 def _build_prepare(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("scenenet_path", type=str, help="the path to the SceneNet RGB-D validation data set")
-    parser.add_argument("protobuf_path", type=str, help="the path to the SceneNet RGB-D validation protobuf file")
+    parser.add_argument("scenenet_path", type=str, help="the path to the SceneNet RGB-D data set")
+    parser.add_argument("protobuf_path", type=str, help="the path to the SceneNet RGB-D protobuf file")
     parser.add_argument("ground_truth_path", type=str, help="the path where the ground truth should be stored")
     
 
