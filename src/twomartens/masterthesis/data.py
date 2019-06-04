@@ -416,6 +416,7 @@ def prepare_scenenet_val(data_path: str, protobuf_path: str) -> Tuple[List[List[
                 if coordinates is None:  # the current instance was not in this frame
                     continue
                 else:
+                    print(coordinates)
                     coordinates = coordinates[0]  # extract the coords of the one object
                 
                 x = coordinates[0]
