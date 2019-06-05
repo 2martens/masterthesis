@@ -72,12 +72,23 @@ def _build_train(parser: argparse.ArgumentParser) -> None:
     sub_parsers = parser.add_subparsers(dest="network")
     sub_parsers.required = True
     
+    ssd_parser = sub_parsers.add_parser("ssd", help="SSD")
     # ssd_bayesian_parser = sub_parsers.add_parser("bayesian_ssd", help="SSD with dropout layers")
     auto_encoder_parser = sub_parsers.add_parser("auto_encoder", help="Auto-encoder network")
     
     # build sub parsers
+    _build_ssd_train(ssd_parser)
     # _build_bayesian_ssd(ssd_bayesian_parser)
     _build_auto_encoder_train(auto_encoder_parser)
+ 
+
+def _build_ssd_train(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--coco_path", type=str, help="the path to the COCO data set")
+    parser.add_argument("--weights_path", type=str, help="path to the weights directory")
+    parser.add_argument("--ground_truth_path", type=str, help="path to the prepared ground truth directory")
+    parser.add_argument("--summary_path", type=str, help="path to the summaries directory")
+    parser.add_argument("num_epochs", type=int, help="the number of epochs to train", default=80)
+    parser.add_argument("iteration", type=int, help="the training iteration")
     
 
 def _build_auto_encoder_train(parser: argparse.ArgumentParser) -> None:

@@ -227,11 +227,11 @@ def _load_images_callback(resized_shape: Sequence[int]) -> Callable[
     return _load_images
 
 
-def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
-                      instances: Sequence[Sequence[Sequence[dict]]],
-                      coco_path: str,
-                      num_epochs: int = 1, batch_size: int = 32,
-                      resized_shape: Sequence[int] = (256, 256)) -> Tuple[tf.data.Dataset, int]:
+def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
+                       instances: Sequence[Sequence[Sequence[dict]]],
+                       coco_path: str,
+                       num_epochs: int = 1, batch_size: int = 32,
+                       resized_shape: Sequence[int] = (256, 256)) -> Tuple[tf.data.Dataset, int]:
     """
     Loads the SceneNet RGB-D data and returns a data set.
     
@@ -244,7 +244,7 @@ def load_scenenet_val(photo_paths: Sequence[Sequence[str]],
         resized_shape: shape of input images to SSD
 
     Returns:
-        scenenet val data set
+        scenenet data set
         number of digits required to print largest batch number
     """
     trajectories = zip(photo_paths, instances)

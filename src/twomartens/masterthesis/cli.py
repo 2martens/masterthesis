@@ -28,8 +28,56 @@ import argparse
 
 
 def train(args: argparse.Namespace) -> None:
-    if args.network == "auto_encoder":
+    if args.network == "ssd" or args.network == "bayesian_ssd":
+        _ssd_train(args)
+    elif args.network == "auto_encoder":
         _auto_encoder_train(args)
+
+
+def _ssd_train(args: argparse.Namespace) -> None:
+    import os
+    import pickle
+    
+    import tensorflow as tf
+    from tensorflow.python.ops import summary_ops_v2
+
+    from twomartens.masterthesis import data
+    from twomartens.masterthesis import ssd
+    
+    tf.enable_eager_execution()
+    
+    batch_size = 16
+    image_size = 300
+    use_dropout = False if args.network == "ssd" else True
+    
+    pre_trained_weights_file = f"{args.weights_path}/VGG_coco_SSD_300x300_iter_400000.h5"
+    weights_path = f"{args.weights_path}/train/{args.network}/"
+    os.makedirs(weights_path, exist_ok=True)
+    
+    # load prepared ground truth
+    with open(f"{args.ground_truth_path}/photo_paths.bin", "rb") as file:
+        file_names_photos = pickle.load(file)
+    with open(f"{args.ground_truth_path}/instances.bin", "rb") as file:
+        instances = pickle.load(file)
+    
+    scenenet_data, nr_digits = data.load_scenenet_data(file_names_photos, instances, args.coco_path,
+                                                       batch_size=batch_size,
+                                                       resized_shape=(image_size, image_size))
+    del file_names_photos, instances
+
+    use_summary_writer = summary_ops_v2.create_file_writer(
+        f"{args.summary_path}/val/{args.network}/{args.iteration}"
+    )
+    
+    if args.debug:
+        with use_summary_writer.as_default():
+            ssd.train(scenenet_data, args.iteration, use_dropout, weights_prefix=weights_path,
+                      weights_path=pre_trained_weights_file, batch_size=batch_size,
+                      nr_epochs=args.num_epochs)
+    else:
+        ssd.train(scenenet_data, args.iteration, use_dropout, weights_prefix=weights_path,
+                  weights_path=pre_trained_weights_file, batch_size=batch_size,
+                  nr_epochs=args.num_epochs)
 
 
 def _auto_encoder_train(args: argparse.Namespace) -> None:
@@ -197,9 +245,9 @@ def _ssd_val(args: argparse.Namespace) -> None:
     with open(f"{args.ground_truth_path}/instances.bin", "rb") as file:
         instances = pickle.load(file)
     
-    scenenet_data, nr_digits = data.load_scenenet_val(file_names_photos, instances, args.coco_path,
-                                                      batch_size=batch_size,
-                                                      resized_shape=(image_size, image_size))
+    scenenet_data, nr_digits = data.load_scenenet_data(file_names_photos, instances, args.coco_path,
+                                                       batch_size=batch_size,
+                                                       resized_shape=(image_size, image_size))
     del file_names_photos, instances
     
     use_summary_writer = summary_ops_v2.create_file_writer(
