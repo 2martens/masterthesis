@@ -444,7 +444,8 @@ def _train_one_epoch(epoch: int,
                      ssd: tf.keras.Model,
                      ssd_optimizer: tf.train.Optimizer,
                      global_step: tf.Variable,
-                     epoch_var: tf.Variable) -> Dict[str, float]:
+                     epoch_var: tf.Variable,
+                     learning_rate_var: tf.Variable) -> Dict[str, float]:
     
     with summary_ops_v2.always_record_summaries():
         epoch_var.assign(epoch)
