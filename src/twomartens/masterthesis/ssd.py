@@ -49,6 +49,7 @@ from twomartens.masterthesis.ssd_keras.keras_loss_function import keras_ssd_loss
 from twomartens.masterthesis.ssd_keras.models import keras_ssd300
 from twomartens.masterthesis.ssd_keras.models import keras_ssd300_dropout
 from twomartens.masterthesis.ssd_keras.ssd_encoder_decoder import ssd_output_decoder
+from twomartens.masterthesis.ssd_keras.ssd_encoder_decoder import ssd_input_encoder
 
 K = tf.keras.backend
 tfe = tf.contrib.eager
@@ -72,9 +73,11 @@ class SSD:
     """
     
     def __init__(self, mode: str, weights_path: Optional[str] = None) -> None:
-        self._model = keras_ssd300.ssd_300(image_size=IMAGE_SIZE, n_classes=N_CLASSES,
-                                           mode=mode, iou_threshold=IOU_THRESHOLD, top_k=TOP_K,
-                                           scales=[0.07, 0.15, 0.33, 0.51, 0.69, 0.87, 1.05])
+        self._model, self.predictor_sizes = \
+            keras_ssd300.ssd_300(image_size=IMAGE_SIZE, n_classes=N_CLASSES,
+                                 mode=mode, iou_threshold=IOU_THRESHOLD, top_k=TOP_K,
+                                 scales=[0.07, 0.15, 0.33, 0.51, 0.69, 0.87, 1.05],
+                                 return_predictor_sizes=True)
         self.mode = mode
         
         # load existing weights
@@ -107,10 +110,14 @@ class DropoutSSD:
     """
     
     def __init__(self, mode: str, weights_path: Optional[str] = None) -> None:
-        self._model = keras_ssd300_dropout.ssd_300_dropout(image_size=IMAGE_SIZE, n_classes=N_CLASSES,
-                                                           dropout_rate=DROPOUT_RATE, mode=mode,
-                                                           iou_threshold=IOU_THRESHOLD, top_k=TOP_K,
-                                                           scales=[0.07, 0.15, 0.33, 0.51, 0.69, 0.87, 1.05])
+        self._model, self.predictor_sizes = \
+            keras_ssd300_dropout.ssd_300_dropout(image_size=IMAGE_SIZE,
+                                                 n_classes=N_CLASSES,
+                                                 dropout_rate=DROPOUT_RATE, mode=mode,
+                                                 iou_threshold=IOU_THRESHOLD,
+                                                 top_k=TOP_K,
+                                                 scales=[0.07, 0.15, 0.33, 0.51, 0.69, 0.87, 1.05],
+                                                 return_predictor_sizes=True)
         self.mode = mode
 
         # load existing weights
@@ -391,6 +398,10 @@ def train(dataset: tf.data.Dataset,
     latest_checkpoint = tf.train.latest_checkpoint(checkpoint_dir)
     checkpoint = tf.train.Checkpoint(**checkpointables)
     checkpoint.restore(latest_checkpoint)
+
+    # input encoder
+    input_encoder = ssd_input_encoder.SSDInputEncoder(IMAGE_SIZE[0], IMAGE_SIZE[1],
+                                                      N_CLASSES, checkpointables['ssd'].predictor_sizes)
     
     def _get_last_epoch(epoch_var: tf.Variable, **kwargs) -> int:
         return int(epoch_var)
@@ -406,7 +417,7 @@ def train(dataset: tf.data.Dataset,
     
     for epoch in range(nr_epochs - previous_epochs):
         _epoch = epoch + previous_epochs
-        outputs = _train_one_epoch(_epoch, dataset, **checkpointables)
+        outputs = _train_one_epoch(_epoch, dataset, input_encoder, **checkpointables)
         
         if verbose:
             print((
@@ -427,6 +438,7 @@ def train(dataset: tf.data.Dataset,
 
 def _train_one_epoch(epoch: int,
                      dataset: tf.data.Dataset,
+                     input_encoder: ssd_input_encoder.SSDInputEncoder,
                      ssd: tf.keras.Model,
                      ssd_optimizer: tf.train.Optimizer,
                      global_step: tf.Variable,
@@ -441,10 +453,11 @@ def _train_one_epoch(epoch: int,
         
         # go through data set
         for x, y in dataset:
+            encoded_ground_truth = input_encoder(y)
             ssd_train_loss = _train_ssd_step(ssd=ssd,
                                              optimizer=ssd_optimizer,
                                              inputs=x,
-                                             ground_truth=y,
+                                             ground_truth=encoded_ground_truth,
                                              global_step=global_step)
             ssd_loss_avg(ssd_train_loss)
             global_step.assign_add(1)
