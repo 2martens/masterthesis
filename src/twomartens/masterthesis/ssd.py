@@ -73,7 +73,7 @@ class SSD:
     """
     
     def __init__(self, mode: str, weights_path: Optional[str] = None) -> None:
-        self._model, self.predictor_sizes = \
+        self.model, self.predictor_sizes = \
             keras_ssd300.ssd_300(image_size=IMAGE_SIZE, n_classes=N_CLASSES,
                                  mode=mode, iou_threshold=IOU_THRESHOLD, top_k=TOP_K,
                                  scales=[0.07, 0.15, 0.33, 0.51, 0.69, 0.87, 1.05],
@@ -82,7 +82,7 @@ class SSD:
         
         # load existing weights
         if weights_path is not None:
-            self._model.load_weights(weights_path, by_name=True)
+            self.model.load_weights(weights_path, by_name=True)
         
         if mode == "training":
             # set non-classifier layers to non-trainable
@@ -92,12 +92,12 @@ class SSD:
                                 'conv7_2_mbox_conf',
                                 'conv8_2_mbox_conf',
                                 'conv9_2_mbox_conf']
-            for layer in self._model.layers:
+            for layer in self.model.layers:
                 if layer.name not in classifier_names:
                     layer.trainable = False
     
     def __call__(self, inputs: tf.Tensor, *args, **kwargs) -> tf.Tensor:
-        return self._model(inputs)
+        return self.model(inputs)
 
 
 class DropoutSSD:
@@ -110,7 +110,7 @@ class DropoutSSD:
     """
     
     def __init__(self, mode: str, weights_path: Optional[str] = None) -> None:
-        self._model, self.predictor_sizes = \
+        self.model, self.predictor_sizes = \
             keras_ssd300_dropout.ssd_300_dropout(image_size=IMAGE_SIZE,
                                                  n_classes=N_CLASSES,
                                                  dropout_rate=DROPOUT_RATE, mode=mode,
@@ -122,7 +122,7 @@ class DropoutSSD:
 
         # load existing weights
         if weights_path is not None:
-            self._model.load_weights(weights_path, by_name=True)
+            self.model.load_weights(weights_path, by_name=True)
 
         if mode == "training":
             # set non-classifier layers to non-trainable
@@ -132,12 +132,12 @@ class DropoutSSD:
                                 'conv7_2_mbox_conf',
                                 'conv8_2_mbox_conf',
                                 'conv9_2_mbox_conf']
-            for layer in self._model.layers:
+            for layer in self.model.layers:
                 if layer.name not in classifier_names:
                     layer.trainable = False
     
     def __call__(self, inputs: tf.Tensor, *args, **kwargs) -> tf.Tensor:
-        return self._model(inputs)
+        return self.model(inputs)
     
     
 def predict(dataset: tf.data.Dataset,
@@ -374,13 +374,13 @@ def train(dataset: tf.data.Dataset,
     }
     # model
     if use_dropout:
-        checkpointables.update({
-            'ssd': DropoutSSD(mode='training', weights_path=weights_path)
-        })
+        ssd = DropoutSSD(mode='training', weights_path=weights_path)
     else:
-        checkpointables.update({
-            'ssd': SSD(mode='training', weights_path=weights_path)
-        })
+        ssd = SSD(mode='training', weights_path=weights_path)
+    
+    checkpointables.update({
+        'ssd': ssd.model
+    })
     
     checkpointables.update({
         # optimizer
@@ -398,10 +398,12 @@ def train(dataset: tf.data.Dataset,
     latest_checkpoint = tf.train.latest_checkpoint(checkpoint_dir)
     checkpoint = tf.train.Checkpoint(**checkpointables)
     checkpoint.restore(latest_checkpoint)
+    # update model inside SSD object with version from checkpoint
+    ssd.model = checkpointables['ssd']
 
     # input encoder
     input_encoder = ssd_input_encoder.SSDInputEncoder(IMAGE_SIZE[0], IMAGE_SIZE[1],
-                                                      N_CLASSES, checkpointables['ssd'].predictor_sizes)
+                                                      N_CLASSES, ssd.predictor_sizes)
     
     def _get_last_epoch(epoch_var: tf.Variable, **kwargs) -> int:
         return int(epoch_var)
