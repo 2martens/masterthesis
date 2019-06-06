@@ -34,6 +34,7 @@ Functions:
     predict(...): runs trained SSD/DropoutSSD on a given data set
     train(...): trains the SSD/DropoutSSD on a given data set
 """
+import math
 import os
 import pickle
 import time
@@ -341,6 +342,7 @@ def _get_observations(detections: Sequence[Sequence[np.ndarray]]) -> List[List[n
 def train(dataset: tf.data.Dataset,
           iteration: int,
           use_dropout: bool,
+          length_dataset: int,
           weights_prefix: str,
           weights_path: Optional[str] = None,
           verbose: Optional[bool] = False,
@@ -360,6 +362,7 @@ def train(dataset: tf.data.Dataset,
         dataset: the training data set
         iteration: identifier for current training run
         use_dropout: if True, the DropoutSSD will be used
+        length_dataset: specifies number of images in data set
         weights_prefix: prefix for weights directory
         weights_path: path to the pre-trained SSD weights
         verbose: if True, progress is printed to the standard output
@@ -412,31 +415,14 @@ def train(dataset: tf.data.Dataset,
                                                                                [1.0, 2.0, 0.5],
                                                                                [1.0, 2.0, 0.5]])
     
-    def _get_last_epoch(epoch_var: tf.Variable, **kwargs) -> int:
-        return int(epoch_var)
-    
-    last_epoch = _get_last_epoch(**checkpointables)
-    previous_epochs = 0
-    if last_epoch != -1:
-        previous_epochs = last_epoch + 1
-
     with summary_ops_v2.always_record_summaries():
         summary_ops_v2.scalar(name='learning_rate', tensor=checkpointables['learning_rate_var'],
                               step=checkpointables['global_step'])
+        
+    nr_batches_per_epoch = int(math.ceil(length_dataset / float(batch_size)))
     
-    for epoch in range(nr_epochs - previous_epochs):
-        _epoch = epoch + previous_epochs
-        outputs = _train_one_epoch(_epoch, dataset, input_encoder, **checkpointables)
-        
-        if verbose:
-            print((
-                f"[{_epoch + 1:d}/{nr_epochs:d} - "
-                f"train time: {outputs['per_epoch_time']:.2f}, "
-                f"SSD loss: {outputs['ssd_loss']:.3f}, "
-            ))
-        
-        # save weights at end of epoch
-        checkpoint.save(checkpoint_prefix)
+    _train_epochs(nr_batches_per_epoch, nr_epochs, dataset, input_encoder,
+                  checkpoint, checkpoint_prefix, verbose=verbose, **checkpointables)
     
     if verbose:
         print("Training finished!... save model weights")
@@ -445,24 +431,34 @@ def train(dataset: tf.data.Dataset,
     checkpoint.save(checkpoint_prefix)
 
 
-def _train_one_epoch(epoch: int,
-                     dataset: tf.data.Dataset,
-                     input_encoder: ssd_input_encoder.SSDInputEncoder,
-                     ssd: tf.keras.Model,
-                     ssd_optimizer: tf.train.Optimizer,
-                     global_step: tf.Variable,
-                     epoch_var: tf.Variable,
-                     learning_rate_var: tf.Variable) -> Dict[str, float]:
+def _train_epochs(nr_batches_per_epoch: int,
+                  nr_epochs: int,
+                  dataset: tf.data.Dataset,
+                  input_encoder: ssd_input_encoder.SSDInputEncoder,
+                  checkpoint: tf.train.Checkpoint,
+                  checkpoint_prefix: str,
+                  ssd: tf.keras.Model,
+                  ssd_optimizer: tf.train.Optimizer,
+                  global_step: tf.Variable,
+                  epoch_var: tf.Variable,
+                  learning_rate_var: tf.Variable,
+                  verbose: bool) -> None:
     
     with summary_ops_v2.always_record_summaries():
+        epoch = 0
+        batch_counter = 0
         epoch_var.assign(epoch)
-        epoch_start_time = time.time()
+        epoch_start_time = None
         
         # define loss variables
         ssd_loss_avg = tfe.metrics.Mean(name='ssd_loss', dtype=tf.float32)
         
         # go through data set
         for x, y in dataset:
+            if batch_counter == 0:
+                # epoch starts
+                epoch_start_time = time.time()
+            
             labels = []
             for i in range(y.shape[0]):
                 image_labels = np.asarray(y[i])
@@ -476,17 +472,35 @@ def _train_one_epoch(epoch: int,
                                              global_step=global_step)
             ssd_loss_avg(ssd_train_loss)
             global_step.assign_add(1)
+
+            batch_counter += 1
+
+            if batch_counter == nr_batches_per_epoch:
+                # one epoch is over
+                epoch_end_time = time.time()
+                per_epoch_time = epoch_end_time - epoch_start_time
+
+                # final losses of epoch
+                outputs = {
+                    'ssd_loss':       ssd_loss_avg.result(False),
+                    'per_epoch_time': per_epoch_time,
+                }
+
+                if verbose:
+                    print((
+                        f"[{epoch + 1:d}/{nr_epochs:d} - "
+                        f"train time: {outputs['per_epoch_time']:.2f}, "
+                        f"SSD loss: {outputs['ssd_loss']:.3f}, "
+                    ))
+
+                # save weights at end of epoch
+                checkpoint.save(checkpoint_prefix)
+                
+                epoch += 1
+                
+                batch_counter = 0
         
-        epoch_end_time = time.time()
-        per_epoch_time = epoch_end_time - epoch_start_time
-        
-        # final losses of epoch
-        outputs = {
-            'ssd_loss': ssd_loss_avg.result(False),
-            'per_epoch_time': per_epoch_time,
-        }
-        
-        return outputs
+       
 
 
 def _train_ssd_step(ssd: tf.keras.Model,

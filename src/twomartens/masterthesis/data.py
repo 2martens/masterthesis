@@ -231,7 +231,8 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
                        instances: Sequence[Sequence[Sequence[dict]]],
                        coco_path: str,
                        num_epochs: int = 1, batch_size: int = 32,
-                       resized_shape: Sequence[int] = (256, 256)) -> Tuple[tf.data.Dataset, int]:
+                       resized_shape: Sequence[int] = (256, 256),
+                       mode: str = "inference") -> Tuple[tf.data.Dataset, int, int]:
     """
     Loads the SceneNet RGB-D data and returns a data set.
     
@@ -242,10 +243,12 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
         num_epochs: number of epochs to use
         batch_size: size of every batch
         resized_shape: shape of input images to SSD
+        mode: one of "inference" or "training"
 
     Returns:
         scenenet data set
         number of digits required to print largest batch number
+        length of dataset
     """
     trajectories = zip(photo_paths, instances)
     final_image_paths = []
@@ -292,14 +295,17 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
     path_dataset = tf.data.Dataset.from_tensor_slices(final_image_paths)
     label_dataset = tf.data.Dataset.from_tensor_slices(real_final_labels)
     dataset = tf.data.Dataset.zip((path_dataset, label_dataset))
-    dataset = dataset.repeat(num_epochs)
+    if mode == "inference":
+        dataset = dataset.repeat(num_epochs)
+    elif mode == "training":
+        dataset = dataset.apply(tf.data.experimental.shuffle_and_repeat(length_dataset, num_epochs))
     dataset = dataset.batch(batch_size=batch_size)
     dataset = dataset.map(_load_images_ssd_callback(resized_shape))
     dataset = dataset.prefetch(1)
     
     nr_digits = math.ceil(math.log10(math.ceil((length_dataset * num_epochs) / batch_size)))
     
-    return dataset, nr_digits
+    return dataset, nr_digits, length_dataset
 
 
 def _load_images_ssd_callback(resized_shape: Sequence[int]) \

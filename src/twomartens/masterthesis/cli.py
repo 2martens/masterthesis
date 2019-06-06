@@ -60,9 +60,11 @@ def _ssd_train(args: argparse.Namespace) -> None:
     with open(f"{args.ground_truth_path}/instances.bin", "rb") as file:
         instances = pickle.load(file)
     
-    scenenet_data, nr_digits = data.load_scenenet_data(file_names_photos, instances, args.coco_path,
-                                                       batch_size=batch_size,
-                                                       resized_shape=(image_size, image_size))
+    scenenet_data, nr_digits, length_dataset = \
+        data.load_scenenet_data(file_names_photos, instances, args.coco_path,
+                                batch_size=batch_size,
+                                resized_shape=(image_size, image_size),
+                                mode="training")
     del file_names_photos, instances
 
     use_summary_writer = summary_ops_v2.create_file_writer(
@@ -71,13 +73,17 @@ def _ssd_train(args: argparse.Namespace) -> None:
     
     if args.debug:
         with use_summary_writer.as_default():
-            ssd.train(scenenet_data, args.iteration, use_dropout, weights_prefix=weights_path,
+            ssd.train(scenenet_data, args.iteration, use_dropout, length_dataset,
+                      weights_prefix=weights_path,
                       weights_path=pre_trained_weights_file, batch_size=batch_size,
-                      nr_epochs=args.num_epochs)
+                      nr_epochs=args.num_epochs,
+                      verbose=args.verbose)
     else:
-        ssd.train(scenenet_data, args.iteration, use_dropout, weights_prefix=weights_path,
+        ssd.train(scenenet_data, args.iteration, use_dropout, length_dataset,
+                  weights_prefix=weights_path,
                   weights_path=pre_trained_weights_file, batch_size=batch_size,
-                  nr_epochs=args.num_epochs)
+                  nr_epochs=args.num_epochs,
+                  verbose=args.verbose)
 
 
 def _auto_encoder_train(args: argparse.Namespace) -> None:
@@ -245,9 +251,10 @@ def _ssd_val(args: argparse.Namespace) -> None:
     with open(f"{args.ground_truth_path}/instances.bin", "rb") as file:
         instances = pickle.load(file)
     
-    scenenet_data, nr_digits = data.load_scenenet_data(file_names_photos, instances, args.coco_path,
-                                                       batch_size=batch_size,
-                                                       resized_shape=(image_size, image_size))
+    scenenet_data, nr_digits, length_dataset = \
+        data.load_scenenet_data(file_names_photos, instances, args.coco_path,
+                                batch_size=batch_size,
+                                resized_shape=(image_size, image_size))
     del file_names_photos, instances
     
     use_summary_writer = summary_ops_v2.create_file_writer(
