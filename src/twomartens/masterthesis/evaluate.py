@@ -293,6 +293,9 @@ def get_f1_score(cumulative_precisions: List[np.ndarray],
     for class_id in range(1, nr_classes + 1):
         cumulative_precision = cumulative_precisions[class_id]
         cumulative_recall = cumulative_recalls[class_id]
+        if (cumulative_precision + cumulative_recall) == 0:
+            cumulative_f1_scores.append([])
+            continue
         f1_score = 2 * ((cumulative_precision * cumulative_recall) / (cumulative_precision + cumulative_recall))
         cumulative_f1_scores.append(f1_score)
     
