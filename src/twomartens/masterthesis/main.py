@@ -33,8 +33,8 @@ def main() -> None:
         description="Train, test, and use SSD with novelty detection.",
     )
     
-    parser.add_argument("--verbose", default=False, action="store_true", help="provide to get extra output")
-    parser.add_argument("--debug", default=False, action="store_true", help="provide to collect tensorboard summaries")
+    parser.add_argument("--verbose", action="store_true", help="provide to get extra output")
+    parser.add_argument("--debug", action="store_true", help="provide to collect tensorboard summaries")
     parser.add_argument('--version', action='version', version='2martens Masterthesis 0.1.0')
     sub_parsers = parser.add_subparsers(dest="action")
     sub_parsers.required = True
