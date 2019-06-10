@@ -242,6 +242,7 @@ def _ssd_val(args: argparse.Namespace) -> None:
     use_dropout = False if args.network == "ssd" else True
     
     weights_file = f"{args.weights_path}/VGG_coco_SSD_300x300_iter_400000.h5"
+    checkpoint_path = f"{args.weights_path}/train/{args.network}/"
     output_path = f"{args.output_path}/val/{args.network}/{args.iteration}/"
     os.makedirs(output_path, exist_ok=True)
     
@@ -262,11 +263,11 @@ def _ssd_val(args: argparse.Namespace) -> None:
     )
     if args.debug:
         with use_summary_writer.as_default():
-            ssd.predict(scenenet_data, use_dropout, output_path, weights_file, nr_digits=nr_digits,
-                        forward_passes_per_image=forward_passes_per_image)
+            ssd.predict(scenenet_data, use_dropout, output_path, weights_file, checkpoint_path,
+                        nr_digits=nr_digits, forward_passes_per_image=forward_passes_per_image)
     else:
-        ssd.predict(scenenet_data, use_dropout, output_path, weights_file, nr_digits=nr_digits,
-                    forward_passes_per_image=forward_passes_per_image)
+        ssd.predict(scenenet_data, use_dropout, output_path, weights_file, checkpoint_path,
+                    nr_digits=nr_digits, forward_passes_per_image=forward_passes_per_image)
 
 
 def _auto_encoder_val(args: argparse.Namespace) -> None:
