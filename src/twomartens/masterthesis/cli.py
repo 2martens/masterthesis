@@ -242,7 +242,7 @@ def _ssd_val(args: argparse.Namespace) -> None:
     use_dropout = False if args.network == "ssd" else True
     
     weights_file = f"{args.weights_path}/VGG_coco_SSD_300x300_iter_400000.h5"
-    checkpoint_path = f"{args.weights_path}/train/{args.network}/"
+    checkpoint_path = f"{args.weights_path}/train/{args.network}/{args.train_iteration}"
     output_path = f"{args.output_path}/val/{args.network}/{args.iteration}/"
     os.makedirs(output_path, exist_ok=True)
     

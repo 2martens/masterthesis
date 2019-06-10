@@ -121,6 +121,7 @@ def _build_ssd_val(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--summary_path", type=str, help="path to the summaries directory")
     parser.add_argument("--output_path", type=str, help="path to the output directory")
     parser.add_argument("iteration", type=int, help="the validation iteration")
+    parser.add_argument("train_iteration", type=int, help="the train iteration")
     
 
 def _build_auto_encoder_val(parser: argparse.ArgumentParser) -> None:
