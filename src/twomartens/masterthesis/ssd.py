@@ -497,7 +497,9 @@ def _train_epochs(nr_batches_per_epoch: int,
                     print((
                         f"[{epoch + 1:d}/{nr_epochs:d}] - "
                         f"train time: {outputs['per_epoch_time']:.2f}, "
-                        f"SSD loss: {outputs['ssd_loss']:.3f}"
+                        f"SSD loss: {outputs['ssd_loss']:.3f}, "
+                        f"batch_counter: {batch_counter:d}, "
+                        f"nr_batches_per_epoch: {nr_batches_per_epoch:d}"
                     ))
 
                 # save weights at end of epoch
