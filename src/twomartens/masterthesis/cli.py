@@ -68,7 +68,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
     del file_names_photos, instances
 
     use_summary_writer = summary_ops_v2.create_file_writer(
-        f"{args.summary_path}/val/{args.network}/{args.iteration}"
+        f"{args.summary_path}/train/{args.network}/{args.iteration}"
     )
     
     if args.debug:
