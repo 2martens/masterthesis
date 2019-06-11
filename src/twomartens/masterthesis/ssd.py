@@ -498,9 +498,9 @@ def _train_epochs(nr_batches_per_epoch: int,
 
                 if verbose:
                     print((
-                        f"[{epoch + 1:d}/{nr_epochs:d} - "
+                        f"[{epoch + 1:d}/{nr_epochs:d}] - "
                         f"train time: {outputs['per_epoch_time']:.2f}, "
-                        f"SSD loss: {outputs['ssd_loss']:.3f}, "
+                        f"SSD loss: {outputs['ssd_loss']:.3f}"
                     ))
 
                 # save weights at end of epoch
