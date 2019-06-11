@@ -509,8 +509,6 @@ def _train_epochs(nr_batches_per_epoch: int,
                 epoch += 1
                 
                 batch_counter = 0
-        
-       
 
 
 def _train_ssd_step(ssd: tf.keras.Model,
