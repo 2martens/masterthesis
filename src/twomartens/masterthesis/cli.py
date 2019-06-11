@@ -62,7 +62,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
     
     scenenet_data, nr_digits, length_dataset = \
         data.load_scenenet_data(file_names_photos, instances, args.coco_path,
-                                batch_size=batch_size,
+                                batch_size=batch_size, num_epochs=args.num_epochs,
                                 resized_shape=(image_size, image_size),
                                 mode="training")
     del file_names_photos, instances
