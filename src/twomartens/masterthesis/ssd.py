@@ -458,16 +458,13 @@ def _train_epochs(nr_batches_per_epoch: int,
         epoch = 0
         batch_counter = 0
         epoch_var.assign(epoch)
-        epoch_start_time = None
-        
-        # define loss variables
-        ssd_loss_avg = tfe.metrics.Mean(name='ssd_loss', dtype=tf.float32)
         
         # go through data set
         for x, y in dataset:
             if batch_counter == 0:
                 # epoch starts
                 epoch_start_time = time.time()
+                ssd_loss_avg = tfe.metrics.Mean(name='ssd_loss', dtype=tf.float32)
             
             labels = []
             for i in range(y.shape[0]):
