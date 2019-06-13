@@ -25,6 +25,7 @@ Functions:
     prepare(...): prepares the SceneNet ground truth data
 """
 import argparse
+import math
 
 
 def train(args: argparse.Namespace) -> None:
@@ -39,7 +40,6 @@ def _ssd_train(args: argparse.Namespace) -> None:
     import pickle
     
     import tensorflow as tf
-    from tensorflow.python.ops import summary_ops_v2
 
     from twomartens.masterthesis import data
     from twomartens.masterthesis import ssd
@@ -55,35 +55,58 @@ def _ssd_train(args: argparse.Namespace) -> None:
     os.makedirs(weights_path, exist_ok=True)
     
     # load prepared ground truth
-    with open(f"{args.ground_truth_path}/photo_paths.bin", "rb") as file:
-        file_names_photos = pickle.load(file)
-    with open(f"{args.ground_truth_path}/instances.bin", "rb") as file:
-        instances = pickle.load(file)
+    with open(f"{args.ground_truth_path_train}/photo_paths.bin", "rb") as file:
+        file_names_train = pickle.load(file)
+    with open(f"{args.ground_truth_path_train}/instances.bin", "rb") as file:
+        instances_train = pickle.load(file)
+    with open(f"{args.ground_truth_path_val}/photo_paths.bin", "rb") as file:
+        file_names_val = pickle.load(file)
+    with open(f"{args.ground_truth_path_val}/instances.bin", "rb") as file:
+        instances_val = pickle.load(file)
+
+    # model
+    if use_dropout:
+        ssd_model = ssd.DropoutSSD(mode='training', weights_path=pre_trained_weights_file)
+    else:
+        ssd_model = ssd.SSD(mode='training', weights_path=pre_trained_weights_file)
     
-    scenenet_data, nr_digits, length_dataset = \
-        data.load_scenenet_data(file_names_photos, instances, args.coco_path,
-                                batch_size=batch_size, num_epochs=args.num_epochs,
+    train_generator, train_length = \
+        data.load_scenenet_data(file_names_train, instances_train, args.coco_path,
+                                predictor_sizes=ssd_model.predictor_sizes,
+                                batch_size=batch_size,
                                 resized_shape=(image_size, image_size),
                                 mode="training")
-    del file_names_photos, instances
-
-    use_summary_writer = summary_ops_v2.create_file_writer(
-        f"{args.summary_path}/train/{args.network}/{args.iteration}"
+    val_generator, val_length = \
+        data.load_scenenet_data(file_names_val, instances_val, args.coco_path,
+                                predictor_sizes=ssd_model.predictor_sizes,
+                                batch_size=batch_size,
+                                resized_shape=(image_size, image_size),
+                                mode="validation")
+    del file_names_train, instances_train, file_names_val, instances_val
+    
+    nr_batches_train = int(math.ceil(train_length / float(batch_size)))
+    nr_batches_val = int(math.ceil(val_length / float(batch_size)))
+    
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(
+        log_dir=f"{args.summary_path}/train/{args.network}/{args.iteration}"
     )
     
-    if args.debug:
-        with use_summary_writer.as_default():
-            ssd.train(scenenet_data, args.iteration, use_dropout, length_dataset,
-                      weights_prefix=weights_path,
-                      weights_path=pre_trained_weights_file, batch_size=batch_size,
-                      nr_epochs=args.num_epochs,
-                      verbose=args.verbose)
-    else:
-        ssd.train(scenenet_data, args.iteration, use_dropout, length_dataset,
-                  weights_prefix=weights_path,
-                  weights_path=pre_trained_weights_file, batch_size=batch_size,
-                  nr_epochs=args.num_epochs,
-                  verbose=args.verbose)
+    history = ssd.train_keras(
+        train_generator,
+        nr_batches_train,
+        val_generator,
+        nr_batches_val,
+        ssd_model,
+        weights_path,
+        args.iteration,
+        initial_epoch=0,
+        nr_epochs=args.num_epochs,
+        lr=0.001,
+        tensorboard_callback=tensorboard_callback
+    )
+    
+    with open(f"{args.summary_path}/train/{args.network}/{args.iteration}/history", "wb") as file:
+        pickle.dump(history, file)
 
 
 def _auto_encoder_train(args: argparse.Namespace) -> None:
