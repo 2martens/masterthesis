@@ -23,14 +23,18 @@ Functions:
     load_scenenet_data(...): loads the SceneNet RGB-D data into a Tensorflow data set
     prepare_scenenet_data(...): prepares the SceneNet RGB-D data and returns it in Python format
 """
+import functools
 from typing import Callable, List, Mapping, Tuple
 from typing import Sequence
 
-import math
 import numpy as np
 import scipy
 import tensorflow as tf
 from scipy import ndimage
+
+from twomartens.masterthesis.ssd_keras.data_generator import object_detection_2d_data_generator, \
+    data_augmentation_chain_original_ssd, object_detection_2d_photometric_ops, object_detection_2d_geometric_ops
+from twomartens.masterthesis.ssd_keras.ssd_encoder_decoder import ssd_input_encoder
 
 
 def load_coco_train(data_path: str, category: int,
@@ -230,10 +234,10 @@ def _load_images_callback(resized_shape: Sequence[int]) -> Callable[
 
 def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
                        instances: Sequence[Sequence[Sequence[dict]]],
-                       coco_path: str,
-                       num_epochs: int = 1, batch_size: int = 32,
-                       resized_shape: Sequence[int] = (256, 256),
-                       mode: str = "inference") -> Tuple[tf.data.Dataset, int, int]:
+                       coco_path: str, predictor_sizes: np.ndarray,
+                       batch_size: int,
+                       resized_shape: Sequence[int],
+                       mode: str) -> Tuple[callable, int]:
     """
     Loads the SceneNet RGB-D data and returns a data set.
     
@@ -241,14 +245,13 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
         photo_paths: contains a list of image paths per trajectory
         instances: instance data per frame per trajectory
         coco_path: path to the COCO data set
-        num_epochs: number of epochs to use
+        predictor_sizes: sizes of the predictor layers
         batch_size: size of every batch
         resized_shape: shape of input images to SSD
-        mode: one of "inference" or "training"
+        mode: one of "validation" or "training"
 
     Returns:
-        scenenet data set
-        number of digits required to print largest batch number
+        scenenet data set generator
         length of dataset
     """
     trajectories = zip(photo_paths, instances)
@@ -281,32 +284,44 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
     
             final_image_paths.append(image_path)
             final_labels.append(labels)
-        
-    empty_label = [[-1.0, 0.0, 0.0, 0.0, 0.0]]
-    real_final_labels = []
-    for labels in final_labels:
-        _labels = labels[:]
-        len_labels = len(labels)
-        if len_labels < max_nr_labels:
-            _labels.extend(empty_label * (max_nr_labels - len_labels))
-        real_final_labels.append(_labels)
     
-    length_dataset = len(final_image_paths)
+    data_generator = object_detection_2d_data_generator.DataGenerator(
+        filenames=final_image_paths,
+        labels=final_labels
+    )
     
-    path_dataset = tf.data.Dataset.from_tensor_slices(final_image_paths)
-    label_dataset = tf.data.Dataset.from_tensor_slices(real_final_labels)
-    dataset = tf.data.Dataset.zip((path_dataset, label_dataset))
-    if mode == "inference":
-        dataset = dataset.repeat(num_epochs)
-    elif mode == "training":
-        dataset = dataset.apply(tf.data.experimental.shuffle_and_repeat(length_dataset, num_epochs))
-    dataset = dataset.batch(batch_size=batch_size)
-    dataset = dataset.map(_load_images_ssd_callback(resized_shape))
-    dataset = dataset.prefetch(1)
+    if mode == "training":
+        shuffle = True
+        transformations = [data_augmentation_chain_original_ssd.SSDDataAugmentation(
+            img_width=resized_shape[0],
+            img_height=resized_shape[1]
+        )]
+    else:
+        shuffle = False
+        transformations = [
+            object_detection_2d_photometric_ops.ConvertTo3Channels(),
+            object_detection_2d_geometric_ops.Resize(height=resized_shape[0],
+                                                     width=resized_shape[1])
+        ]
     
-    nr_digits = math.ceil(math.log10(math.ceil((length_dataset * num_epochs) / batch_size)))
+    generator = functools.partial(
+        data_generator.generate,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        transformations=transformations,
+        label_encoder=ssd_input_encoder.SSDInputEncoder(
+          img_height=resized_shape[0],
+          img_width=resized_shape[1],
+          n_classes=len(cats_to_classes),  # 80
+          predictor_sizes=predictor_sizes
+        ),
+        returns={'processed_images', 'encoded_labels'},
+        keep_images_without_gt=False
+    )
     
-    return dataset, nr_digits, length_dataset
+    length_dataset = data_generator.dataset_size
+    
+    return generator, length_dataset
 
 
 def _load_images_ssd_callback(resized_shape: Sequence[int]) \
