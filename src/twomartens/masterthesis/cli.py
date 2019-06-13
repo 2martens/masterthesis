@@ -174,12 +174,9 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
     for filename in files:
         with open(filename, "rb") as file:
             # get labels per batch
-            _labels = np.asarray(pickle.load(file))
-            # exclude padded label entries
-            for i in range(_labels.shape[0]):
-                image_labels = _labels[i]
-                image_labels = image_labels[image_labels[:, 0] != -1]
-                labels.append(image_labels)
+            label_dict = pickle.load(file)
+            labels.extend(label_dict['labels'])
+
     # store labels for later use
     with open(label_file, "wb") as file:
         pickle.dump(labels, file)
