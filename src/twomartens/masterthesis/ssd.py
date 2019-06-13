@@ -38,7 +38,7 @@ import math
 import os
 import pickle
 import time
-from typing import Dict, List, Sequence
+from typing import Dict, List, Sequence, Union
 from typing import Optional
 
 import numpy as np
@@ -71,6 +71,11 @@ class SSD:
     Args:
         mode: one of training, inference, and inference_fast
         weights_path: path to trained weights
+    
+    Attributes:
+        mode: one of training, inference, and inference_fast
+        predictor_sizes: sizes of predictor layers
+        model: Keras SSD model
     """
     
     def __init__(self, mode: str, weights_path: Optional[str] = None) -> None:
@@ -78,8 +83,8 @@ class SSD:
             keras_ssd300.ssd_300(image_size=IMAGE_SIZE, n_classes=N_CLASSES,
                                  mode=mode, iou_threshold=IOU_THRESHOLD, top_k=TOP_K,
                                  scales=[0.07, 0.15, 0.33, 0.51, 0.69, 0.87, 1.05],
-                                 return_predictor_sizes=True)
-        self.mode = mode
+                                 return_predictor_sizes=True)  # type: tf.keras.models.Model, np.ndarray
+        self.mode = mode  # type: str
         
         # load existing weights
         if weights_path is not None:
@@ -108,6 +113,11 @@ class DropoutSSD:
     Args:
         mode: one of training, inference, and inference_fast
         weights_path: path to trained weights
+    
+    Attributes:
+        mode: one of training, inference, and inference_fast
+        predictor_sizes: sizes of predictor layers
+        model: Keras SSD model
     """
     
     def __init__(self, mode: str, weights_path: Optional[str] = None) -> None:
@@ -118,8 +128,8 @@ class DropoutSSD:
                                                  iou_threshold=IOU_THRESHOLD,
                                                  top_k=TOP_K,
                                                  scales=[0.07, 0.15, 0.33, 0.51, 0.69, 0.87, 1.05],
-                                                 return_predictor_sizes=True)
-        self.mode = mode
+                                                 return_predictor_sizes=True)  # type: tf.keras.models.Model, np.ndarray
+        self.mode = mode  # type: str
 
         # load existing weights
         if weights_path is not None:
