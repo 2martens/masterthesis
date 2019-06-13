@@ -249,7 +249,6 @@ def _ssd_val(args: argparse.Namespace) -> None:
     import os
     
     import tensorflow as tf
-    from tensorflow.python.ops import summary_ops_v2
     
     from twomartens.masterthesis import data
     from twomartens.masterthesis import ssd
@@ -260,12 +259,12 @@ def _ssd_val(args: argparse.Namespace) -> None:
     tf.enable_eager_execution(config=config)
     
     batch_size = 16
-    image_size = 300
+    image_size = (300, 300)
     forward_passes_per_image = 10
     use_dropout = False if args.network == "ssd" else True
     
-    weights_file = f"{args.weights_path}/VGG_coco_SSD_300x300_iter_400000.h5"
     checkpoint_path = f"{args.weights_path}/train/{args.network}/{args.train_iteration}"
+    model_file = f"{checkpoint_path}/ssd300.h5"
     output_path = f"{args.output_path}/val/{args.network}/{args.iteration}/"
     os.makedirs(output_path, exist_ok=True)
     
@@ -274,23 +273,28 @@ def _ssd_val(args: argparse.Namespace) -> None:
         file_names_photos = pickle.load(file)
     with open(f"{args.ground_truth_path}/instances.bin", "rb") as file:
         instances = pickle.load(file)
+
+    # model
+    ssd_model = tf.keras.models.load_model(model_file)
     
-    scenenet_data, nr_digits, length_dataset = \
+    test_generator, length_dataset = \
         data.load_scenenet_data(file_names_photos, instances, args.coco_path,
+                                predictor_sizes=ssd_model.predictor_sizes,
                                 batch_size=batch_size,
-                                resized_shape=(image_size, image_size))
+                                resized_shape=image_size,
+                                training=False, evaluation=True)
     del file_names_photos, instances
-    
-    use_summary_writer = summary_ops_v2.create_file_writer(
-        f"{args.summary_path}/val/{args.network}/{args.iteration}"
-    )
-    if args.debug:
-        with use_summary_writer.as_default():
-            ssd.predict(scenenet_data, use_dropout, output_path, weights_file, checkpoint_path,
-                        nr_digits=nr_digits, forward_passes_per_image=forward_passes_per_image)
-    else:
-        ssd.predict(scenenet_data, use_dropout, output_path, weights_file, checkpoint_path,
-                    nr_digits=nr_digits, forward_passes_per_image=forward_passes_per_image)
+
+    nr_digits = math.ceil(math.log10(math.ceil(length_dataset / batch_size)))
+    steps_per_epoch = int(math.ceil(length_dataset / batch_size))
+    ssd.predict_keras(test_generator,
+                      steps_per_epoch,
+                      ssd_model,
+                      use_dropout,
+                      forward_passes_per_image,
+                      image_size,
+                      output_path,
+                      nr_digits)
 
 
 def _auto_encoder_val(args: argparse.Namespace) -> None:
