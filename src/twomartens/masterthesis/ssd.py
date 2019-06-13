@@ -38,7 +38,7 @@ import math
 import os
 import pickle
 import time
-from typing import Dict, List, Sequence, Union
+from typing import Dict, List, Sequence, Union, Tuple
 from typing import Optional
 
 import numpy as np
@@ -46,6 +46,7 @@ import tensorflow as tf
 from tensorflow.python.ops import summary_ops_v2
 
 from twomartens.masterthesis.ssd_keras.bounding_box_utils import bounding_box_utils
+from twomartens.masterthesis.ssd_keras.data_generator import object_detection_2d_misc_utils
 from twomartens.masterthesis.ssd_keras.keras_loss_function import keras_ssd_loss
 from twomartens.masterthesis.ssd_keras.models import keras_ssd300
 from twomartens.masterthesis.ssd_keras.models import keras_ssd300_dropout
@@ -150,7 +151,84 @@ class DropoutSSD:
     def __call__(self, inputs: tf.Tensor, *args, **kwargs) -> tf.Tensor:
         return self.model(inputs)
     
+
+def predict_keras(generator: callable,
+                  steps_per_epoch: int,
+                  ssd_model: tf.keras.models.Model,
+                  use_dropout: bool,
+                  forward_passes_per_image: int,
+                  image_size: Tuple[int, int],
+                  output_path: str,
+                  nr_digits: int) -> None:
+    """
+    Run trained SSD on the given data set.
     
+    The prediction results are saved to the output path.
+    
+    Args:
+        generator: generator of test data
+        steps_per_epoch: number of batches per epoch
+        ssd_model: compiled and trained Keras model
+        use_dropout: if True, multiple forward passes and observations will be used
+        forward_passes_per_image: specifies number of forward passes per image
+            used by DropoutSSD
+        image_size: size of input images to model
+        output_path: the path in which the results should be saved
+        nr_digits: number of digits needed to print largest batch number
+    """
+    # prepare filename
+    filename = 'ssd_predictions'
+    label_filename = 'ssd_labels'
+    if use_dropout:
+        filename = f"dropout-{filename}"
+    output_file = os.path.join(output_path, filename)
+    label_output_file = os.path.join(output_path, label_filename)
+    
+    batch_counter = 0
+    for x, filenames, inverse_transforms, original_labels in generator:
+        if use_dropout:
+            detections = None
+            batch_size = None
+            for _ in range(forward_passes_per_image):
+                predictions = ssd_model.model.predict_on_batch(x)
+                if batch_size is None:
+                    batch_size = predictions.shape[0]
+                if detections is None:
+                    detections = [[] for _ in range(batch_size)]
+                
+                for i in range(batch_size):
+                    batch_item = predictions[i]
+                    detections[i].extend(batch_item)
+                
+            # do observation stuff
+            predictions = np.asarray(_get_observations(detections))
+        else:
+            predictions = ssd_model.model.predict_on_batch(x)
+        
+        decoded_predictions_batch = ssd_output_decoder.decode_detections_fast(
+            y_pred=predictions,
+            img_width=image_size[0],
+            img_height=image_size[1],
+        )
+        transformed_predictions_batch = object_detection_2d_misc_utils.apply_inverse_transforms(
+            decoded_predictions_batch, inverse_transforms
+        )
+        
+        # save prediction results to prevent memory issues
+        counter_str = str(batch_counter).zfill(nr_digits)
+        filename = f"{output_file}-{counter_str}.bin"
+        label_filename = f"{label_output_file}-{counter_str}.bin"
+        
+        with open(filename, 'wb') as file, open(label_filename, 'wb') as label_file:
+            pickle.dump(transformed_predictions_batch, file)
+            pickle.dump({'labels': original_labels, 'filenames': filenames}, label_file)
+        
+        batch_counter += 1
+        # we only do one epoch for prediction
+        if batch_counter == steps_per_epoch:
+            break
+
+
 def predict(dataset: tf.data.Dataset,
             use_dropout: bool,
             output_path: str,
