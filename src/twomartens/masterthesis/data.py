@@ -20,7 +20,7 @@ Functionality to load data into Tensorflow data sets.
 Functions:
     load_coco_train(...): loads the COCO training data into a Tensorflow data set
     load_coco_val(...): loads the COCO validation data into a Tensorflow data set
-    load_scenenet(...): loads the SceneNet RGB-D data into a Tensorflow data set
+    load_scenenet_data(...): loads the SceneNet RGB-D data into a Tensorflow data set
 """
 from typing import Callable, List, Mapping, Tuple
 from typing import Sequence
