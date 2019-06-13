@@ -41,21 +41,21 @@ def main() -> None:
     
     prepare_parser = sub_parsers.add_parser("prepare", help="Prepare SceneNet RGB-D ground truth")
     train_parser = sub_parsers.add_parser("train", help="Train a network")
-    test_parser = sub_parsers.add_parser("test", help="Test a network")
+    evaluate_parser = sub_parsers.add_parser("evaluate", help="Evaluate a network")
     val_parser = sub_parsers.add_parser("val", help="Validate a network")
     
     # build sub parsers
     _build_prepare(prepare_parser)
     _build_train(train_parser)
     _build_val(val_parser)
-    _build_test(test_parser)
+    _build_evaluate(evaluate_parser)
     
     args = parser.parse_args()
     
     if args.action == "train":
         cli.train(args)
     elif args.action == "test":
-        cli.test(args)
+        cli.evaluate(args)
     elif args.action == "val":
         cli.val(args)
     elif args.action == "prepare":
@@ -137,7 +137,7 @@ def _build_auto_encoder_val(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("iteration_trained", type=int, help="the training iteration")
 
 
-def _build_test(parser: argparse.ArgumentParser) -> None:
+def _build_evaluate(parser: argparse.ArgumentParser) -> None:
     sub_parsers = parser.add_subparsers(dest="network")
     sub_parsers.required = True
 
@@ -145,11 +145,11 @@ def _build_test(parser: argparse.ArgumentParser) -> None:
     ssd_parser = sub_parsers.add_parser("ssd", help="SSD")
 
     # build sub parsers
-    _build_ssd_test(ssd_bayesian_parser)
-    _build_ssd_test(ssd_parser)
+    _build_ssd_evaluate(ssd_bayesian_parser)
+    _build_ssd_evaluate(ssd_parser)
 
 
-def _build_ssd_test(parser: argparse.ArgumentParser) -> None:
+def _build_ssd_evaluate(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--output_path", type=str, help="path to the output directory")
     parser.add_argument("--evaluation_path", type=str, help="path to the directory for the evaluation results")
     parser.add_argument("iteration", type=int, help="the validation iteration to use")

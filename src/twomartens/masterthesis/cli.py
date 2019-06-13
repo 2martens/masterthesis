@@ -138,14 +138,14 @@ def _auto_encoder_train(args: argparse.Namespace) -> None:
                            channels=3, train_epoch=args.num_epochs, batch_size=batch_size)
 
 
-def test(args: argparse.Namespace) -> None:
+def evaluate(args: argparse.Namespace) -> None:
     if args.network == "ssd":
-        _ssd_test(args)
+        _ssd_evaluate(args)
     else:
         raise NotImplementedError
 
 
-def _ssd_test(args: argparse.Namespace) -> None:
+def _ssd_evaluate(args: argparse.Namespace) -> None:
     import glob
     import os
     import pickle
