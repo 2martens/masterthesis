@@ -237,7 +237,7 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
                        coco_path: str, predictor_sizes: np.ndarray,
                        batch_size: int,
                        resized_shape: Sequence[int],
-                       mode: str) -> Tuple[callable, int]:
+                       training: bool) -> Tuple[callable, int]:
     """
     Loads the SceneNet RGB-D data and returns a data set.
     
@@ -248,7 +248,7 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
         predictor_sizes: sizes of the predictor layers
         batch_size: size of every batch
         resized_shape: shape of input images to SSD
-        mode: one of "validation" or "training"
+        training: True if training data is desired
 
     Returns:
         scenenet data set generator
@@ -290,7 +290,7 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
         labels=final_labels
     )
     
-    if mode == "training":
+    if training:
         shuffle = True
         transformations = [data_augmentation_chain_original_ssd.SSDDataAugmentation(
             img_width=resized_shape[0],
