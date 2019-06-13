@@ -237,14 +237,14 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
         pickle.dump(results, file)
 
 
-def val(args: argparse.Namespace) -> None:
+def test(args: argparse.Namespace) -> None:
     if args.network == "ssd" or args.network == "bayesian_ssd":
-        _ssd_val(args)
+        _ssd_test(args)
     elif args.network == "auto_encoder":
-        _auto_encoder_val(args)
+        _auto_encoder_test(args)
 
 
-def _ssd_val(args: argparse.Namespace) -> None:
+def _ssd_test(args: argparse.Namespace) -> None:
     import pickle
     import os
     
@@ -297,7 +297,7 @@ def _ssd_val(args: argparse.Namespace) -> None:
                       nr_digits)
 
 
-def _auto_encoder_val(args: argparse.Namespace) -> None:
+def _auto_encoder_test(args: argparse.Namespace) -> None:
     from twomartens.masterthesis import data
     from twomartens.masterthesis.aae import run
     import tensorflow as tf

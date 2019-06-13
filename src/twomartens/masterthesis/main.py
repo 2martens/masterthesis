@@ -42,22 +42,22 @@ def main() -> None:
     prepare_parser = sub_parsers.add_parser("prepare", help="Prepare SceneNet RGB-D ground truth")
     train_parser = sub_parsers.add_parser("train", help="Train a network")
     evaluate_parser = sub_parsers.add_parser("evaluate", help="Evaluate a network")
-    val_parser = sub_parsers.add_parser("val", help="Validate a network")
+    test_parser = sub_parsers.add_parser("test", help="Test a network")
     
     # build sub parsers
     _build_prepare(prepare_parser)
     _build_train(train_parser)
-    _build_val(val_parser)
+    _build_test(test_parser)
     _build_evaluate(evaluate_parser)
     
     args = parser.parse_args()
     
     if args.action == "train":
         cli.train(args)
-    elif args.action == "test":
+    elif args.action == "evaluate":
         cli.evaluate(args)
-    elif args.action == "val":
-        cli.val(args)
+    elif args.action == "test":
+        cli.test(args)
     elif args.action == "prepare":
         cli.prepare(args)
 
@@ -103,7 +103,7 @@ def _build_auto_encoder_train(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("iteration", type=int, help="the training iteration")
     
 
-def _build_val(parser: argparse.ArgumentParser) -> None:
+def _build_test(parser: argparse.ArgumentParser) -> None:
     sub_parsers = parser.add_subparsers(dest="network")
     sub_parsers.required = True
     
@@ -112,12 +112,12 @@ def _build_val(parser: argparse.ArgumentParser) -> None:
     auto_encoder_parser = sub_parsers.add_parser("auto_encoder", help="Auto-encoder network")
     
     # build sub parsers
-    _build_ssd_val(ssd_bayesian_parser)
-    _build_ssd_val(ssd_parser)
-    _build_auto_encoder_val(auto_encoder_parser)
+    _build_ssd_test(ssd_bayesian_parser)
+    _build_ssd_test(ssd_parser)
+    _build_auto_encoder_test(auto_encoder_parser)
 
 
-def _build_ssd_val(parser: argparse.ArgumentParser) -> None:
+def _build_ssd_test(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--coco_path", type=str, help="the path to the COCO data set")
     parser.add_argument("--weights_path", type=str, help="path to the weights directory")
     parser.add_argument("--ground_truth_path", type=str, help="path to the prepared ground truth directory")
@@ -127,7 +127,7 @@ def _build_ssd_val(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("train_iteration", type=int, help="the train iteration")
     
 
-def _build_auto_encoder_val(parser: argparse.ArgumentParser) -> None:
+def _build_auto_encoder_test(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--coco_path", type=str, help="the path to the COCO data set")
     parser.add_argument("--weights_path", type=str, help="path to the weights directory")
     parser.add_argument("--summary_path", type=str, help="path to the summaries directory")
