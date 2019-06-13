@@ -21,6 +21,7 @@ Functions:
     load_coco_train(...): loads the COCO training data into a Tensorflow data set
     load_coco_val(...): loads the COCO validation data into a Tensorflow data set
     load_scenenet_data(...): loads the SceneNet RGB-D data into a Tensorflow data set
+    prepare_scenenet_data(...): prepares the SceneNet RGB-D data and returns it in Python format
 """
 from typing import Callable, List, Mapping, Tuple
 from typing import Sequence
@@ -361,9 +362,9 @@ def _load_images_ssd_callback(resized_shape: Sequence[int]) \
     return _load_images_ssd
 
 
-def prepare_scenenet_val(data_path: str, protobuf_path: str) -> Tuple[List[List[str]],
-                                                                      List[List[str]],
-                                                                      List[List[List[dict]]]]:
+def prepare_scenenet_data(data_path: str, protobuf_path: str) -> Tuple[List[List[str]],
+                                                                       List[List[str]],
+                                                                       List[List[List[dict]]]]:
     """
     Prepares the SceneNet RGB-D data and returns it in Python format.
     
