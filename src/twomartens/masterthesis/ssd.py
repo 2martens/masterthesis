@@ -475,10 +475,7 @@ def train_keras(train_generator: callable,
                                          beta1=0.5, beta2=0.999),
         loss=ssd_loss.compute_loss,
         metrics=[
-            tf.keras.metrics.Precision(),
-            tf.keras.metrics.Recall(),
-            tf.keras.metrics.FalsePositives(),
-            tf.keras.metrics.CategoricalAccuracy()
+            "categorical_accuracy"
         ]
     )
 
