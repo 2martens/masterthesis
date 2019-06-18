@@ -269,6 +269,10 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
         traj_image_paths, traj_instances = trajectory
         for image_path, frame_instances in zip(traj_image_paths, traj_instances):
             labels = []
+            
+            if not frame_instances:
+                continue  # skip images that do not contain instances
+            
             for instance in frame_instances:
                 bbox = instance['bbox']
                 labels.append([
