@@ -84,8 +84,8 @@ def _ssd_train(args: argparse.Namespace) -> None:
                                 training=False, evaluation=False)
     del file_names_train, instances_train, file_names_val, instances_val
     
-    nr_batches_train = int(math.ceil(train_length / float(batch_size)))
-    nr_batches_val = int(math.ceil(val_length / float(batch_size)))
+    nr_batches_train = int(math.floor(train_length / batch_size))
+    nr_batches_val = int(math.floor(val_length / batch_size))
     
     tensorboard_callback = tf.keras.callbacks.TensorBoard(
         log_dir=f"{args.summary_path}/train/{args.network}/{args.iteration}"
