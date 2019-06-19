@@ -479,12 +479,12 @@ def train_keras(train_generator: callable,
         ]
     )
 
-    checkpoint_dir = os.path.join(weights_prefix, str(iteration), "/")
+    checkpoint_dir = os.path.join(weights_prefix, str(iteration))
     os.makedirs(checkpoint_dir, exist_ok=True)
     
     callbacks = [
         tf.keras.callbacks.ModelCheckpoint(
-            filepath=f"{checkpoint_dir}ssd300-{{epoch:02d}}_loss-{{loss:.4f}}_val_loss-{{val_loss:.4f}}.h5",
+            filepath=f"{checkpoint_dir}/ssd300-{{epoch:02d}}_loss-{{loss:.4f}}_val_loss-{{val_loss:.4f}}.h5",
             monitor="val_loss",
             verbose=1,
             save_best_only=True,
