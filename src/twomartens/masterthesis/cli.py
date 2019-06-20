@@ -118,7 +118,7 @@ def _auto_encoder_train(args: argparse.Namespace) -> None:
     tf.enable_eager_execution()
     coco_path = args.coco_path
     category = args.category
-    batch_size = 16
+    batch_size = 32
     image_size = 256
     coco_data = data.load_coco_train(coco_path, category, num_epochs=args.num_epochs, batch_size=batch_size,
                                      resized_shape=(image_size, image_size))
