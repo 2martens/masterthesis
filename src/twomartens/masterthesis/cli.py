@@ -95,7 +95,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
         train_generator,
         nr_batches_train,
         val_generator,
-        nr_batches_val,
+        20,
         ssd_model,
         weights_path,
         args.iteration,
