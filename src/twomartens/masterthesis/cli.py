@@ -88,7 +88,8 @@ def _ssd_train(args: argparse.Namespace) -> None:
         train_image, _ = next(train_generator)
         train_length -= 1
         from PIL import Image
-        image = Image.fromarray(train_image)
+        import numpy as np
+        image = Image.fromarray(np.asarray(train_image))
         image.save(f"{args.summary_path}/train/{args.network}/{args.iteration}/train_image.png")
     
     nr_batches_train = int(math.floor(train_length / batch_size))
