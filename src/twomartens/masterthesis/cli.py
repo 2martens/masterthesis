@@ -87,8 +87,9 @@ def _ssd_train(args: argparse.Namespace) -> None:
     if args.debug:
         train_image, _ = next(train_generator)
         train_length -= 1
-        import cv2
-        cv2.imwrite(f"{args.summary_path}/train/{args.network}/{args.iteration}/train.png", train_image)
+        from PIL import Image
+        image = Image.fromarray(train_image)
+        image.save(f"{args.summary_path}/train/{args.network}/{args.iteration}/train_image.png")
     
     nr_batches_train = int(math.floor(train_length / batch_size))
     nr_batches_val = int(math.floor(val_length / batch_size))
