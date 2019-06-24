@@ -86,6 +86,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
     
     if args.debug:
         train_image, _ = next(train_generator)
+        print(train_image)
         train_length -= 1
         from PIL import Image
         import numpy as np
