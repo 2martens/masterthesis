@@ -132,7 +132,6 @@ def _ssd_train(args: argparse.Namespace) -> None:
             pyplot.savefig(f"{args.summary_path}/train/{args.network}/{args.iteration}/bboxes{str(i).zfill(nr_digits)}.png")
             pyplot.close(figure)
     
-    
     nr_batches_train = int(math.floor(train_length / batch_size))
     nr_batches_val = int(math.floor(val_length / batch_size))
     
