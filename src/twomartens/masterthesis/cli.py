@@ -399,3 +399,25 @@ def visualise(args: argparse.Namespace) -> None:
             pyplot.close(figure)
         
         i += 1
+
+
+def measure_mapping(args: argparse.Namespace) -> None:
+    import pickle
+
+    from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
+
+    with open(f"{args.ground_truth_path}/instances.bin", "rb") as file:
+        instances = pickle.load(file)
+
+    output_path = f"{args.output_path}/measure/{args.tarball_id}"
+    annotation_file_train = f"{args.coco_path}/annotations/instances_train2014.json"
+    cats_to_classes, _, _, _ = coco_utils.get_coco_category_maps(annotation_file_train)
+    
+    for i, trajectory in enumerate(instances):
+        counts = {cat_id: 0 for cat_id in cats_to_classes.keys()}
+        for labels in trajectory:
+            for instance in labels:
+                counts[instance['coco_id']] += 1
+        
+        with open(f"{output_path}/{i}.bin", "wb") as file:
+            pickle.dump(counts, file)

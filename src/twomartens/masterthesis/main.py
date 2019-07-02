@@ -44,6 +44,7 @@ def main() -> None:
     evaluate_parser = sub_parsers.add_parser("evaluate", help="Evaluate a network")
     test_parser = sub_parsers.add_parser("test", help="Test a network")
     visualise_parser = sub_parsers.add_parser("visualise", help="Visualise the ground truth")
+    measure_parser = sub_parsers.add_parser("measure_mapping", help="Measure the number of instances per COCO category")
     
     # build sub parsers
     _build_prepare(prepare_parser)
@@ -51,6 +52,7 @@ def main() -> None:
     _build_test(test_parser)
     _build_evaluate(evaluate_parser)
     _build_visualise(visualise_parser)
+    _build_measure(measure_parser)
     
     args = parser.parse_args()
     
@@ -64,6 +66,8 @@ def main() -> None:
         cli.prepare(args)
     elif args.action == "visualise":
         cli.visualise(args)
+    elif args.action == "measure_mapping":
+        cli.measure_mapping(args)
 
 
 def _build_prepare(parser: argparse.ArgumentParser) -> None:
@@ -164,6 +168,13 @@ def _build_visualise(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--ground_truth_path", type=str, help="path to the prepared ground truth directory")
     parser.add_argument("--output_path", type=str, help="path to the output directory")
     parser.add_argument("trajectory", type=int, help="trajectory to visualise")
+
+
+def _build_measure(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--coco_path", type=str, help="the path to the COCO data set")
+    parser.add_argument("--ground_truth_path", type=str, help="path to the prepared ground truth directory")
+    parser.add_argument("--output_path", type=str, help="path to the output directory")
+    parser.add_argument("tarball_id", type=int, help="id of the used tarball")
 
 
 if __name__ == "__main__":
