@@ -367,8 +367,6 @@ def visualise(args: argparse.Namespace) -> None:
     _, _, cats_to_names, _ = coco_utils.get_coco_category_maps(annotation_file_train)
 
     colors = pyplot.cm.hsv(np.linspace(0, 1, 81)).tolist()
-    classes = ['background']
-    classes.extend(cats_to_names)
     
     i = 0
     nr_images = len(file_names[args.trajectory])
@@ -392,7 +390,7 @@ def visualise(args: argparse.Namespace) -> None:
                 xmax = bbox[2]
                 ymax = bbox[3]
                 color = colors[int(instance['coco_id'])]
-                label = f"{classes[int(instance['coco_id'])]}"
+                label = f"{cats_to_names[int(instance['coco_id'])]}"
                 current_axis.add_patch(
                     pyplot.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color=color, fill=False, linewidth=2))
                 current_axis.text(xmin, ymin, label, size='x-large', color='white',
