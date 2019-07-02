@@ -238,7 +238,8 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
                        batch_size: int,
                        resized_shape: Sequence[int],
                        training: bool,
-                       evaluation: bool) -> Tuple[callable, int]:
+                       evaluation: bool,
+                       augment: bool) -> Tuple[callable, int]:
     """
     Loads the SceneNet RGB-D data and returns a data set.
     
@@ -251,6 +252,7 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
         resized_shape: shape of input images to SSD
         training: True if training data is desired
         evaluation: True if evaluation-ready data is desired
+        augment: True if training data should be augmented
 
     Returns:
         scenenet data set generator
@@ -296,14 +298,14 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
         labels=final_labels
     )
     
-    if training:
-        shuffle = True
+    shuffle = True if training else False
+    
+    if training and augment:
         transformations = [data_augmentation_chain_original_ssd.SSDDataAugmentation(
             img_width=resized_shape[0],
             img_height=resized_shape[1]
         )]
     else:
-        shuffle = False
         transformations = [
             object_detection_2d_photometric_ops.ConvertTo3Channels(),
             object_detection_2d_geometric_ops.Resize(height=resized_shape[0],
