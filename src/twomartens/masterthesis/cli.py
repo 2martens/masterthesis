@@ -390,7 +390,7 @@ def visualise(args: argparse.Namespace) -> None:
                 xmax = bbox[2]
                 ymax = bbox[3]
                 color = colors[cats_to_classes[int(instance['coco_id'])]]
-                label = f"{cats_to_names[int(instance['coco_id'])]}"
+                label = f"{cats_to_names[int(instance['coco_id'])]}: {instance['wordnet_class_name']}"
                 current_axis.add_patch(
                     pyplot.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color=color, fill=False, linewidth=2))
                 current_axis.text(xmin, ymin, label, size='x-large', color='white',
