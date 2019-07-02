@@ -122,7 +122,6 @@ def _ssd_train(args: argparse.Namespace) -> None:
                 xmax = instance[-10] * image_size
                 ymax = instance[-9] * image_size
                 class_id = np.argmax(instance[:-12])
-                print(class_id)
                 color = colors[class_id]
                 label = f"{classes_to_names[class_id]}"
                 current_axis.add_patch(
