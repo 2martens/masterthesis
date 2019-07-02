@@ -384,6 +384,7 @@ def visualise(args: argparse.Namespace) -> None:
             current_axis = pyplot.gca()
         
             for instance in labels:
+                print(instance)
                 bbox = instance['bbox']
                 # Transform the predicted bounding boxes for the 300x300 image to the original image dimensions.
                 xmin = bbox[0]
