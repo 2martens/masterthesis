@@ -43,12 +43,14 @@ def main() -> None:
     train_parser = sub_parsers.add_parser("train", help="Train a network")
     evaluate_parser = sub_parsers.add_parser("evaluate", help="Evaluate a network")
     test_parser = sub_parsers.add_parser("test", help="Test a network")
+    visualise_parser = sub_parsers.add_parser("visualise", help="Visualise the ground truth")
     
     # build sub parsers
     _build_prepare(prepare_parser)
     _build_train(train_parser)
     _build_test(test_parser)
     _build_evaluate(evaluate_parser)
+    _build_visualise(visualise_parser)
     
     args = parser.parse_args()
     
@@ -60,6 +62,8 @@ def main() -> None:
         cli.test(args)
     elif args.action == "prepare":
         cli.prepare(args)
+    elif args.actions == "visualise":
+        cli.visualise(args)
 
 
 def _build_prepare(parser: argparse.ArgumentParser) -> None:
@@ -153,6 +157,13 @@ def _build_ssd_evaluate(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--output_path", type=str, help="path to the output directory")
     parser.add_argument("--evaluation_path", type=str, help="path to the directory for the evaluation results")
     parser.add_argument("iteration", type=int, help="the validation iteration to use")
+
+
+def _build_visualise(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--coco_path", type=str, help="the path to the COCO data set")
+    parser.add_argument("--ground_truth_path", type=str, help="path to the prepared ground truth directory")
+    parser.add_argument("--output_path", type=str, help="path to the output directory")
+    parser.add_argument("trajectory", type=int, help="trajectory to visualise")
 
 
 if __name__ == "__main__":

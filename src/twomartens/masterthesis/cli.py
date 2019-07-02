@@ -346,3 +346,57 @@ def prepare(args: argparse.Namespace) -> None:
         pickle.dump(file_names_instances, file)
     with open(f"{args.ground_truth_path}/instances.bin", "wb") as file:
         pickle.dump(instances, file)
+
+
+def visualise(args: argparse.Namespace) -> None:
+    import pickle
+    
+    from matplotlib import pyplot
+    import numpy as np
+    from PIL import Image
+
+    from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
+    
+    with open(f"{args.ground_truth_path}/photo_paths.bin", "rb") as file:
+        file_names = pickle.load(file)
+    with open(f"{args.ground_truth_path}/instances.bin", "rb") as file:
+        instances = pickle.load(file)
+
+    output_path = f"{args.output_path}/visualise/{args.trajectory}"
+    annotation_file_train = f"{args.coco_path}/annotations/instances_train2014.json"
+    _, _, cats_to_names, _ = coco_utils.get_coco_category_maps(annotation_file_train)
+
+    colors = pyplot.cm.hsv(np.linspace(0, 1, 81)).tolist()
+    classes = ['background'].extend(cats_to_names)
+    
+    i = 0
+    nr_images = len(file_names[args.trajectory])
+    nr_digits = math.ceil(math.log10(nr_images))
+    for file_name, labels in zip(file_names[args.trajectory], instances[args.trajectory]):
+        if not labels:
+            continue
+        
+        # only loop through selected trajectory
+        with Image.open(file_name) as image:
+            figure = pyplot.figure(figsize=(20, 12))
+            pyplot.imshow(image)
+        
+            current_axis = pyplot.gca()
+        
+            for instance in labels:
+                bbox = instance['bbox']
+                # Transform the predicted bounding boxes for the 300x300 image to the original image dimensions.
+                xmin = bbox[0]
+                ymin = bbox[1]
+                xmax = bbox[2]
+                ymax = bbox[3]
+                color = colors[int(instance['coco_id'])]
+                label = f"{classes[int(instance['coco_id'])]}"
+                current_axis.add_patch(
+                    pyplot.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color=color, fill=False, linewidth=2))
+                current_axis.text(xmin, ymin, label, size='x-large', color='white',
+                                  bbox={'facecolor': color, 'alpha': 1.0})
+            pyplot.savefig(f"{output_path}/{str(i).zfill(nr_digits)}")
+            figure.clear()
+        
+        i += 1
