@@ -435,7 +435,9 @@ def prepare_scenenet_data(data_path: str, protobuf_path: str) -> Tuple[List[List
             instance_dict = {}
             if instance_type != scenenet_pb2.Instance.BACKGROUND:
                 wnid = instance.semantic_wordnet_id
+                wn_class = instance.semantic_english
                 instance_dict['wordnet_id'] = wnid
+                instance_dict['wordnet_class_name'] = wn_class
                 if wnid in definitions.WNID_TO_COCO:
                     instance_dict['coco_id'] = definitions.WNID_TO_COCO[wnid]
                 else:
