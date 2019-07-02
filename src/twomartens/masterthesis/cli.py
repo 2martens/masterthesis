@@ -367,7 +367,8 @@ def visualise(args: argparse.Namespace) -> None:
     _, _, cats_to_names, _ = coco_utils.get_coco_category_maps(annotation_file_train)
 
     colors = pyplot.cm.hsv(np.linspace(0, 1, 81)).tolist()
-    classes = ['background'].extend(cats_to_names)
+    classes = ['background']
+    classes.extend(cats_to_names)
     
     i = 0
     nr_images = len(file_names[args.trajectory])
@@ -384,7 +385,6 @@ def visualise(args: argparse.Namespace) -> None:
             current_axis = pyplot.gca()
         
             for instance in labels:
-                print(instance)
                 bbox = instance['bbox']
                 # Transform the predicted bounding boxes for the 300x300 image to the original image dimensions.
                 xmin = bbox[0]
