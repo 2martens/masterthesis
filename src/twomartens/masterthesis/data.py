@@ -463,8 +463,8 @@ def prepare_scenenet_data(data_path: str, protobuf_path: str) -> Tuple[List[List
                 else:
                     coordinates = coordinates[0]  # extract the coords of the one object
                 
-                x = coordinates[0]
-                y = coordinates[1]
+                x = coordinates[1]
+                y = coordinates[0]
                 xmin, xmax = x.start, x.stop
                 ymin, ymax = y.start, y.stop
                 instance = instances_traj_dict[instance_id].copy()
