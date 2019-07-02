@@ -396,6 +396,6 @@ def visualise(args: argparse.Namespace) -> None:
                 current_axis.text(xmin, ymin, label, size='x-large', color='white',
                                   bbox={'facecolor': color, 'alpha': 1.0})
             pyplot.savefig(f"{output_path}/{str(i).zfill(nr_digits)}")
-            figure.clear()
+            pyplot.close(figure)
         
         i += 1
