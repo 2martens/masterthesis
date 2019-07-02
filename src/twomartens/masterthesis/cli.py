@@ -111,9 +111,6 @@ def _ssd_train(args: argparse.Namespace) -> None:
             image.save(f"{summary_path}"
                        f"train_image{str(i).zfill(nr_digits)}.png")
             
-            if not instances:
-                continue
-
             figure = pyplot.figure(figsize=(20, 12))
             pyplot.imshow(image)
 
