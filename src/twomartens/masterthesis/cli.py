@@ -385,10 +385,10 @@ def visualise(args: argparse.Namespace) -> None:
             for instance in labels:
                 bbox = instance['bbox']
                 # Transform the predicted bounding boxes for the 300x300 image to the original image dimensions.
-                xmin = bbox[1]
-                ymin = bbox[0]
-                xmax = bbox[3]
-                ymax = bbox[2]
+                xmin = bbox[0]
+                ymin = bbox[1]
+                xmax = bbox[2]
+                ymax = bbox[3]
                 color = colors[cats_to_classes[int(instance['coco_id'])]]
                 label = f"{cats_to_names[int(instance['coco_id'])]}"
                 current_axis.add_patch(
