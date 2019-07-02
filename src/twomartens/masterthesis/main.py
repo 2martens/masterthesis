@@ -62,7 +62,7 @@ def main() -> None:
         cli.test(args)
     elif args.action == "prepare":
         cli.prepare(args)
-    elif args.actions == "visualise":
+    elif args.action == "visualise":
         cli.visualise(args)
 
 
