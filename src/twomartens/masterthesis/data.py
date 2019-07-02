@@ -29,6 +29,7 @@ from typing import Sequence
 import numpy as np
 import scipy
 import tensorflow as tf
+import tqdm
 from scipy import ndimage
 
 from twomartens.masterthesis.ssd_keras.data_generator import object_detection_2d_data_generator, \
@@ -422,7 +423,7 @@ def prepare_scenenet_data(data_path: str, protobuf_path: str) -> Tuple[List[List
     file_names_photos = []
     file_names_instances = []
     instances = []
-    for trajectory in trajectories.trajectories:
+    for trajectory in tqdm.tqdm(trajectories.trajectories, desc="preparing trajectories"):
         path = f"{data_path}/{trajectory.render_path}"
         file_names_photos_traj = []
         file_names_instances_traj = []
