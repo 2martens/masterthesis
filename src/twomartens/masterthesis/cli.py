@@ -99,6 +99,8 @@ def _ssd_train(args: argparse.Namespace) -> None:
         annotation_file_train = f"{args.coco_path}/annotations/instances_train2014.json"
         _, _, _, classes_to_names = coco_utils.get_coco_category_maps(annotation_file_train)
         colors = pyplot.cm.hsv(np.linspace(0, 1, 81)).tolist()
+        summary_path = f"{args.summary_path}/train/{args.network}/{args.iteration}/"
+        os.makedirs(summary_path, exist_ok=True)
 
         nr_images = len(train_images)
         nr_digits = math.ceil(math.log10(nr_images))
@@ -106,7 +108,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
         for i, train_image in enumerate(train_images):
             instances = train_labels[i]
             image = Image.fromarray(train_image)
-            image.save(f"{args.summary_path}/train/{args.network}/{args.iteration}/"
+            image.save(f"{summary_path}"
                        f"train_image{str(i).zfill(nr_digits)}.png")
             
             if not instances:
