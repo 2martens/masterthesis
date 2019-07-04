@@ -36,6 +36,7 @@ _CONFIG_PROPS = {
     "Paths": {
         "coco": (str, ""),
         "scenenet": (str, ""),
+        "scenenet_gt": (str, ""),
         "scenenet_gt_train": (str, ""),
         "scenenet_gt_val": (str, ""),
         "scenenet_gt_test": (str, ""),

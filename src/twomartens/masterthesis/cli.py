@@ -45,13 +45,19 @@ def prepare(args: argparse.Namespace) -> None:
     
     from twomartens.masterthesis import data
     
-    file_names_photos, file_names_instances, instances = data.prepare_scenenet_data(args.scenenet_path,
-                                                                                    args.protobuf_path)
-    with open(f"{args.ground_truth_path}/photo_paths.bin", "wb") as file:
+    file_names_photos, file_names_instances, \
+        instances = data.prepare_scenenet_data(conf.get_property("Paths.scenenet"),
+                                               args.protobuf_path)
+    with open(f"{conf.get_property('Paths.scenenet_gt')}/"
+              f"{args.ground_truth_path}/photo_paths.bin", "wb") as file:
         pickle.dump(file_names_photos, file)
-    with open(f"{args.ground_truth_path}/instance_paths.bin", "wb") as file:
+        
+    with open(f"{conf.get_property('Paths.scenenet_gt')}/"
+              f"{args.ground_truth_path}/instance_paths.bin", "wb") as file:
         pickle.dump(file_names_instances, file)
-    with open(f"{args.ground_truth_path}/instances.bin", "wb") as file:
+        
+    with open(f"{conf.get_property('Paths.scenenet_gt')}/"
+              f"{args.ground_truth_path}/instances.bin", "wb") as file:
         pickle.dump(instances, file)
 
 
