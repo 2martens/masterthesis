@@ -21,6 +21,7 @@ Functions:
     main(...): provides command line interface
 """
 import argparse
+from typing import List
 
 from twomartens.masterthesis import cli
 
@@ -33,45 +34,59 @@ def main() -> None:
         description="Train, test, and use SSD with novelty detection.",
     )
     
+    _build_general(parser)
+    sub_parsers = _build_sub_parsers(parser)
+    
+    _build_config(sub_parsers[0])
+    _build_prepare(sub_parsers[1])
+    _build_train(sub_parsers[2])
+    _build_test(sub_parsers[3])
+    _build_evaluate(sub_parsers[4])
+    _build_visualise(sub_parsers[5])
+    _build_measure(sub_parsers[6])
+    args = _get_user_input(parser)
+    action = _get_action(args.component)
+    _execute_action(action, args)
+
+
+def _build_general(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--verbose", action="store_true", help="provide to get extra output")
     parser.add_argument("--debug", action="store_true", help="activate debug functionality")
     parser.add_argument('--version', action='version', version='2martens Masterthesis 0.1.0')
+
+
+def _build_sub_parsers(parser: argparse.ArgumentParser) -> List[argparse.ArgumentParser]:
     sub_parsers = parser.add_subparsers(dest="component")
     sub_parsers.required = True
-    
     config_parser = sub_parsers.add_parser("config", help="Get and set config values")
     prepare_parser = sub_parsers.add_parser("prepare", help="Prepare SceneNet RGB-D ground truth")
     train_parser = sub_parsers.add_parser("train", help="Train a network")
-    evaluate_parser = sub_parsers.add_parser("evaluate", help="Evaluate a network")
     test_parser = sub_parsers.add_parser("test", help="Test a network")
+    evaluate_parser = sub_parsers.add_parser("evaluate", help="Evaluate a network")
     visualise_parser = sub_parsers.add_parser("visualise", help="Visualise the ground truth")
     measure_parser = sub_parsers.add_parser("measure_mapping", help="Measure the number of instances per COCO category")
     
-    # build sub parsers
-    _build_config(config_parser)
-    _build_prepare(prepare_parser)
-    _build_train(train_parser)
-    _build_test(test_parser)
-    _build_evaluate(evaluate_parser)
-    _build_visualise(visualise_parser)
-    _build_measure(measure_parser)
-    
-    args = parser.parse_args()
-    
-    if args.component == "config":
-        cli.config(args)
-    elif args.component == "prepare":
-        cli.prepare(args)
-    elif args.component == "train":
-        cli.train(args)
-    elif args.component == "evaluate":
-        cli.evaluate(args)
-    elif args.component == "test":
-        cli.test(args)
-    elif args.component == "visualise":
-        cli.visualise(args)
-    elif args.component == "measure_mapping":
-        cli.measure_mapping(args)
+    return [
+        config_parser,
+        prepare_parser,
+        train_parser,
+        test_parser,
+        evaluate_parser,
+        visualise_parser,
+        measure_parser
+    ]
+
+
+def _get_user_input(parser: argparse.ArgumentParser) -> argparse.Namespace:
+    return parser.parse_args()
+
+
+def _get_action(component: str) -> callable:
+    return getattr(cli, component)
+
+
+def _execute_action(action: callable, input: argparse.Namespace) -> None:
+    action(input)
 
 
 def _build_config(parser: argparse.ArgumentParser) -> None:
