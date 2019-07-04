@@ -154,7 +154,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
     )
     
     with open(f"{args.summary_path}/train/{args.network}/{args.iteration}/history", "wb") as file:
-        pickle.dump(history, file)
+        pickle.dump(history.history, file)
 
 
 def _auto_encoder_train(args: argparse.Namespace) -> None:
