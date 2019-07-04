@@ -471,8 +471,11 @@ def train_keras(train_generator: callable,
     
     # compile the model
     ssd_model.model.compile(
-        optimizer=tf.train.AdamOptimizer(learning_rate=learning_rate_var,
-                                         beta1=0.5, beta2=0.999),
+        # optimizer=tf.train.AdamOptimizer(learning_rate=learning_rate_var,
+        #                                  beta1=0.5, beta2=0.999),
+        optimizer=tf.keras.optimizers.Adam(lr=learning_rate_var,
+                                           beta_1=0.9, beta_2=0.999,
+                                           epsilon=1e-08, decay=5e-04),
         loss=ssd_loss.compute_loss,
         metrics=[
             "categorical_accuracy"
