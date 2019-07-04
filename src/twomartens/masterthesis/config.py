@@ -50,7 +50,9 @@ _CONFIG_PROPS = {
     },
     "Parameters": {
         "batch_size": (int, "32"),
-        "ssd_image_size": (int, "300")
+        "ssd_image_size": (int, "300"),
+        "learning_rate": (float, "0.001"),
+        "steps_per_val_epoch": (int, "20")
     }
 }
 

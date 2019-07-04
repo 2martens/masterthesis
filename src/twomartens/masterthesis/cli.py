@@ -239,13 +239,13 @@ def _ssd_train(args: argparse.Namespace) -> None:
         train_generator,
         nr_batches_train,
         val_generator,
-        20,
+        conf.get_property("Parameters.steps_per_val_epoch"),
         ssd_model,
         weights_path,
         args.iteration,
         initial_epoch=0,
         nr_epochs=args.num_epochs,
-        lr=0.001,
+        lr=conf.get_property("Parameters.learning_rate"),
         tensorboard_callback=tensorboard_callback
     )
     
