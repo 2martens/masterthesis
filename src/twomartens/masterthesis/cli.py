@@ -75,13 +75,15 @@ def _ssd_train(args: argparse.Namespace) -> None:
                                 predictor_sizes=ssd_model.predictor_sizes,
                                 batch_size=batch_size,
                                 resized_shape=(image_size, image_size),
-                                training=True, evaluation=False, augment=False)
+                                training=True, evaluation=False, augment=False,
+                                nr_trajectories=1)
     val_generator, val_length = \
         data.load_scenenet_data(file_names_val, instances_val, args.coco_path,
                                 predictor_sizes=ssd_model.predictor_sizes,
                                 batch_size=batch_size,
                                 resized_shape=(image_size, image_size),
-                                training=False, evaluation=False, augment=False)
+                                training=False, evaluation=False, augment=False,
+                                nr_trajectories=1)
     del file_names_train, instances_train, file_names_val, instances_val
     
     if args.debug:
