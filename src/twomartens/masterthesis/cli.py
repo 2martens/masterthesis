@@ -26,18 +26,14 @@ Functions:
     prepare(...): prepares the SceneNet ground truth data
 """
 import argparse
+
 import math
 
 from twomartens.masterthesis import config as conf
 
 
 def config(args: argparse.Namespace) -> None:
-    if args.action == "get":
-        print(str(conf.get_property(args.property)))
-    elif args.action == "set":
-        conf.set_property(args.property, args.value)
-    elif args.action == "list":
-        conf.list_property_values()
+    _config_execute_action(args, conf.get_property, conf.set_property, conf.list_property_values)
 
 
 def prepare(args: argparse.Namespace) -> None:
@@ -156,6 +152,16 @@ def measure_mapping(args: argparse.Namespace) -> None:
         
         with open(f"{output_path}/{i}.bin", "wb") as file:
             pickle.dump(counts, file)
+
+
+def _config_execute_action(args: argparse.Namespace, on_get: callable,
+                           on_set: callable, on_list: callable) -> None:
+    if args.action == "get":
+        print(str(on_get(args.property)))
+    elif args.action == "set":
+        on_set(args.property, args.value)
+    elif args.action == "list":
+        on_list()
 
 
 def _ssd_train(args: argparse.Namespace) -> None:
