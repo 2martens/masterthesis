@@ -44,8 +44,8 @@ _CONFIG_PROPS = {
         "weights": (str, "")
     },
     "Debug": {
-        "summaries": (bool, True),
-        "train_images": (bool, False)
+        "summaries": (bool, "True"),
+        "train_images": (bool, "False")
     }
 }
 
@@ -58,7 +58,7 @@ def get_property(key: str) -> str:
     parser.read(config_file)
     
     section, prop = tuple(key.split("."))
-    return str(parser.get(section, prop))
+    return parser.get(section, prop)
 
 
 def set_property(key: str, value: str) -> None:
@@ -69,8 +69,7 @@ def set_property(key: str, value: str) -> None:
     parser.read(config_file)
     
     section, prop = tuple(key.split("."))
-    cast_method = _CONFIG_PROPS[section][key][0]
-    parser.set(section, prop, cast_method(value))
+    parser.set(section, prop, value)
 
 
 def list_property_values() -> None:
