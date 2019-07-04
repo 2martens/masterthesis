@@ -44,9 +44,16 @@ def main() -> None:
     _build_evaluate(sub_parsers[4])
     _build_visualise(sub_parsers[5])
     _build_measure(sub_parsers[6])
+    
     args = _get_user_input(parser)
-    action = _get_action(args.component)
-    _execute_action(action, args)
+    _execute_action(args,
+                    cli.config,
+                    cli.prepare,
+                    cli.train,
+                    cli.test,
+                    cli.evaluate,
+                    cli.visualise,
+                    cli.measure_mapping)
 
 
 def _build_general(parser: argparse.ArgumentParser) -> None:
@@ -85,8 +92,28 @@ def _get_action(component: str) -> callable:
     return getattr(cli, component)
 
 
-def _execute_action(action: callable, input: argparse.Namespace) -> None:
-    action(input)
+def _execute_action(args: argparse.Namespace,
+                    on_config: callable,
+                    on_prepare: callable,
+                    on_train: callable,
+                    on_test: callable,
+                    on_evaluate: callable,
+                    on_visualise: callable,
+                    on_measure: callable) -> None:
+    if args.component == "config":
+        on_config(args)
+    elif args.component == "prepare":
+        on_prepare(args)
+    elif args.component == "train":
+        on_train(args)
+    elif args.component == "test":
+        on_test(args)
+    elif args.component == "evaluate":
+        on_evaluate(args)
+    elif args.component == "visualise":
+        on_visualise(args)
+    elif args.component == "measure_mapping":
+        on_measure(args)
 
 
 def _build_config(parser: argparse.ArgumentParser) -> None:
