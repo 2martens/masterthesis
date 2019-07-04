@@ -214,7 +214,6 @@ def _ssd_train(args: argparse.Namespace) -> None:
     del file_names_train, instances_train, file_names_val, instances_val
     
     if args.debug and conf.get_property("Debug.train_images"):
-        from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
         from twomartens.masterthesis import debug
         
         train_data = next(train_generator)
