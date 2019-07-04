@@ -39,7 +39,7 @@ setup(
     },
     python_requires="~=3.6",
     install_requires=["tensorflow-gpu", "Pillow", "h5py", "numpy", "opencv-python", "scikit-learn", "tqdm",
-                      "beautifulsoup4", "matplotlib", "protobuf", "imutils", "matplotlib"],
+                      "beautifulsoup4", "matplotlib", "protobuf", "imutils"],
     license="Apache License 2.0",
     classifiers=[
         "Operating System :: OS Independent",
