@@ -228,9 +228,12 @@ def _ssd_train(args: argparse.Namespace) -> None:
     nr_batches_train = int(math.floor(train_length / batch_size))
     nr_batches_val = int(math.floor(val_length / batch_size))
     
-    tensorboard_callback = tf.keras.callbacks.TensorBoard(
-        log_dir=f"{summary_path}/train/{args.network}/{args.iteration}"
-    )
+    if args.debug and conf.get_property("Debug.summaries"):
+        tensorboard_callback = tf.keras.callbacks.TensorBoard(
+            log_dir=f"{summary_path}/train/{args.network}/{args.iteration}"
+        )
+    else:
+        tensorboard_callback = None
     
     history = ssd.train_keras(
         train_generator,

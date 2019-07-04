@@ -447,7 +447,7 @@ def train_keras(train_generator: callable,
                 initial_epoch: int,
                 nr_epochs: int,
                 lr: float,
-                tensorboard_callback: tf.keras.callbacks.TensorBoard) -> tf.keras.callbacks.History:
+                tensorboard_callback: Optional[tf.keras.callbacks.TensorBoard]) -> tf.keras.callbacks.History:
     """
     Trains the SSD on the given data set using Keras functionality.
     
@@ -491,9 +491,10 @@ def train_keras(train_generator: callable,
             save_weights_only=False
         ),
         tf.keras.callbacks.TerminateOnNaN(),
-        tf.keras.callbacks.EarlyStopping(patience=2, min_delta=0.001, monitor="val_loss"),
-        tensorboard_callback
+        tf.keras.callbacks.EarlyStopping(patience=2, min_delta=0.001, monitor="val_loss")
     ]
+    if tensorboard_callback is not None:
+        callbacks.append(tensorboard_callback)
     
     history = ssd_model.model.fit_generator(generator=train_generator,
                                             epochs=nr_epochs,
