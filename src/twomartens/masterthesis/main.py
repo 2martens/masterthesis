@@ -34,7 +34,7 @@ def main() -> None:
     )
     
     parser.add_argument("--verbose", action="store_true", help="provide to get extra output")
-    parser.add_argument("--debug", action="store_true", help="provide to collect tensorboard summaries")
+    parser.add_argument("--debug", action="store_true", help="activate debug functionality")
     parser.add_argument('--version', action='version', version='2martens Masterthesis 0.1.0')
     sub_parsers = parser.add_subparsers(dest="component")
     sub_parsers.required = True
