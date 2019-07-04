@@ -19,6 +19,7 @@
 Provides CLI actions.
 
 Functions:
+    config(...): handles the config component
     train(...): trains a network
     test(...): evaluates a network
     val(...): runs predictions on the validation data
@@ -26,6 +27,17 @@ Functions:
 """
 import argparse
 import math
+
+from twomartens.masterthesis import config as conf
+
+
+def config(args: argparse.Namespace) -> None:
+    if args.action == "get":
+        conf.get_property(args.property)
+    elif args.action == "set":
+        conf.set_property(args.property, args.value)
+    elif args.action == "list":
+        conf.list_property_values()
 
 
 def train(args: argparse.Namespace) -> None:
