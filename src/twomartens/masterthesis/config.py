@@ -70,6 +70,9 @@ def set_property(key: str, value: str) -> None:
     
     section, prop = tuple(key.split("."))
     parser.set(section, prop, value)
+    
+    with open(config_file, "w") as file:
+        parser.write(file)
 
 
 def list_property_values() -> None:
