@@ -47,6 +47,10 @@ _CONFIG_PROPS = {
     "Debug": {
         "summaries": (bool, "True"),
         "train_images": (bool, "False")
+    },
+    "Parameters": {
+        "batch_size": (int, "32"),
+        "ssd_image_size": (int, "300")
     }
 }
 
