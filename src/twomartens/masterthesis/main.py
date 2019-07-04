@@ -60,14 +60,14 @@ def main() -> None:
     
     if args.component == "config":
         cli.config(args)
+    elif args.component == "prepare":
+        cli.prepare(args)
     elif args.component == "train":
         cli.train(args)
     elif args.component == "evaluate":
         cli.evaluate(args)
     elif args.component == "test":
         cli.test(args)
-    elif args.component == "prepare":
-        cli.prepare(args)
     elif args.component == "visualise":
         cli.visualise(args)
     elif args.component == "measure_mapping":
@@ -96,9 +96,9 @@ def _build_config_set(parser: argparse.ArgumentParser) -> None:
 
 
 def _build_prepare(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("scenenet_path", type=str, help="the path to the SceneNet RGB-D data set")
-    parser.add_argument("protobuf_path", type=str, help="the path to the SceneNet RGB-D protobuf file")
-    parser.add_argument("ground_truth_path", type=str, help="the path where the ground truth should be stored")
+    parser.add_argument("protobuf_path", type=str, help="path to the SceneNet RGB-D protobuf file")
+    parser.add_argument("ground_truth_path", type=str,
+                        help="path to store ground truth - relative to configured ground truth path")
     
 
 def _build_train(parser: argparse.ArgumentParser) -> None:
