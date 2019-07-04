@@ -79,7 +79,11 @@ def list_property_values() -> None:
     _initialise_config(config_file)
     parser.read(config_file)
     
-    print(parser)  # simple implementation, more sophisticated might follow
+    for section in parser:
+        print(f"[{section}]")
+        for option in parser[section]:
+            value = parser.get(section, option)
+            print(f"{option}: {value}")
 
 
 def get_config() -> configparser.ConfigParser:
