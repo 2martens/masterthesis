@@ -33,7 +33,7 @@ from twomartens.masterthesis import config as conf
 
 def config(args: argparse.Namespace) -> None:
     if args.action == "get":
-        conf.get_property(args.property)
+        print(conf.get_property(args.property))
     elif args.action == "set":
         conf.set_property(args.property, args.value)
     elif args.action == "list":
