@@ -36,7 +36,7 @@ def main() -> None:
     parser.add_argument("--verbose", action="store_true", help="provide to get extra output")
     parser.add_argument("--debug", action="store_true", help="provide to collect tensorboard summaries")
     parser.add_argument('--version', action='version', version='2martens Masterthesis 0.1.0')
-    sub_parsers = parser.add_subparsers(dest="action")
+    sub_parsers = parser.add_subparsers(dest="component")
     sub_parsers.required = True
     
     config_parser = sub_parsers.add_parser("config", help="Get and set config values")
@@ -58,19 +58,19 @@ def main() -> None:
     
     args = parser.parse_args()
     
-    if args.action == "config":
+    if args.component == "config":
         cli.config(args)
-    elif args.action == "train":
+    elif args.component == "train":
         cli.train(args)
-    elif args.action == "evaluate":
+    elif args.component == "evaluate":
         cli.evaluate(args)
-    elif args.action == "test":
+    elif args.component == "test":
         cli.test(args)
-    elif args.action == "prepare":
+    elif args.component == "prepare":
         cli.prepare(args)
-    elif args.action == "visualise":
+    elif args.component == "visualise":
         cli.visualise(args)
-    elif args.action == "measure_mapping":
+    elif args.component == "measure_mapping":
         cli.measure_mapping(args)
 
 
