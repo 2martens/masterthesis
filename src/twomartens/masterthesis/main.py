@@ -39,6 +39,7 @@ def main() -> None:
     sub_parsers = parser.add_subparsers(dest="action")
     sub_parsers.required = True
     
+    config_parser = sub_parsers.add_parser("config", help="Get and set config values")
     prepare_parser = sub_parsers.add_parser("prepare", help="Prepare SceneNet RGB-D ground truth")
     train_parser = sub_parsers.add_parser("train", help="Train a network")
     evaluate_parser = sub_parsers.add_parser("evaluate", help="Evaluate a network")
@@ -47,6 +48,7 @@ def main() -> None:
     measure_parser = sub_parsers.add_parser("measure_mapping", help="Measure the number of instances per COCO category")
     
     # build sub parsers
+    _build_config(config_parser)
     _build_prepare(prepare_parser)
     _build_train(train_parser)
     _build_test(test_parser)
@@ -56,7 +58,9 @@ def main() -> None:
     
     args = parser.parse_args()
     
-    if args.action == "train":
+    if args.action == "config":
+        cli.config(args)
+    elif args.action == "train":
         cli.train(args)
     elif args.action == "evaluate":
         cli.evaluate(args)
@@ -68,6 +72,27 @@ def main() -> None:
         cli.visualise(args)
     elif args.action == "measure_mapping":
         cli.measure_mapping(args)
+
+
+def _build_config(parser: argparse.ArgumentParser) -> None:
+    sub_parsers = parser.add_subparsers(dest="action")
+    sub_parsers.required = True
+    
+    get_parser = sub_parsers.add_parser("get", help="Get a config value")
+    set_parser = sub_parsers.add_parser("set", help="Set a config value")
+    sub_parsers.add_parser("list", help="List all config values")
+    
+    _build_config_get(get_parser)
+    _build_config_set(set_parser)
+
+
+def _build_config_get(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("property", type=str, help="config property to retrieve")
+
+
+def _build_config_set(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("property", type=str, help="config property to set")
+    parser.add_argument("value", type=str, help="new value for config property")
 
 
 def _build_prepare(parser: argparse.ArgumentParser) -> None:
