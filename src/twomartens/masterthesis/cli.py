@@ -169,22 +169,25 @@ def _ssd_train(args: argparse.Namespace) -> None:
     
     tf.enable_eager_execution()
     
-    batch_size = 32
-    image_size = 300
+    batch_size = conf.get_property("Parameters.batch_size")
+    image_size = conf.get_property("Parameters.ssd_image_size")
     use_dropout = False if args.network == "ssd" else True
     
-    pre_trained_weights_file = f"{args.weights_path}/VGG_coco_SSD_300x300_iter_400000.h5"
-    weights_path = f"{args.weights_path}/train/{args.network}/"
+    weights_path = conf.get_property("Paths.weights")
+    pre_trained_weights_file = f"{weights_path}/VGG_coco_SSD_300x300_iter_400000.h5"
+    weights_path = f"{weights_path}/train/{args.network}/"
     os.makedirs(weights_path, exist_ok=True)
     
     # load prepared ground truth
-    with open(f"{args.ground_truth_path_train}/photo_paths.bin", "rb") as file:
+    train_gt_path = conf.get_property('Paths.scenenet_gt_train')
+    val_gt_path = conf.get_property('Paths.scenenet_gt_val')
+    with open(f"{train_gt_path}/photo_paths.bin", "rb") as file:
         file_names_train = pickle.load(file)
-    with open(f"{args.ground_truth_path_train}/instances.bin", "rb") as file:
+    with open(f"{train_gt_path}/instances.bin", "rb") as file:
         instances_train = pickle.load(file)
-    with open(f"{args.ground_truth_path_val}/photo_paths.bin", "rb") as file:
+    with open(f"{val_gt_path}/photo_paths.bin", "rb") as file:
         file_names_val = pickle.load(file)
-    with open(f"{args.ground_truth_path_val}/instances.bin", "rb") as file:
+    with open(f"{val_gt_path}/instances.bin", "rb") as file:
         instances_val = pickle.load(file)
 
     # model
@@ -194,7 +197,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
         ssd_model = ssd.SSD(mode='training', weights_path=pre_trained_weights_file)
     
     train_generator, train_length = \
-        data.load_scenenet_data(file_names_train, instances_train, args.coco_path,
+        data.load_scenenet_data(file_names_train, instances_train, conf.get_property("Paths.coco"),
                                 predictor_sizes=ssd_model.predictor_sizes,
                                 batch_size=batch_size,
                                 resized_shape=(image_size, image_size),
@@ -209,7 +212,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
                                 nr_trajectories=1)
     del file_names_train, instances_train, file_names_val, instances_val
     
-    if args.debug:
+    if args.debug and conf.get_property("Debug.train_images"):
         from matplotlib import pyplot
         import numpy as np
         from PIL import Image
@@ -260,8 +263,9 @@ def _ssd_train(args: argparse.Namespace) -> None:
     nr_batches_train = int(math.floor(train_length / batch_size))
     nr_batches_val = int(math.floor(val_length / batch_size))
     
+    summary_path = conf.get_property("Paths.summaries")
     tensorboard_callback = tf.keras.callbacks.TensorBoard(
-        log_dir=f"{args.summary_path}/train/{args.network}/{args.iteration}"
+        log_dir=f"{summary_path}/train/{args.network}/{args.iteration}"
     )
     
     history = ssd.train_keras(
@@ -278,7 +282,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
         tensorboard_callback=tensorboard_callback
     )
     
-    with open(f"{args.summary_path}/train/{args.network}/{args.iteration}/history", "wb") as file:
+    with open(f"{summary_path}/train/{args.network}/{args.iteration}/history", "wb") as file:
         pickle.dump(history.history, file)
 
 

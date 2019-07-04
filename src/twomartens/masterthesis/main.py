@@ -116,13 +116,6 @@ def _build_train(parser: argparse.ArgumentParser) -> None:
  
 
 def _build_ssd_train(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--coco_path", type=str, help="the path to the COCO data set")
-    parser.add_argument("--weights_path", type=str, help="path to the weights directory")
-    parser.add_argument("--ground_truth_path_train", type=str,
-                        help="path to the prepared ground truth directory for training")
-    parser.add_argument("--ground_truth_path_val", type=str,
-                        help="path to the prepared ground truth directory for validation")
-    parser.add_argument("--summary_path", type=str, help="path to the summaries directory")
     parser.add_argument("num_epochs", type=int, help="the number of epochs to train", default=80)
     parser.add_argument("iteration", type=int, help="the training iteration")
     
