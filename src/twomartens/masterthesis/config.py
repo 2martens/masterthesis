@@ -29,7 +29,7 @@ Functions:
 """
 import configparser
 import os
-
+from typing import Union
 
 CONFIG_FILE = "tm-masterthesis-config.ini"
 _CONFIG_PROPS = {
@@ -55,7 +55,7 @@ _CONFIG_PROPS = {
 }
 
 
-def get_property(key: str) -> str:
+def get_property(key: str) -> Union[str, float, int, bool]:
     parser = configparser.ConfigParser()
     config_file = f"{os.getcwd()}/{CONFIG_FILE}"
     
@@ -63,7 +63,19 @@ def get_property(key: str) -> str:
     parser.read(config_file)
     
     section, prop = tuple(key.split("."))
-    return parser.get(section, prop)
+    cast = _CONFIG_PROPS[section][prop][0]
+    
+    value = None
+    if cast is str:
+        value = parser.get(section, prop)
+    elif cast is float:
+        value = parser.getfloat(section, prop)
+    elif cast is int:
+        value = parser.getint(section, prop)
+    elif cast is bool:
+        value = parser.getboolean(section, prop)
+    
+    return value
 
 
 def set_property(key: str, value: str) -> None:
