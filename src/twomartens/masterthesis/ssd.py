@@ -504,8 +504,8 @@ def train_keras(train_generator: callable,
                                             callbacks=callbacks,
                                             initial_epoch=initial_epoch)
     
-    ssd_model.model.save(f"{checkpoint_dir}ssd300.h5")
-    ssd_model.model.save_weights(f"{checkpoint_dir}ssd300_weights.h5")
+    ssd_model.model.save(f"{checkpoint_dir}/ssd300.h5")
+    ssd_model.model.save_weights(f"{checkpoint_dir}/ssd300_weights.h5")
     
     return history
 
