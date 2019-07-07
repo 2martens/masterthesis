@@ -181,6 +181,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
 
     summary_path = conf.get_property("Paths.summaries")
     weights_path = conf.get_property("Paths.weights")
+    coco_path = conf.get_property("Paths.coco")
     pre_trained_weights_file = f"{weights_path}/{args.network}/VGG_coco_SSD_300x300_iter_400000.h5"
     weights_path = f"{weights_path}/{args.network}/train/"
     os.makedirs(weights_path, exist_ok=True)
@@ -204,14 +205,14 @@ def _ssd_train(args: argparse.Namespace) -> None:
         ssd_model = ssd.SSD(mode='training', weights_path=pre_trained_weights_file)
     
     train_generator, train_length = \
-        data.load_scenenet_data(file_names_train, instances_train, conf.get_property("Paths.coco"),
+        data.load_scenenet_data(file_names_train, instances_train, coco_path,
                                 predictor_sizes=ssd_model.predictor_sizes,
                                 batch_size=batch_size,
                                 resized_shape=(image_size, image_size),
                                 training=True, evaluation=False, augment=False,
                                 nr_trajectories=1)
     val_generator, val_length = \
-        data.load_scenenet_data(file_names_val, instances_val, args.coco_path,
+        data.load_scenenet_data(file_names_val, instances_val, coco_path,
                                 predictor_sizes=ssd_model.predictor_sizes,
                                 batch_size=batch_size,
                                 resized_shape=(image_size, image_size),
@@ -226,7 +227,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
         train_length -= batch_size
         train_images = train_data[0]
         train_labels = train_data[1]
-        output_path = f"{summary_path}/train/{args.network}/{args.iteration}"
+        output_path = f"{summary_path}/{args.network}/train/{args.iteration}"
 
         debug.save_ssd_train_images(train_images, train_labels, output_path)
     
@@ -235,7 +236,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
     
     if args.debug and conf.get_property("Debug.summaries"):
         tensorboard_callback = tf.keras.callbacks.TensorBoard(
-            log_dir=f"{summary_path}/train/{args.network}/{args.iteration}"
+            log_dir=f"{summary_path}/{args.network}/train/{args.iteration}"
         )
     else:
         tensorboard_callback = None
@@ -254,7 +255,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
         tensorboard_callback=tensorboard_callback
     )
     
-    with open(f"{summary_path}/train/{args.network}/{args.iteration}/history", "wb") as file:
+    with open(f"{summary_path}/{args.network}/train/{args.iteration}/history", "wb") as file:
         pickle.dump(history.history, file)
 
 
@@ -271,18 +272,20 @@ def _auto_encoder_train(args: argparse.Namespace) -> None:
     image_size = 256
     coco_data = data.load_coco_train(coco_path, category, num_epochs=args.num_epochs, batch_size=batch_size,
                                      resized_shape=(image_size, image_size))
+    summary_path = conf.get_property("Paths.summary")
     train_summary_writer = summary_ops_v2.create_file_writer(
-        f"{args.summary_path}/train/category-{category}/{args.iteration}"
+        f"{summary_path}/{args.network}/train/category-{category}/{args.iteration}"
     )
+    weights_path = conf.get_property("Paths.weights")
     if args.debug:
         with train_summary_writer.as_default():
             train.train_simple(coco_data, iteration=args.iteration,
-                               weights_prefix=f"{args.weights_path}/category-{category}",
+                               weights_prefix=f"{weights_path}/{args.network}/category-{category}",
                                zsize=16, lr=0.0001, verbose=args.verbose, image_size=image_size,
                                channels=3, train_epoch=args.num_epochs, batch_size=batch_size)
     else:
         train.train_simple(coco_data, iteration=args.iteration,
-                           weights_prefix=f"{args.weights_path}/category-{category}",
+                           weights_prefix=f"{weights_path}/{args.network}/category-{category}",
                            zsize=16, lr=0.0001, verbose=args.verbose, image_size=image_size,
                            channels=3, train_epoch=args.num_epochs, batch_size=batch_size)
 
@@ -301,30 +304,34 @@ def _ssd_test(args: argparse.Namespace) -> None:
     config.gpu_options.allow_growth = False
     tf.enable_eager_execution(config=config)
     
-    batch_size = 16
-    image_size = (300, 300)
-    forward_passes_per_image = 10
+    batch_size = conf.get_property("Parameters.batch_size")
+    image_size = conf.get_property("Parameters.ssd_image_size")
+    forward_passes_per_image = conf.get_property("Parameters.ssd_forward_passes_per_image")
     use_dropout = False if args.network == "ssd" else True
     
-    checkpoint_path = f"{args.weights_path}/{args.network}/train/{args.train_iteration}"
+    weights_path = conf.get_property("Paths.weights")
+    output_path = conf.get_property("Paths.output")
+    coco_path = conf.get_property("Paths.coco")
+    checkpoint_path = f"{weights_path}/{args.network}/train/{args.train_iteration}"
     model_file = f"{checkpoint_path}/ssd300.h5"
-    output_path = f"{args.output_path}/val/{args.network}/{args.iteration}/"
+    output_path = f"{output_path}/{args.network}/val/{args.iteration}/"
     os.makedirs(output_path, exist_ok=True)
     
     # load prepared ground truth
-    with open(f"{args.ground_truth_path}/photo_paths.bin", "rb") as file:
+    ground_truth_path = conf.get_property("Paths.scenenet_gt_test")
+    with open(f"{ground_truth_path}/photo_paths.bin", "rb") as file:
         file_names_photos = pickle.load(file)
-    with open(f"{args.ground_truth_path}/instances.bin", "rb") as file:
+    with open(f"{ground_truth_path}/instances.bin", "rb") as file:
         instances = pickle.load(file)
 
     # model
     ssd_model = tf.keras.models.load_model(model_file)
     
     test_generator, length_dataset = \
-        data.load_scenenet_data(file_names_photos, instances, args.coco_path,
+        data.load_scenenet_data(file_names_photos, instances, coco_path,
                                 predictor_sizes=ssd_model.predictor_sizes,
                                 batch_size=batch_size,
-                                resized_shape=image_size,
+                                resized_shape=(image_size, image_size),
                                 training=False, evaluation=True, augment=False)
     del file_names_photos, instances
 
@@ -347,25 +354,29 @@ def _auto_encoder_test(args: argparse.Namespace) -> None:
     from tensorflow.python.ops import summary_ops_v2
     
     tf.enable_eager_execution()
-    coco_path = args.coco_path
+    coco_path = conf.get_property("Paths.coco")
     category = args.category
     category_trained = args.category_trained
     batch_size = 16
     image_size = 256
     coco_data = data.load_coco_val(coco_path, category, num_epochs=1,
                                    batch_size=batch_size, resized_shape=(image_size, image_size))
+    
+    summary_path = conf.get_property("Paths.summary")
     use_summary_writer = summary_ops_v2.create_file_writer(
-        f"{args.summary_path}/val/category-{category}/{args.iteration}"
+        f"{args.summary_path}/{args.network}/val/category-{category}/{args.iteration}"
     )
+    
+    weights_path = conf.get_property("Paths.weights")
     if args.debug:
         with use_summary_writer.as_default():
             run.run_simple(coco_data, iteration=args.iteration_trained,
-                           weights_prefix=f"{args.weights_path}/{args.network}/category-{category_trained}",
+                           weights_prefix=f"{weights_path}/{args.network}/category-{category_trained}",
                            zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size,
                            image_size=image_size)
     else:
         run.run_simple(coco_data, iteration=args.iteration_trained,
-                       weights_prefix=f"{args.weights_path}/{args.network}/category-{category_trained}",
+                       weights_prefix=f"{weights_path}/{args.network}/category-{category_trained}",
                        zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size,
                        image_size=image_size)
 
@@ -385,8 +396,10 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
     
     batch_size = 16
     use_dropout = False if args.network == "ssd" else True
-    output_path = f"{args.output_path}/val/{args.network}/{args.iteration}"
-    evaluation_path = f"{args.evaluation_path}/{args.network}"
+    output_path = conf.get_property("Paths.output")
+    evaluation_path = conf.get_property("Paths.evaluation")
+    output_path = f"{output_path}/{args.network}/val/{args.iteration}"
+    evaluation_path = f"{evaluation_path}/{args.network}"
     result_file = f"{evaluation_path}/results-{args.iteration}.bin"
     label_file = f"{output_path}/labels.bin"
     predictions_file = f"{output_path}/predictions.bin"
