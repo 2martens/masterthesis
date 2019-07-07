@@ -181,8 +181,8 @@ def _ssd_train(args: argparse.Namespace) -> None:
 
     summary_path = conf.get_property("Paths.summaries")
     weights_path = conf.get_property("Paths.weights")
-    pre_trained_weights_file = f"{weights_path}/VGG_coco_SSD_300x300_iter_400000.h5"
-    weights_path = f"{weights_path}/train/{args.network}/"
+    pre_trained_weights_file = f"{weights_path}/{args.network}/VGG_coco_SSD_300x300_iter_400000.h5"
+    weights_path = f"{weights_path}/{args.network}/train/"
     os.makedirs(weights_path, exist_ok=True)
     
     # load prepared ground truth
@@ -306,7 +306,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
     forward_passes_per_image = 10
     use_dropout = False if args.network == "ssd" else True
     
-    checkpoint_path = f"{args.weights_path}/train/{args.network}/{args.train_iteration}"
+    checkpoint_path = f"{args.weights_path}/{args.network}/train/{args.train_iteration}"
     model_file = f"{checkpoint_path}/ssd300.h5"
     output_path = f"{args.output_path}/val/{args.network}/{args.iteration}/"
     os.makedirs(output_path, exist_ok=True)
@@ -360,12 +360,12 @@ def _auto_encoder_test(args: argparse.Namespace) -> None:
     if args.debug:
         with use_summary_writer.as_default():
             run.run_simple(coco_data, iteration=args.iteration_trained,
-                           weights_prefix=f"{args.weights_path}/category-{category_trained}",
+                           weights_prefix=f"{args.weights_path}/{args.network}/category-{category_trained}",
                            zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size,
                            image_size=image_size)
     else:
         run.run_simple(coco_data, iteration=args.iteration_trained,
-                       weights_prefix=f"{args.weights_path}/category-{category_trained}",
+                       weights_prefix=f"{args.weights_path}/{args.network}/category-{category_trained}",
                        zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size,
                        image_size=image_size)
 
