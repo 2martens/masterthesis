@@ -325,7 +325,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
                                 predictor_sizes=ssd_model.predictor_sizes,
                                 batch_size=batch_size,
                                 resized_shape=image_size,
-                                training=False, evaluation=True)
+                                training=False, evaluation=True, augment=False)
     del file_names_photos, instances
 
     nr_digits = math.ceil(math.log10(math.ceil(length_dataset / batch_size)))
