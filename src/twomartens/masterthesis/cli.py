@@ -358,7 +358,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
                       ssd_model,
                       use_dropout,
                       forward_passes_per_image,
-                      image_size,
+                      (image_size, image_size),
                       output_path,
                       nr_digits)
 
