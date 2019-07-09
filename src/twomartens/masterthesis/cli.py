@@ -307,6 +307,9 @@ def _ssd_test(args: argparse.Namespace) -> None:
     
     from twomartens.masterthesis import data
     from twomartens.masterthesis import ssd
+    from twomartens.masterthesis.ssd_keras.keras_layers import keras_layer_AnchorBoxes
+    from twomartens.masterthesis.ssd_keras.keras_layers import keras_layer_L2Normalization
+    
     
     config = tf.ConfigProto()
     config.log_device_placement = False
@@ -334,7 +337,10 @@ def _ssd_test(args: argparse.Namespace) -> None:
         instances = pickle.load(file)
 
     # model
-    ssd_model = tf.keras.models.load_model(model_file)
+    ssd_model = tf.keras.models.load_model(model_file, custom_objects={
+        "L2Normalization": keras_layer_L2Normalization.L2Normalization,
+        "AnchorBoxes": keras_layer_AnchorBoxes.AnchorBoxes
+    })
     
     test_generator, length_dataset = \
         data.load_scenenet_data(file_names_photos, instances, coco_path,
