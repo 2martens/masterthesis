@@ -344,7 +344,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
     
     test_generator, length_dataset = \
         data.load_scenenet_data(file_names_photos, instances, coco_path,
-                                predictor_sizes=ssd_model.predictor_sizes,
+                                predictor_sizes=None,
                                 batch_size=batch_size,
                                 resized_shape=(image_size, image_size),
                                 training=False, evaluation=True, augment=False,
