@@ -42,7 +42,8 @@ _CONFIG_PROPS = {
         "scenenet_gt_test": (str, ""),
         "output": (str, ""),
         "summaries": (str, ""),
-        "weights": (str, "")
+        "weights": (str, ""),
+        "evaluation": (str, "")
     },
     "Debug": {
         "summaries": (bool, "True"),
