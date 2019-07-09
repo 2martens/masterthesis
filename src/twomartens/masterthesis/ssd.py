@@ -204,7 +204,7 @@ def predict_keras(generator: callable,
             predictions = np.asarray(_get_observations(detections))
         else:
             predictions = ssd_model.predict_on_batch(x)
-            print(predictions)
+            print(predictions[:, :, [-2, -1]])
         
         decoded_predictions_batch = ssd_output_decoder.decode_detections_fast(
             y_pred=predictions,
