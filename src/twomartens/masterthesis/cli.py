@@ -180,6 +180,8 @@ def _ssd_train(args: argparse.Namespace) -> None:
     use_dropout = False if args.network == "ssd" else True
 
     summary_path = conf.get_property("Paths.summaries")
+    summary_path = f"{summary_path}/{args.network}/train/{args.iteration}"
+    os.makedirs(summary_path, exist_ok=True)
     weights_path = conf.get_property("Paths.weights")
     coco_path = conf.get_property("Paths.coco")
     pre_trained_weights_file = f"{weights_path}/{args.network}/VGG_coco_SSD_300x300_iter_400000.h5"
@@ -227,16 +229,15 @@ def _ssd_train(args: argparse.Namespace) -> None:
         train_length -= batch_size
         train_images = train_data[0]
         train_labels = train_data[1]
-        output_path = f"{summary_path}/{args.network}/train/{args.iteration}"
 
-        debug.save_ssd_train_images(train_images, train_labels, output_path)
+        debug.save_ssd_train_images(train_images, train_labels, summary_path)
     
     nr_batches_train = int(math.floor(train_length / batch_size))
     nr_batches_val = int(math.floor(val_length / batch_size))
     
     if args.debug and conf.get_property("Debug.summaries"):
         tensorboard_callback = tf.keras.callbacks.TensorBoard(
-            log_dir=f"{summary_path}/{args.network}/train/{args.iteration}"
+            log_dir=summary_path
         )
     else:
         tensorboard_callback = None
@@ -255,15 +256,18 @@ def _ssd_train(args: argparse.Namespace) -> None:
         tensorboard_callback=tensorboard_callback
     )
     
-    with open(f"{summary_path}/{args.network}/train/{args.iteration}/history", "wb") as file:
+    with open(f"{summary_path}/history", "wb") as file:
         pickle.dump(history.history, file)
 
 
 def _auto_encoder_train(args: argparse.Namespace) -> None:
-    from twomartens.masterthesis import data
-    from twomartens.masterthesis.aae import train
+    import os
+    
     import tensorflow as tf
     from tensorflow.python.ops import summary_ops_v2
+    
+    from twomartens.masterthesis import data
+    from twomartens.masterthesis.aae import train
     
     tf.enable_eager_execution()
     coco_path = args.coco_path
@@ -273,19 +277,24 @@ def _auto_encoder_train(args: argparse.Namespace) -> None:
     coco_data = data.load_coco_train(coco_path, category, num_epochs=args.num_epochs, batch_size=batch_size,
                                      resized_shape=(image_size, image_size))
     summary_path = conf.get_property("Paths.summary")
+    summary_path = f"{summary_path}/{args.network}/train/category-{category}/{args.iteration}"
     train_summary_writer = summary_ops_v2.create_file_writer(
-        f"{summary_path}/{args.network}/train/category-{category}/{args.iteration}"
+        summary_path
     )
+    os.makedirs(summary_path, exist_ok=True)
+    
     weights_path = conf.get_property("Paths.weights")
+    weights_path = f"{weights_path}/{args.network}/category-{category}"
+    os.makedirs(weights_path, exist_ok=True)
     if args.debug:
         with train_summary_writer.as_default():
             train.train_simple(coco_data, iteration=args.iteration,
-                               weights_prefix=f"{weights_path}/{args.network}/category-{category}",
+                               weights_prefix=weights_path,
                                zsize=16, lr=0.0001, verbose=args.verbose, image_size=image_size,
                                channels=3, train_epoch=args.num_epochs, batch_size=batch_size)
     else:
         train.train_simple(coco_data, iteration=args.iteration,
-                           weights_prefix=f"{weights_path}/{args.network}/category-{category}",
+                           weights_prefix=weights_path,
                            zsize=16, lr=0.0001, verbose=args.verbose, image_size=image_size,
                            channels=3, train_epoch=args.num_epochs, batch_size=batch_size)
 
@@ -348,10 +357,13 @@ def _ssd_test(args: argparse.Namespace) -> None:
 
 
 def _auto_encoder_test(args: argparse.Namespace) -> None:
-    from twomartens.masterthesis import data
-    from twomartens.masterthesis.aae import run
+    import os
+    
     import tensorflow as tf
     from tensorflow.python.ops import summary_ops_v2
+    
+    from twomartens.masterthesis import data
+    from twomartens.masterthesis.aae import run
     
     tf.enable_eager_execution()
     coco_path = conf.get_property("Paths.coco")
@@ -361,22 +373,26 @@ def _auto_encoder_test(args: argparse.Namespace) -> None:
     image_size = 256
     coco_data = data.load_coco_val(coco_path, category, num_epochs=1,
                                    batch_size=batch_size, resized_shape=(image_size, image_size))
-    
+
     summary_path = conf.get_property("Paths.summary")
+    summary_path = f"{summary_path}/{args.network}/val/category-{category}/{args.iteration}"
+    os.makedirs(summary_path, exist_ok=True)
     use_summary_writer = summary_ops_v2.create_file_writer(
-        f"{args.summary_path}/{args.network}/val/category-{category}/{args.iteration}"
+        summary_path
     )
     
     weights_path = conf.get_property("Paths.weights")
+    weights_path = f"{weights_path}/{args.network}/category-{category_trained}"
+    os.makedirs(weights_path, exist_ok=True)
     if args.debug:
         with use_summary_writer.as_default():
             run.run_simple(coco_data, iteration=args.iteration_trained,
-                           weights_prefix=f"{weights_path}/{args.network}/category-{category_trained}",
+                           weights_prefix=weights_path,
                            zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size,
                            image_size=image_size)
     else:
         run.run_simple(coco_data, iteration=args.iteration_trained,
-                       weights_prefix=f"{weights_path}/{args.network}/category-{category_trained}",
+                       weights_prefix=weights_path,
                        zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size,
                        image_size=image_size)
 
