@@ -234,12 +234,13 @@ def _load_images_callback(resized_shape: Sequence[int]) -> Callable[
 
 def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
                        instances: Sequence[Sequence[Sequence[dict]]],
-                       coco_path: str, predictor_sizes: np.ndarray,
+                       coco_path: str,
                        batch_size: int,
                        resized_shape: Sequence[int],
                        training: bool,
                        evaluation: bool,
                        augment: bool,
+                       predictor_sizes: Optional[np.ndarray],
                        nr_trajectories: Optional[int] = None) -> Tuple[callable, int]:
     """
     Loads the SceneNet RGB-D data and returns a data set.
@@ -248,12 +249,12 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
         photo_paths: contains a list of image paths per trajectory
         instances: instance data per frame per trajectory
         coco_path: path to the COCO data set
-        predictor_sizes: sizes of the predictor layers
         batch_size: size of every batch
         resized_shape: shape of input images to SSD
         training: True if training data is desired
         evaluation: True if evaluation-ready data is desired
         augment: True if training data should be augmented
+        predictor_sizes: sizes of the predictor layers, can be None for evaluation
         nr_trajectories: number of trajectories to consider
 
     Returns:
@@ -327,6 +328,8 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
             'original_labels'}
         label_encoder = None
     else:
+        if predictor_sizes is None:
+            raise ValueError("predictor_sizes cannot be None for training/validation")
         label_encoder = ssd_input_encoder.SSDInputEncoder(
             img_height=resized_shape[0],
             img_width=resized_shape[1],
