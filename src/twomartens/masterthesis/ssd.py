@@ -190,7 +190,7 @@ def predict_keras(generator: callable,
             detections = None
             batch_size = None
             for _ in range(forward_passes_per_image):
-                predictions = ssd_model.model.predict_on_batch(x)
+                predictions = ssd_model.predict_on_batch(x)
                 if batch_size is None:
                     batch_size = predictions.shape[0]
                 if detections is None:
@@ -203,7 +203,7 @@ def predict_keras(generator: callable,
             # do observation stuff
             predictions = np.asarray(_get_observations(detections))
         else:
-            predictions = ssd_model.model.predict_on_batch(x)
+            predictions = ssd_model.predict_on_batch(x)
         
         decoded_predictions_batch = ssd_output_decoder.decode_detections_fast(
             y_pred=predictions,
