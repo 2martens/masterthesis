@@ -59,7 +59,7 @@ def get_number_gt_per_class(labels: Sequence[Sequence[Sequence[int]]],
 
 def prepare_predictions(predictions: Sequence[Sequence[Sequence[Union[int, float]]]],
                         nr_classes: int) -> \
-        List[List[Tuple[int, float, int, int, int, int]]]:
+        List[List[Tuple[int, float, float, int, int, int, int]]]:
     """
     Prepares the predictions for further processing.
     
@@ -79,18 +79,19 @@ def prepare_predictions(predictions: Sequence[Sequence[Sequence[Union[int, float
             class_id = int(box[0])
             # Round the box coordinates to reduce the required memory.
             confidence = box[1]
-            xmin = round(box[2])
-            ymin = round(box[3])
-            xmax = round(box[4])
-            ymax = round(box[5])
-            prediction = (image_id, confidence, xmin, ymin, xmax, ymax)
+            entropy = box[2]
+            xmin = round(box[3])
+            ymin = round(box[4])
+            xmax = round(box[5])
+            ymax = round(box[6])
+            prediction = (image_id, confidence, entropy, xmin, ymin, xmax, ymax)
             # Append the predicted box to the results list for its class.
             results[class_id].append(prediction)
     
     return results
 
 
-def match_predictions(predictions: Sequence[Sequence[Tuple[int, float, int, int, int, int]]],
+def match_predictions(predictions: Sequence[Sequence[Tuple[int, float, float, int, int, int, int]]],
                       labels: Sequence[Sequence[Sequence[int]]],
                       nr_classes: int,
                       iou_threshold: float = 0.5,
@@ -153,6 +154,7 @@ def match_predictions(predictions: Sequence[Sequence[Tuple[int, float, int, int,
         # Create the data type for the structured array.
         preds_data_type = np.dtype([('image_id', np.int32),
                                     ('confidence', 'f4'),
+                                    ('entropy', 'f4'),
                                     ('xmin', 'f4'),
                                     ('ymin', 'f4'),
                                     ('xmax', 'f4'),
