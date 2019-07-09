@@ -163,9 +163,6 @@ def _build_ssd_train(parser: argparse.ArgumentParser) -> None:
     
 
 def _build_auto_encoder_train(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--coco_path", type=str, help="the path to the COCO data set")
-    parser.add_argument("--weights_path", type=str, help="path to the weights directory")
-    parser.add_argument("--summary_path", type=str, help="path to the summaries directory")
     parser.add_argument("category", type=int, help="the COCO category to use")
     parser.add_argument("num_epochs", type=int, help="the number of epochs to train", default=80)
     parser.add_argument("iteration", type=int, help="the training iteration")
@@ -186,19 +183,11 @@ def _build_test(parser: argparse.ArgumentParser) -> None:
 
 
 def _build_ssd_test(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--coco_path", type=str, help="the path to the COCO data set")
-    parser.add_argument("--weights_path", type=str, help="path to the weights directory")
-    parser.add_argument("--ground_truth_path", type=str, help="path to the prepared ground truth directory")
-    parser.add_argument("--summary_path", type=str, help="path to the summaries directory")
-    parser.add_argument("--output_path", type=str, help="path to the output directory")
     parser.add_argument("iteration", type=int, help="the validation iteration")
     parser.add_argument("train_iteration", type=int, help="the train iteration")
     
 
 def _build_auto_encoder_test(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--coco_path", type=str, help="the path to the COCO data set")
-    parser.add_argument("--weights_path", type=str, help="path to the weights directory")
-    parser.add_argument("--summary_path", type=str, help="path to the summaries directory")
     parser.add_argument("category", type=int, help="the COCO category to validate")
     parser.add_argument("category_trained", type=int, help="the trained COCO category")
     parser.add_argument("iteration", type=int, help="the validation iteration")
@@ -218,22 +207,14 @@ def _build_evaluate(parser: argparse.ArgumentParser) -> None:
 
 
 def _build_ssd_evaluate(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--output_path", type=str, help="path to the output directory")
-    parser.add_argument("--evaluation_path", type=str, help="path to the directory for the evaluation results")
     parser.add_argument("iteration", type=int, help="the validation iteration to use")
 
 
 def _build_visualise(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--coco_path", type=str, help="the path to the COCO data set")
-    parser.add_argument("--ground_truth_path", type=str, help="path to the prepared ground truth directory")
-    parser.add_argument("--output_path", type=str, help="path to the output directory")
     parser.add_argument("trajectory", type=int, help="trajectory to visualise")
 
 
 def _build_measure(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--coco_path", type=str, help="the path to the COCO data set")
-    parser.add_argument("--ground_truth_path", type=str, help="path to the prepared ground truth directory")
-    parser.add_argument("--output_path", type=str, help="path to the output directory")
     parser.add_argument("tarball_id", type=int, help="id of the used tarball")
 
 
