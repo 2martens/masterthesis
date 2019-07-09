@@ -311,7 +311,6 @@ def _ssd_test(args: argparse.Namespace) -> None:
     from twomartens.masterthesis.ssd_keras.keras_layers import keras_layer_L2Normalization
     from twomartens.masterthesis.ssd_keras.keras_loss_function import keras_ssd_loss
     
-    
     config = tf.ConfigProto()
     config.log_device_placement = False
     config.gpu_options.allow_growth = False
