@@ -491,7 +491,7 @@ def train_keras(train_generator: callable,
             save_weights_only=False
         ),
         tf.keras.callbacks.TerminateOnNaN(),
-        tf.keras.callbacks.EarlyStopping(patience=2, min_delta=0.001, monitor="val_loss")
+        # tf.keras.callbacks.EarlyStopping(patience=2, min_delta=0.001, monitor="val_loss")
     ]
     if tensorboard_callback is not None:
         callbacks.append(tensorboard_callback)
