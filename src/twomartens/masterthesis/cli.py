@@ -309,6 +309,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
     from twomartens.masterthesis import ssd
     from twomartens.masterthesis.ssd_keras.keras_layers import keras_layer_AnchorBoxes
     from twomartens.masterthesis.ssd_keras.keras_layers import keras_layer_L2Normalization
+    from twomartens.masterthesis.ssd_keras.keras_loss_function import keras_ssd_loss
     
     
     config = tf.ConfigProto()
@@ -341,6 +342,18 @@ def _ssd_test(args: argparse.Namespace) -> None:
         "L2Normalization": keras_layer_L2Normalization.L2Normalization,
         "AnchorBoxes": keras_layer_AnchorBoxes.AnchorBoxes
     })
+    # TODO finde clean solution rather than Copy & Paste
+    learning_rate_var = tf.keras.backend.variable(conf.get_property("Parameters.learning_rate"))
+    ssd_loss = keras_ssd_loss.SSDLoss()
+    
+    ssd_model.compile(
+        optimizer=tf.train.AdamOptimizer(learning_rate=learning_rate_var,
+                                         beta1=0.9, beta2=0.999),
+        loss=ssd_loss.compute_loss,
+        metrics=[
+            "categorical_accuracy"
+        ]
+    )
     
     test_generator, length_dataset = \
         data.load_scenenet_data(file_names_photos, instances, coco_path,
