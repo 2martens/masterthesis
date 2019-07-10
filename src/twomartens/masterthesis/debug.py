@@ -78,18 +78,13 @@ def save_ssd_train_images(images: np.ndarray, labels: np.ndarray,
                 ymax = instance[4]
             else:
                 class_id = np.argmax(instance[:-12], axis=0)
-                xmin = instance[-12] + instance[-8]
-                ymin = instance[-11] + instance[-7]
-                xmax = instance[-10] + instance[-6]
-                ymax = instance[-9] + instance[-5]
+                xmin = (instance[-12] + instance[-8]) * image_size
+                ymin = (instance[-11] + instance[-7]) * image_size
+                xmax = (instance[-10] + instance[-6]) * image_size
+                ymax = (instance[-9] + instance[-5]) * image_size
             
             if class_id == 0:
                 continue
-            
-            xmin *= image_size
-            ymin *= image_size
-            xmax *= image_size
-            ymax *= image_size
             
             color = colors[class_id]
             label = f"{classes_to_names[class_id]}"
