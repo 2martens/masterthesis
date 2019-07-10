@@ -19,7 +19,7 @@
 Handle debug functionality.
 
 Functions:
-    save_ssd_train_images(images, labels, output_path):
+    save_ssd_train_images(...):
         saves the first batch of SSD train images with overlaid ground truth bounding boxes
 """
 import os
@@ -29,19 +29,33 @@ import numpy as np
 from matplotlib import pyplot
 from PIL import Image
 
-from twomartens.masterthesis import config
-from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
 
-
-def save_ssd_train_images(images: np.ndarray, labels: np.ndarray, output_path: str, custom_string: str = None) -> None:
-    annotation_file_train = f"{config.get_property('Paths.coco')}/annotations/instances_train2014.json"
-    _, _, _, classes_to_names = coco_utils.get_coco_category_maps(annotation_file_train)
+def save_ssd_train_images(images: np.ndarray, labels: np.ndarray,
+                          output_path: str, coco_path: str,
+                          image_size: int, get_coco_cat_maps_func: callable,
+                          custom_string: str = None) -> None:
+    """
+    Saves given images and labels to given output path.
+    
+    The images are saved both in a raw version and with bounding boxes printed on them.
+    
+    Args:
+        images: a NumPy array of images
+        labels: a NumPy array of labels
+        output_path: path to save the images in
+        coco_path: path to the COCO data set
+        image_size: size of the resized images
+        get_coco_cat_maps_func: callable that returns the COCO category maps for a given annotation file
+        custom_string: optional custom string that is prepended to file names
+    """
+    
+    annotation_file_train = f"{coco_path}/annotations/instances_train2014.json"
+    _, _, _, classes_to_names = get_coco_cat_maps_func(annotation_file_train)
     colors = pyplot.cm.hsv(np.linspace(0, 1, 81)).tolist()
     os.makedirs(output_path, exist_ok=True)
     
     nr_images = len(images)
     nr_digits = math.ceil(math.log10(nr_images))
-    image_size = config.get_property("Parameters.ssd_image_size")
     custom_string = f"{custom_string}_" if custom_string is not None else ""
     
     for i, train_image in enumerate(images):
@@ -70,5 +84,5 @@ def save_ssd_train_images(images: np.ndarray, labels: np.ndarray, output_path: s
                                  linewidth=2))
             current_axis.text(xmin, ymin, label, size='x-large', color='white',
                               bbox={'facecolor': color, 'alpha': 1.0})
-        pyplot.savefig(f"{output_path}/bboxes{str(i).zfill(nr_digits)}.png")
+        pyplot.savefig(f"{output_path}/{custom_string}bboxes{str(i).zfill(nr_digits)}.png")
         pyplot.close(figure)
