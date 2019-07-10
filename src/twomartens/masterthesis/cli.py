@@ -345,7 +345,7 @@ def _ssd_train_get_generators(load_data: callable,
                   predictor_sizes=predictor_sizes,
                   batch_size=batch_size,
                   image_size=image_size,
-                  training=True, evaluation=False, augment=False,
+                  training=True, evaluation=True, augment=False,
                   nr_trajectories=nr_trajectories)
     
     val_generator, val_length = \
@@ -368,8 +368,9 @@ def _ssd_debug_save_images(args: argparse.Namespace, save_images_on_debug: bool,
         train_length -= batch_size
         train_images = train_data[0]
         train_labels = train_data[1]
+        train_labels_not_encoded = train_data[2]
         
-        save_images(train_images, train_labels, summary_path)
+        save_images(train_images, train_labels_not_encoded, summary_path)
     
     return train_length
 

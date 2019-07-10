@@ -70,10 +70,10 @@ def save_ssd_train_images(images: np.ndarray, labels: np.ndarray,
         current_axis = pyplot.gca()
         
         for instance in instances:
-            xmin = (instance[-12] + instance[-8]) * image_size
-            ymin = (instance[-11] + instance[-7]) * image_size
-            xmax = (instance[-10] + instance[-6]) * image_size
-            ymax = (instance[-9] + instance[-5]) * image_size
+            xmin = (instance[-12]) * image_size
+            ymin = (instance[-11]) * image_size
+            xmax = (instance[-10]) * image_size
+            ymax = (instance[-9]) * image_size
             class_id = np.argmax(instance[:-12], axis=0)
             if class_id == 0:
                 continue

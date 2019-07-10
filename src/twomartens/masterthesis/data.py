@@ -320,6 +320,8 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
         ]
         
     returns = {'processed_images', 'encoded_labels'}
+    if training and evaluation:
+        returns = {'processed_images', 'encoded_labels', 'processed_labels'}
     
     if not training and evaluation:
         returns = {
