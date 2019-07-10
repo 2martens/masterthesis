@@ -236,7 +236,7 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
                        instances: Sequence[Sequence[Sequence[dict]]],
                        coco_path: str,
                        batch_size: int,
-                       resized_shape: Sequence[int],
+                       image_size: int,
                        training: bool,
                        evaluation: bool,
                        augment: bool,
@@ -250,7 +250,7 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
         instances: instance data per frame per trajectory
         coco_path: path to the COCO data set
         batch_size: size of every batch
-        resized_shape: shape of input images to SSD
+        image_size: size of resized images
         training: True if training data is desired
         evaluation: True if evaluation-ready data is desired
         augment: True if training data should be augmented
@@ -264,6 +264,7 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
     trajectories = zip(photo_paths, instances)
     final_image_paths = []
     final_labels = []
+    resized_shape = (image_size, image_size)
 
     from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
     
