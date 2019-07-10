@@ -222,8 +222,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
                                           debug.save_ssd_train_images, coco_utils.get_coco_category_maps,
                                           summary_path, coco_path,
                                           batch_size, image_size,
-                                          train_generator, train_length,
-                                          "before-encoding")
+                                          train_generator, train_length)
     
     nr_batches_train = _get_nr_batches(train_length, batch_size)
     tensorboard_callback = _ssd_get_tensorboard_callback(args, save_summaries, summary_path)
@@ -368,8 +367,7 @@ def _ssd_debug_save_images(args: argparse.Namespace, save_images_on_debug: bool,
                            save_images: callable, get_coco_cat_maps_func: callable,
                            summary_path: str, coco_path: str,
                            batch_size: int, image_size: int,
-                           train_generator: Generator, train_length: int,
-                           custom_string: str) -> int:
+                           train_generator: Generator, train_length: int) -> int:
     
     if args.debug and save_images_on_debug:
         train_data = next(train_generator)
@@ -380,7 +378,11 @@ def _ssd_debug_save_images(args: argparse.Namespace, save_images_on_debug: bool,
         
         save_images(train_images, train_labels_not_encoded,
                     summary_path, coco_path, image_size,
-                    get_coco_cat_maps_func, custom_string)
+                    get_coco_cat_maps_func, "before-encoding")
+
+        save_images(train_images, train_labels,
+                    summary_path, coco_path, image_size,
+                    get_coco_cat_maps_func, "after-encoding")
     
     return train_length
 
