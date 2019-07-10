@@ -58,10 +58,7 @@ def prepare(args: argparse.Namespace) -> None:
 
 
 def train(args: argparse.Namespace) -> None:
-    if args.network == "ssd" or args.network == "bayesian_ssd":
-        _ssd_train(args)
-    elif args.network == "auto_encoder":
-        _auto_encoder_train(args)
+    _train_execute_action(args, _ssd_train, _auto_encoder_train)
 
 
 def test(args: argparse.Namespace) -> None:
@@ -162,6 +159,13 @@ def _config_execute_action(args: argparse.Namespace, on_get: callable,
         on_set(args.property, args.value)
     elif args.action == "list":
         on_list()
+
+
+def _train_execute_action(args: argparse.Namespace, on_ssd: callable, on_auto_encoder: callable) -> None:
+    if args.network == "ssd" or args.network == "bayesian_ssd":
+        on_ssd(args)
+    elif args.network == "auto_encoder":
+        on_auto_encoder(args)
 
 
 def _ssd_train(args: argparse.Namespace) -> None:
