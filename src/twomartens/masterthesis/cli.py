@@ -176,6 +176,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
     from twomartens.masterthesis import debug
     from twomartens.masterthesis import ssd
     
+    from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
     from twomartens.masterthesis.ssd_keras.models import keras_ssd300
     from twomartens.masterthesis.ssd_keras.models import keras_ssd300_dropout
     
@@ -217,8 +218,12 @@ def _ssd_train(args: argparse.Namespace) -> None:
         predictor_sizes
     )
     
-    train_length = _ssd_debug_save_images(args, save_train_images, debug.save_ssd_train_images,
-                                          summary_path, batch_size, train_generator, train_length)
+    train_length = _ssd_debug_save_images(args, save_train_images,
+                                          debug.save_ssd_train_images, coco_utils.get_coco_category_maps,
+                                          summary_path, coco_path,
+                                          batch_size, image_size,
+                                          train_generator, train_length,
+                                          "before-encoding")
     
     nr_batches_train = _get_nr_batches(train_length, batch_size)
     tensorboard_callback = _ssd_get_tensorboard_callback(args, save_summaries, summary_path)
@@ -359,9 +364,12 @@ def _ssd_train_get_generators(load_data: callable,
     return train_generator, train_length, val_generator, val_length
 
 
-def _ssd_debug_save_images(args: argparse.Namespace, save_images_on_debug: bool, save_images: callable,
-                           summary_path: str, batch_size: int,
-                           train_generator: Generator, train_length: int) -> int:
+def _ssd_debug_save_images(args: argparse.Namespace, save_images_on_debug: bool,
+                           save_images: callable, get_coco_cat_maps_func: callable,
+                           summary_path: str, coco_path: str,
+                           batch_size: int, image_size: int,
+                           train_generator: Generator, train_length: int,
+                           custom_string: str) -> int:
     
     if args.debug and save_images_on_debug:
         train_data = next(train_generator)
@@ -370,7 +378,9 @@ def _ssd_debug_save_images(args: argparse.Namespace, save_images_on_debug: bool,
         train_labels = train_data[1]
         train_labels_not_encoded = train_data[2]
         
-        save_images(train_images, train_labels_not_encoded, summary_path)
+        save_images(train_images, train_labels_not_encoded,
+                    summary_path, coco_path, image_size,
+                    get_coco_cat_maps_func, custom_string)
     
     return train_length
 
