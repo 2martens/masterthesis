@@ -23,7 +23,7 @@ Functions:
     load_scenenet_data(...): loads the SceneNet RGB-D data into a Tensorflow data set
     prepare_scenenet_data(...): prepares the SceneNet RGB-D data and returns it in Python format
 """
-from typing import Callable, List, Mapping, Tuple, Optional
+from typing import Callable, List, Mapping, Tuple, Optional, Generator
 from typing import Sequence
 
 import numpy as np
@@ -240,8 +240,9 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
                        training: bool,
                        evaluation: bool,
                        augment: bool,
+                       debug: bool,
                        predictor_sizes: Optional[np.ndarray],
-                       nr_trajectories: Optional[int] = None) -> Tuple[callable, int]:
+                       nr_trajectories: Optional[int] = None) -> Tuple[Generator, int, Optional[Generator]]:
     """
     Loads the SceneNet RGB-D data and returns a data set.
     
@@ -254,12 +255,14 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
         training: True if training data is desired
         evaluation: True if evaluation-ready data is desired
         augment: True if training data should be augmented
+        debug: True if a more extensive generator should be added to output
         predictor_sizes: sizes of the predictor layers, can be None for evaluation
         nr_trajectories: number of trajectories to consider
 
     Returns:
         scenenet data set generator
         length of dataset
+        generator which offers processed_labels as well (only if debug is True)
     """
     trajectories = zip(photo_paths, instances)
     final_image_paths = []
@@ -320,8 +323,7 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
         ]
         
     returns = {'processed_images', 'encoded_labels'}
-    if training and evaluation:
-        returns = {'processed_images', 'encoded_labels', 'processed_labels'}
+    returns_debug = {'processed_images', 'encoded_labels', 'processed_labels'}
     
     if not training and evaluation:
         returns = {
@@ -356,9 +358,21 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
         keep_images_without_gt=False
     )
     
+    if debug:
+        debug_generator = data_generator.generate(
+            batch_size=batch_size,
+            shuffle=shuffle,
+            transformations=transformations,
+            label_encoder=label_encoder,
+            returns=returns_debug,
+            keep_images_without_gt=False
+        )
+    else:
+        debug_generator = None
+    
     length_dataset = data_generator.dataset_size
     
-    return generator, length_dataset
+    return generator, length_dataset, debug_generator
 
 
 def _load_images_ssd_callback(resized_shape: Sequence[int]) \

@@ -205,24 +205,23 @@ def _ssd_train(args: argparse.Namespace) -> None:
                                                top_k,
                                                pre_trained_weights_file)
     
-    train_generator, train_length, val_generator, val_length = _ssd_train_get_generators(
-        data.load_scenenet_data,
-        file_names_train,
-        instances_train,
-        file_names_val,
-        instances_val,
-        coco_path,
-        batch_size,
-        image_size,
-        nr_trajectories,
-        predictor_sizes
-    )
+    train_generator, train_length, train_debug_generator, \
+        val_generator, val_length, val_debug_generator = _ssd_train_get_generators(args,
+                                                                                   data.load_scenenet_data,
+                                                                                   file_names_train,
+                                                                                   instances_train,
+                                                                                   file_names_val,
+                                                                                   instances_val,
+                                                                                   coco_path,
+                                                                                   batch_size,
+                                                                                   image_size,
+                                                                                   nr_trajectories,
+                                                                                   predictor_sizes)
     
-    train_length = _ssd_debug_save_images(args, save_train_images,
-                                          debug.save_ssd_train_images, coco_utils.get_coco_category_maps,
-                                          summary_path, coco_path,
-                                          batch_size, image_size,
-                                          train_generator, train_length)
+    _ssd_debug_save_images(args, save_train_images,
+                           debug.save_ssd_train_images, coco_utils.get_coco_category_maps,
+                           summary_path, coco_path,
+                           image_size, train_debug_generator)
     
     nr_batches_train = _get_nr_batches(train_length, batch_size)
     tensorboard_callback = _ssd_get_tensorboard_callback(args, save_summaries, summary_path)
@@ -331,7 +330,8 @@ def _ssd_train_load_gt(train_gt_path: str, val_gt_path: str
     return file_names_train, instances_train, file_names_val, instances_val
 
 
-def _ssd_train_get_generators(load_data: callable,
+def _ssd_train_get_generators(args: argparse.Namespace,
+                              load_data: callable,
                               file_names_train: Sequence[Sequence[str]],
                               instances_train: Sequence[Sequence[Sequence[dict]]],
                               file_names_val: Sequence[Sequence[str]],
@@ -340,38 +340,43 @@ def _ssd_train_get_generators(load_data: callable,
                               batch_size: int,
                               image_size: int,
                               nr_trajectories: int,
-                              predictor_sizes: Sequence[Sequence[int]]) -> Tuple[Generator, int, Generator, int]:
+                              predictor_sizes: Sequence[Sequence[int]]) -> Tuple[Generator, int, Generator, Generator, int, Generator]:
     
     if nr_trajectories == -1:
         nr_trajectories = None
-    train_generator, train_length = \
+        
+    train_generator, train_length, train_debug_generator = \
         load_data(file_names_train, instances_train, coco_path,
                   predictor_sizes=predictor_sizes,
                   batch_size=batch_size,
                   image_size=image_size,
-                  training=True, evaluation=True, augment=False,
+                  training=True, evaluation=False, augment=False,
+                  debug=args.debug,
                   nr_trajectories=nr_trajectories)
     
-    val_generator, val_length = \
+    val_generator, val_length, val_debug_generator = \
         load_data(file_names_val, instances_val, coco_path,
                   predictor_sizes=predictor_sizes,
                   batch_size=batch_size,
                   image_size=image_size,
                   training=False, evaluation=False, augment=False,
+                  debug=args.debug,
                   nr_trajectories=nr_trajectories)
     
-    return train_generator, train_length, val_generator, val_length
+    return (
+        train_generator, train_length, train_debug_generator,
+        val_generator, val_length, val_debug_generator
+    )
 
 
 def _ssd_debug_save_images(args: argparse.Namespace, save_images_on_debug: bool,
                            save_images: callable, get_coco_cat_maps_func: callable,
                            summary_path: str, coco_path: str,
-                           batch_size: int, image_size: int,
-                           train_generator: Generator, train_length: int) -> int:
+                           image_size: int,
+                           train_generator: Generator) -> None:
     
     if args.debug and save_images_on_debug:
         train_data = next(train_generator)
-        train_length -= batch_size
         train_images = train_data[0]
         train_labels = train_data[1]
         train_labels_not_encoded = train_data[2]
@@ -383,8 +388,6 @@ def _ssd_debug_save_images(args: argparse.Namespace, save_images_on_debug: bool,
         save_images(train_images, train_labels,
                     summary_path, coco_path, image_size,
                     get_coco_cat_maps_func, "after-encoding")
-    
-    return train_length
 
 
 def _ssd_get_tensorboard_callback(args: argparse.Namespace, save_summaries_on_debug: bool,
