@@ -187,7 +187,8 @@ def get_model(use_dropout: bool,
             dropout_rate=dropout_rate,
             top_k=top_k,
             scales=scales,
-            return_predictor_sizes=True
+            return_predictor_sizes=True,
+            coords="corners"
         )
     else:
         model, predictor_sizes = vanilla_model(
@@ -197,7 +198,8 @@ def get_model(use_dropout: bool,
             iou_threshold=iou_threshold,
             top_k=top_k,
             scales=scales,
-            return_predictor_sizes=True
+            return_predictor_sizes=True,
+            coords="corners"
         )
     
     if mode == "training":
