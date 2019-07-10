@@ -46,7 +46,7 @@ def save_ssd_train_images(images: np.ndarray, labels: np.ndarray, output_path: s
     for i, train_image in enumerate(images):
         instances = labels[i]
         image = Image.fromarray(train_image)
-        image.save(f"{output_path}"
+        image.save(f"{output_path}/"
                    f"train_image{str(i).zfill(nr_digits)}.png")
         
         figure = pyplot.figure(figsize=(20, 12))
