@@ -26,8 +26,11 @@ Functions:
     prepare(...): prepares the SceneNet ground truth data
 """
 import argparse
+from typing import Callable, Union, Tuple, Sequence, Optional, Generator
 
 import math
+
+import tensorflow as tf
 
 from twomartens.masterthesis import config as conf
 
@@ -42,16 +45,16 @@ def prepare(args: argparse.Namespace) -> None:
     from twomartens.masterthesis import data
     
     file_names_photos, file_names_instances, \
-        instances = data.prepare_scenenet_data(conf.get_property("Paths.scenenet"),
-                                               args.protobuf_path)
+    instances = data.prepare_scenenet_data(conf.get_property("Paths.scenenet"),
+                                           args.protobuf_path)
     with open(f"{conf.get_property('Paths.scenenet_gt')}/"
               f"{args.ground_truth_path}/photo_paths.bin", "wb") as file:
         pickle.dump(file_names_photos, file)
-        
+    
     with open(f"{conf.get_property('Paths.scenenet_gt')}/"
               f"{args.ground_truth_path}/instance_paths.bin", "wb") as file:
         pickle.dump(file_names_instances, file)
-        
+    
     with open(f"{conf.get_property('Paths.scenenet_gt')}/"
               f"{args.ground_truth_path}/instances.bin", "wb") as file:
         pickle.dump(instances, file)
@@ -169,32 +172,149 @@ def _train_execute_action(args: argparse.Namespace, on_ssd: callable, on_auto_en
 
 
 def _ssd_train(args: argparse.Namespace) -> None:
-    import os
-    import pickle
-    
-    import tensorflow as tf
-
     from twomartens.masterthesis import data
+    from twomartens.masterthesis import debug
     from twomartens.masterthesis import ssd
     
-    tf.enable_eager_execution()
+    from twomartens.masterthesis.ssd_keras.models import keras_ssd300
+    from twomartens.masterthesis.ssd_keras.models import keras_ssd300_dropout
     
-    batch_size = conf.get_property("Parameters.batch_size")
-    image_size = conf.get_property("Parameters.ssd_image_size")
-    use_dropout = False if args.network == "ssd" else True
+    _init_eager_mode()
+    
+    batch_size, image_size, learning_rate, steps_per_val_epoch, nr_classes, \
+        iou_treshold, dropout_rate, top_k, nr_trajectories, \
+        coco_path, summary_path, weights_path, train_gt_path, val_gt_path, \
+        save_train_images, save_summaries = _ssd_train_get_config_values(conf.get_property)
+    
+    use_dropout = _ssd_is_dropout(args)
+    summary_path, weights_path, \
+        pre_trained_weights_file = _ssd_train_prepare_paths(args, summary_path, weights_path)
+    
+    file_names_train, instances_train, \
+        file_names_val, instances_val = _ssd_train_load_gt(train_gt_path, val_gt_path)
+    
+    ssd_model, predictor_sizes = ssd.get_model(use_dropout,
+                                               keras_ssd300_dropout.ssd_300_dropout,
+                                               keras_ssd300.ssd_300,
+                                               image_size,
+                                               nr_classes,
+                                               "training",
+                                               iou_treshold,
+                                               dropout_rate,
+                                               top_k,
+                                               pre_trained_weights_file)
+    
+    train_generator, train_length, val_generator, val_length = _ssd_train_get_generators(
+        data.load_scenenet_data,
+        file_names_train,
+        instances_train,
+        file_names_val,
+        instances_val,
+        coco_path,
+        batch_size,
+        image_size,
+        nr_trajectories,
+        predictor_sizes
+    )
+    
+    train_length = _ssd_debug_save_images(args, save_train_images, debug.save_ssd_train_images,
+                                          summary_path, batch_size, train_generator, train_length)
+    
+    nr_batches_train = _get_nr_batches(train_length, batch_size)
+    tensorboard_callback = _ssd_get_tensorboard_callback(args, save_summaries, summary_path)
+    
+    history = _ssd_train_call(
+        args,
+        ssd.train_keras,
+        train_generator,
+        nr_batches_train,
+        val_generator,
+        steps_per_val_epoch,
+        ssd_model,
+        weights_path,
+        learning_rate,
+        tensorboard_callback
+    )
+    
+    _ssd_save_history(summary_path, history)
 
-    summary_path = conf.get_property("Paths.summaries")
+
+def _init_eager_mode() -> None:
+    tf.enable_eager_execution()
+
+
+def _ssd_train_get_config_values(config_get: Callable[[str], Union[str, float, int, bool]]
+                                ) -> Tuple[int, int, int, int, int, float, float, int, int,
+                                           str, str, str, str, str,
+                                           bool, bool]:
+    
+    batch_size = config_get("Parameters.batch_size")
+    image_size = config_get("Parameters.ssd_image_size")
+    learning_rate = config_get("Parameters.learning_rate")
+    steps_per_val_epoch = config_get("Parameters.steps_per_val_epoch")
+    nr_classes = config_get("Parameters.nr_classes")
+    iou_threshold = config_get("Parameters.ssd_iou_threshold")
+    dropout_rate = config_get("Parameters.ssd_dropout_rate")
+    top_k = config_get("Parameters.ssd_top_k")
+    nr_trajectories = config_get("Parameters.nr_trajectories")
+    
+    coco_path = config_get("Paths.coco")
+    summary_path = config_get("Paths.summaries")
+    weights_path = config_get("Paths.weights")
+    train_gt_path = config_get('Paths.scenenet_gt_train')
+    val_gt_path = config_get('Paths.scenenet_gt_val')
+    
+    save_train_images = config_get("Debug.train_images")
+    save_summaries = config_get("Debug.summaries")
+    
+    return (
+        batch_size,
+        image_size,
+        learning_rate,
+        steps_per_val_epoch,
+        nr_classes,
+        iou_threshold,
+        dropout_rate,
+        top_k,
+        nr_trajectories,
+        #
+        coco_path,
+        summary_path,
+        weights_path,
+        train_gt_path,
+        val_gt_path,
+        #
+        save_train_images,
+        save_summaries
+    )
+
+
+def _ssd_is_dropout(args: argparse.Namespace) -> bool:
+    return False if args.network == "ssd" else True
+
+
+def _ssd_train_prepare_paths(args: argparse.Namespace,
+                             summary_path: str, weights_path: str) -> Tuple[str, str, str]:
+    import os
+    
     summary_path = f"{summary_path}/{args.network}/train/{args.iteration}"
-    os.makedirs(summary_path, exist_ok=True)
-    weights_path = conf.get_property("Paths.weights")
-    coco_path = conf.get_property("Paths.coco")
     pre_trained_weights_file = f"{weights_path}/{args.network}/VGG_coco_SSD_300x300_iter_400000.h5"
     weights_path = f"{weights_path}/{args.network}/train/"
+    
+    os.makedirs(summary_path, exist_ok=True)
     os.makedirs(weights_path, exist_ok=True)
     
-    # load prepared ground truth
-    train_gt_path = conf.get_property('Paths.scenenet_gt_train')
-    val_gt_path = conf.get_property('Paths.scenenet_gt_val')
+    return summary_path, weights_path, pre_trained_weights_file
+
+
+def _ssd_train_load_gt(train_gt_path: str, val_gt_path: str
+                       ) -> Tuple[Sequence[Sequence[str]],
+                                  Sequence[Sequence[Sequence[dict]]],
+                                  Sequence[Sequence[str]],
+                                  Sequence[Sequence[Sequence[dict]]]]:
+
+    import pickle
+
     with open(f"{train_gt_path}/photo_paths.bin", "rb") as file:
         file_names_train = pickle.load(file)
     with open(f"{train_gt_path}/instances.bin", "rb") as file:
@@ -203,62 +323,100 @@ def _ssd_train(args: argparse.Namespace) -> None:
         file_names_val = pickle.load(file)
     with open(f"{val_gt_path}/instances.bin", "rb") as file:
         instances_val = pickle.load(file)
-
-    # model
-    if use_dropout:
-        ssd_model = ssd.DropoutSSD(mode='training', weights_path=pre_trained_weights_file)
-    else:
-        ssd_model = ssd.SSD(mode='training', weights_path=pre_trained_weights_file)
-    
-    train_generator, train_length = \
-        data.load_scenenet_data(file_names_train, instances_train, coco_path,
-                                predictor_sizes=ssd_model.predictor_sizes,
-                                batch_size=batch_size,
-                                resized_shape=(image_size, image_size),
-                                training=True, evaluation=False, augment=False,
-                                nr_trajectories=1)
-    val_generator, val_length = \
-        data.load_scenenet_data(file_names_val, instances_val, coco_path,
-                                predictor_sizes=ssd_model.predictor_sizes,
-                                batch_size=batch_size,
-                                resized_shape=(image_size, image_size),
-                                training=False, evaluation=False, augment=False,
-                                nr_trajectories=1)
-    del file_names_train, instances_train, file_names_val, instances_val
-    
-    if args.debug and conf.get_property("Debug.train_images"):
-        from twomartens.masterthesis import debug
         
+    return file_names_train, instances_train, file_names_val, instances_val
+
+
+def _ssd_train_get_generators(load_data: callable,
+                              file_names_train: Sequence[Sequence[str]],
+                              instances_train: Sequence[Sequence[Sequence[dict]]],
+                              file_names_val: Sequence[Sequence[str]],
+                              instances_val: Sequence[Sequence[Sequence[dict]]],
+                              coco_path: str,
+                              batch_size: int,
+                              image_size: int,
+                              nr_trajectories: int,
+                              predictor_sizes: Sequence[Sequence[int]]) -> Tuple[Generator, int, Generator, int]:
+    
+    if nr_trajectories == -1:
+        nr_trajectories = None
+    train_generator, train_length = \
+        load_data(file_names_train, instances_train, coco_path,
+                  predictor_sizes=predictor_sizes,
+                  batch_size=batch_size,
+                  image_size=image_size,
+                  training=True, evaluation=False, augment=False,
+                  nr_trajectories=nr_trajectories)
+    
+    val_generator, val_length = \
+        load_data(file_names_val, instances_val, coco_path,
+                  predictor_sizes=predictor_sizes,
+                  batch_size=batch_size,
+                  image_size=image_size,
+                  training=False, evaluation=False, augment=False,
+                  nr_trajectories=nr_trajectories)
+    
+    return train_generator, train_length, val_generator, val_length
+
+
+def _ssd_debug_save_images(args: argparse.Namespace, save_images_on_debug: bool, save_images: callable,
+                           summary_path: str, batch_size: int,
+                           train_generator: Generator, train_length: int) -> int:
+    
+    if args.debug and save_images_on_debug:
         train_data = next(train_generator)
         train_length -= batch_size
         train_images = train_data[0]
         train_labels = train_data[1]
+        
+        save_images(train_images, train_labels, summary_path)
+    
+    return train_length
 
-        debug.save_ssd_train_images(train_images, train_labels, summary_path)
+
+def _ssd_get_tensorboard_callback(args: argparse.Namespace, save_summaries_on_debug: bool,
+                                  summary_path: str) -> Union[None, tf.keras.callbacks.TensorBoard]:
     
-    nr_batches_train = int(math.floor(train_length / batch_size))
-    nr_batches_val = int(math.floor(val_length / batch_size))
-    
-    if args.debug and conf.get_property("Debug.summaries"):
+    if args.debug and save_summaries_on_debug:
         tensorboard_callback = tf.keras.callbacks.TensorBoard(
             log_dir=summary_path
         )
     else:
         tensorboard_callback = None
     
-    history = ssd.train_keras(
+    return tensorboard_callback
+
+
+def _get_nr_batches(data_length: int, batch_size: int) -> int:
+    return int(math.floor(data_length / batch_size))
+
+
+def _ssd_train_call(args: argparse.Namespace, train_function: callable,
+                    train_generator: Generator, nr_batches_train: int,
+                    val_generator: Generator, nr_batches_val: int,
+                    model: tf.keras.models.Model,
+                    weights_path: str, learning_rate: float,
+                    tensorboard_callback: Optional[tf.keras.callbacks.TensorBoard]) -> tf.keras.callbacks.History:
+    
+    history = train_function(
         train_generator,
         nr_batches_train,
         val_generator,
-        conf.get_property("Parameters.steps_per_val_epoch"),
-        ssd_model,
+        nr_batches_val,
+        model,
         weights_path,
         args.iteration,
         initial_epoch=0,
         nr_epochs=args.num_epochs,
-        lr=conf.get_property("Parameters.learning_rate"),
+        lr=learning_rate,
         tensorboard_callback=tensorboard_callback
     )
+    
+    return history
+
+
+def _ssd_save_history(summary_path: str, history: tf.keras.callbacks.History) -> None:
+    import pickle
     
     with open(f"{summary_path}/history", "wb") as file:
         pickle.dump(history.history, file)
@@ -339,11 +497,11 @@ def _ssd_test(args: argparse.Namespace) -> None:
         file_names_photos = pickle.load(file)
     with open(f"{ground_truth_path}/instances.bin", "rb") as file:
         instances = pickle.load(file)
-
+    
     # model
     ssd_model = tf.keras.models.load_model(model_file, custom_objects={
         "L2Normalization": keras_layer_L2Normalization.L2Normalization,
-        "AnchorBoxes": keras_layer_AnchorBoxes.AnchorBoxes
+        "AnchorBoxes":     keras_layer_AnchorBoxes.AnchorBoxes
     })
     # TODO finde clean solution rather than Copy & Paste
     learning_rate_var = tf.keras.backend.variable(conf.get_property("Parameters.learning_rate"))
@@ -366,7 +524,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
                                 training=False, evaluation=True, augment=False,
                                 nr_trajectories=1)
     del file_names_photos, instances
-
+    
     nr_digits = math.ceil(math.log10(math.ceil(length_dataset / batch_size)))
     steps_per_epoch = int(math.ceil(length_dataset / batch_size))
     ssd.predict_keras(test_generator,
@@ -396,7 +554,7 @@ def _auto_encoder_test(args: argparse.Namespace) -> None:
     image_size = 256
     coco_data = data.load_coco_val(coco_path, category, num_epochs=1,
                                    batch_size=batch_size, resized_shape=(image_size, image_size))
-
+    
     summary_path = conf.get_property("Paths.summary")
     summary_path = f"{summary_path}/{args.network}/val/category-{category}/{args.iteration}"
     os.makedirs(summary_path, exist_ok=True)
@@ -482,9 +640,9 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
     
     # compute matches between predictions and ground truth
     true_positives, false_positives, \
-        cum_true_positives, cum_false_positives, open_set_error = evaluate.match_predictions(predictions_per_class,
-                                                                                             labels,
-                                                                                             ssd.N_CLASSES)
+    cum_true_positives, cum_false_positives, open_set_error = evaluate.match_predictions(predictions_per_class,
+                                                                                         labels,
+                                                                                         ssd.N_CLASSES)
     del labels
     cum_precisions, cum_recalls = evaluate.get_precision_recall(number_gt_per_class,
                                                                 cum_true_positives,
