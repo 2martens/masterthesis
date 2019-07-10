@@ -341,6 +341,7 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
             n_classes=len(cats_to_classes),  # 80
             predictor_sizes=predictor_sizes,
             steps=[8, 16, 32, 64, 100, 300],
+            coords="corners",
             aspect_ratios_per_layer=[[1.0, 2.0, 0.5],
                                      [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
                                      [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
