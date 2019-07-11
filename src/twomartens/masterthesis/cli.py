@@ -183,7 +183,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
     _init_eager_mode()
     
     batch_size, image_size, learning_rate, steps_per_val_epoch, nr_classes, \
-        iou_treshold, dropout_rate, top_k, nr_trajectories, \
+        iou_threshold, dropout_rate, top_k, nr_trajectories, \
         coco_path, summary_path, weights_path, train_gt_path, val_gt_path, \
         save_train_images, save_summaries = _ssd_train_get_config_values(conf.get_property)
     
@@ -200,7 +200,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
                                                image_size,
                                                nr_classes,
                                                "training",
-                                               iou_treshold,
+                                               iou_threshold,
                                                dropout_rate,
                                                top_k,
                                                pre_trained_weights_file)
