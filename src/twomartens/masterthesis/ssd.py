@@ -269,7 +269,7 @@ def _predict_loop(generator: Generator, use_dropout: bool, steps_per_epoch: int,
         
         transformed_predictions = transform_func(predictions, inverse_transforms)
         save_func(transformed_predictions, original_labels, filenames,
-                  batch_counter)
+                  batch_nr=batch_counter)
         
         batch_counter += 1
         
