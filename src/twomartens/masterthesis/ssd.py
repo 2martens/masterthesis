@@ -17,9 +17,6 @@
 """
 Provides functionality to use the SSD Keras implementation.
 
-Attributes:
-    N_CLASSES: number of known classes (without background)
-    
 Functions:
     compile_model(...): compiles an SSD model
     get_loss_func(...): returns the SSD loss function
@@ -44,8 +41,6 @@ from twomartens.masterthesis.ssd_keras.ssd_encoder_decoder import ssd_output_dec
 
 K = tf.keras.backend
 tfe = tf.contrib.eager
-
-N_CLASSES = 80
 
 
 def get_model(use_dropout: bool,
