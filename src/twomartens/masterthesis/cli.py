@@ -410,7 +410,7 @@ def _ssd_evaluate_unbatch_dict(glob_string: str) -> tuple:
                 nr_keys = len(batched.keys())
                 unbatched_dict = tuple([[] for _ in range(nr_keys)])
             
-            batched = batched.values()
+            batched = list(batched.values())
             
             for i in range(nr_keys):
                 value = batched[i]
