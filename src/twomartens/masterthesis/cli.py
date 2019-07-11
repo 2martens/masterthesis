@@ -228,7 +228,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
     
     history = _ssd_train_call(
         args,
-        ssd.train_keras,
+        ssd.train,
         train_generator,
         nr_batches_train,
         val_generator,
@@ -543,14 +543,14 @@ def _ssd_test(args: argparse.Namespace) -> None:
     
     nr_digits = math.ceil(math.log10(math.ceil(length_dataset / batch_size)))
     steps_per_epoch = int(math.ceil(length_dataset / batch_size))
-    ssd.predict_keras(test_generator,
-                      steps_per_epoch,
-                      ssd_model,
-                      use_dropout,
-                      forward_passes_per_image,
-                      (image_size, image_size),
-                      output_path,
-                      nr_digits)
+    ssd.predict(test_generator,
+                steps_per_epoch,
+                ssd_model,
+                use_dropout,
+                forward_passes_per_image,
+                (image_size, image_size),
+                output_path,
+                nr_digits)
 
 
 def _auto_encoder_test(args: argparse.Namespace) -> None:
