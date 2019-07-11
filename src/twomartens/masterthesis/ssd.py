@@ -312,12 +312,12 @@ def train(train_generator: callable,
         callbacks.append(tensorboard_callback)
     
     history = ssd_model.fit_generator(generator=train_generator,
-                                            epochs=nr_epochs,
-                                            steps_per_epoch=steps_per_epoch_train,
-                                            validation_data=val_generator,
-                                            validation_steps=steps_per_epoch_val,
-                                            callbacks=callbacks,
-                                            initial_epoch=initial_epoch)
+                                      epochs=nr_epochs,
+                                      steps_per_epoch=steps_per_epoch_train,
+                                      validation_data=val_generator,
+                                      validation_steps=steps_per_epoch_val,
+                                      callbacks=callbacks,
+                                      initial_epoch=initial_epoch)
     
     ssd_model.save(f"{checkpoint_dir}/ssd300.h5")
     ssd_model.save_weights(f"{checkpoint_dir}/ssd300_weights.h5")
