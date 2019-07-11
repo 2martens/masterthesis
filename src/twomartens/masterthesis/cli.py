@@ -289,12 +289,13 @@ def _ssd_test(args: argparse.Namespace) -> None:
     nr_digits = _get_nr_digits(length_dataset, batch_size)
     steps_per_epoch = _get_nr_batches(length_dataset, batch_size)
     ssd.predict(test_generator,
-                steps_per_epoch,
                 ssd_model,
-                use_dropout,
-                forward_passes_per_image,
+                steps_per_epoch,
                 image_size,
+                batch_size,
+                forward_passes_per_image,
                 output_path,
+                use_dropout,
                 nr_digits)
 
 
