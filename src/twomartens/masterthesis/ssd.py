@@ -127,9 +127,6 @@ def compile_model(model: tf.keras.models.Model, learning_rate: float, loss_func:
         model: SSD model
         learning_rate: the learning rate
         loss_func: loss function to minimize
-
-    Returns:
-
     """
     learning_rate_var = K.variable(learning_rate)
     
