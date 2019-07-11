@@ -254,7 +254,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
     
     batch_size, image_size, learning_rate, \
         forward_passes_per_image, nr_classes, iou_threshold, dropout_rate, top_k, nr_trajectories, \
-        coco_path, output_path, weights_path, ground_truth_path = _ssd_test_get_config_values(conf.get_property)
+        coco_path, output_path, weights_path, ground_truth_path = _ssd_test_get_config_values(args, conf.get_property)
     
     use_dropout = _ssd_is_dropout(args)
     
