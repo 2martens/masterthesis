@@ -267,7 +267,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
                                                keras_ssd300.ssd_300,
                                                image_size,
                                                nr_classes,
-                                               "inference_fast",
+                                               "training",
                                                iou_threshold,
                                                dropout_rate,
                                                top_k,
