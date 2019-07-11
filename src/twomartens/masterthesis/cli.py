@@ -303,7 +303,7 @@ def _init_eager_mode() -> None:
 
 
 def _ssd_train_get_config_values(config_get: Callable[[str], Union[str, float, int, bool]]
-                                ) -> Tuple[int, int, int, int, int, float, float, int, int,
+                                ) -> Tuple[int, int, float, int, int, float, float, int, int,
                                            str, str, str, str, str,
                                            bool, bool]:
     
