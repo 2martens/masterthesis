@@ -483,7 +483,7 @@ def _ssd_test_get_config_values(args: argparse.Namespace,
 def _ssd_evaluate_get_config_values(config_get: Callable[[str], Union[str, int, float, bool]]
                                     ) -> Tuple[int, float, int, str, str]:
     batch_size = config_get("Parameters.batch_size")
-    iou_threshold = config_get("Parameters.iou_threshold")
+    iou_threshold = config_get("Parameters.ssd_iou_threshold")
     nr_classes = config_get("Parameters.nr_classes")
     
     evaluation_path = config_get("Paths.evaluation")
