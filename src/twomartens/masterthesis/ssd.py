@@ -219,52 +219,6 @@ def predict(generator: callable,
             break
 
 
-def _get_observations(detections: Sequence[Sequence[np.ndarray]]) -> List[List[np.ndarray]]:
-    batch_size = len(detections)
-    observations = [[] for _ in range(batch_size)]
-    print(f"batch size: {batch_size}")
-    
-    # iterate over images
-    for i in range(batch_size):
-        detections_image = np.asarray(detections[i])
-        overlaps = bounding_box_utils.iou(detections_image[:, -12:-8],
-                                          detections_image[:, -12:-8],
-                                          mode="outer_product",
-                                          border_pixels="include")
-        image_observations = []
-        used_boxes = set()
-        for j in range(overlaps.shape[0]):
-            # check if box is already in existing observation
-            if j in used_boxes:
-                continue
-            
-            box_overlaps = overlaps[j]
-            overlap_detections = np.nonzero(box_overlaps >= 0.95)
-            observation_set = set(overlap_detections)
-            for k in overlap_detections:
-                # check if box was already removed from observation, then skip
-                if k not in observation_set:
-                    continue
-                
-                # check if other found detections are also overlapping with this
-                # detection
-                second_overlaps = overlaps[k]
-                second_detections = set(np.nonzero(second_overlaps >= 0.95))
-                difference = observation_set - second_detections
-                observation_set = observation_set - difference
-            
-            used_boxes.update(observation_set)
-            image_observations.append(observation_set)
-        
-        for observation in image_observations:
-            observation_detections = detections_image[np.asarray(list(observation))]
-            # average over class probabilities
-            observation_mean = np.mean(observation_detections, axis=0)
-            observations[i].append(observation_mean)
-    
-    return observations
-
-
 def train(train_generator: callable,
           steps_per_epoch_train: int,
           val_generator: callable,
@@ -320,3 +274,49 @@ def train(train_generator: callable,
     ssd_model.save_weights(f"{checkpoint_dir}/ssd300_weights.h5")
     
     return history
+
+
+def _get_observations(detections: Sequence[Sequence[np.ndarray]]) -> List[List[np.ndarray]]:
+    batch_size = len(detections)
+    observations = [[] for _ in range(batch_size)]
+    print(f"batch size: {batch_size}")
+    
+    # iterate over images
+    for i in range(batch_size):
+        detections_image = np.asarray(detections[i])
+        overlaps = bounding_box_utils.iou(detections_image[:, -12:-8],
+                                          detections_image[:, -12:-8],
+                                          mode="outer_product",
+                                          border_pixels="include")
+        image_observations = []
+        used_boxes = set()
+        for j in range(overlaps.shape[0]):
+            # check if box is already in existing observation
+            if j in used_boxes:
+                continue
+            
+            box_overlaps = overlaps[j]
+            overlap_detections = np.nonzero(box_overlaps >= 0.95)
+            observation_set = set(overlap_detections)
+            for k in overlap_detections:
+                # check if box was already removed from observation, then skip
+                if k not in observation_set:
+                    continue
+                
+                # check if other found detections are also overlapping with this
+                # detection
+                second_overlaps = overlaps[k]
+                second_detections = set(np.nonzero(second_overlaps >= 0.95))
+                difference = observation_set - second_detections
+                observation_set = observation_set - difference
+            
+            used_boxes.update(observation_set)
+            image_observations.append(observation_set)
+        
+        for observation in image_observations:
+            observation_detections = detections_image[np.asarray(list(observation))]
+            # average over class probabilities
+            observation_mean = np.mean(observation_detections, axis=0)
+            observations[i].append(observation_mean)
+    
+    return observations
