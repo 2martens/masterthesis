@@ -366,6 +366,14 @@ def _pickle(filename: str, content: Any) -> None:
     
     with open(filename, "wb") as file:
         pickle.dump(content, file)
+        
+
+def _get_nr_batches(data_length: int, batch_size: int) -> int:
+    return int(math.floor(data_length / batch_size))
+
+
+def _get_nr_digits(data_length: int, batch_size: int) -> int:
+    return math.ceil(math.log10(math.ceil(data_length / batch_size)))
     
 
 def _ssd_evaluate_unbatch(glob_string: str) -> List[np.ndarray]:
@@ -666,14 +674,6 @@ def _ssd_get_tensorboard_callback(args: argparse.Namespace, save_summaries_on_de
         tensorboard_callback = None
     
     return tensorboard_callback
-
-
-def _get_nr_batches(data_length: int, batch_size: int) -> int:
-    return int(math.floor(data_length / batch_size))
-
-
-def _get_nr_digits(data_length: int, batch_size: int) -> int:
-    return math.ceil(math.log10(math.ceil(data_length / batch_size)))
 
 
 def _ssd_train_call(args: argparse.Namespace, train_function: callable,
