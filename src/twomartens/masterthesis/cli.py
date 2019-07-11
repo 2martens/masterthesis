@@ -325,7 +325,7 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
     predictions = _ssd_evaluate_unbatch_list(predictions_glob_string)
     _pickle(predictions_file, predictions)
 
-    _ssd_evaluate_save_images(filenames, labels,
+    _ssd_evaluate_save_images(filenames, predictions,
                               coco_utils.get_coco_category_maps, debug.save_ssd_train_images,
                               image_size, output_path, coco_path)
     
