@@ -327,7 +327,8 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
 
     _ssd_evaluate_save_images(filenames, predictions,
                               coco_utils.get_coco_category_maps, debug.save_ssd_train_images,
-                              image_size, output_path, coco_path)
+                              image_size, batch_size,
+                              output_path, coco_path)
     
     predictions_per_class = evaluate.prepare_predictions(predictions, nr_classes)
     _pickle(predictions_per_class_file, predictions_per_class)
@@ -365,16 +366,24 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
 
 def _ssd_evaluate_save_images(filenames: Sequence[str], labels: Sequence[np.ndarray],
                               get_coco_cat_maps_func: callable, save_images: callable,
-                              image_size: int,
+                              image_size: int, batch_size: int,
                               output_path: str, coco_path: str) -> None:
     from PIL import Image
     
     images = []
-    for filename in filenames:
+    for i, filename in enumerate(filenames):
+        if i == batch_size:
+            break
         with Image.open(filename) as image:
             images.append(np.array(image, dtype=np.uint8))
     
-    save_images(images, labels, output_path, coco_path, image_size, get_coco_cat_maps_func)
+    cleaned_labels = []
+    for j, label in enumerate(labels):
+        if j == batch_size:
+            break
+        cleaned_labels.append(label)
+    
+    save_images(images, cleaned_labels, output_path, coco_path, image_size, get_coco_cat_maps_func)
 
 
 def _init_eager_mode() -> None:
