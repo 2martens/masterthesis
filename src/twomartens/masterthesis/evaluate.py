@@ -93,8 +93,9 @@ def prepare_predictions(predictions: Sequence[Sequence[Sequence[Union[int, float
 
 def match_predictions(predictions: Sequence[Sequence[Tuple[int, float, float, int, int, int, int]]],
                       labels: Sequence[Sequence[Sequence[int]]],
+                      iou_func: callable,
                       nr_classes: int,
-                      iou_threshold: float = 0.5,
+                      iou_threshold: float,
                       border_pixels: str = "include",
                       sorting_algorithm: str = "quicksort") -> Tuple[List[np.ndarray], List[np.ndarray],
                                                                      List[np.ndarray], List[np.ndarray],
@@ -105,6 +106,7 @@ def match_predictions(predictions: Sequence[Sequence[Tuple[int, float, float, in
     Args:
         predictions: list of predictions
         labels: list of labels per image
+        iou_func: function to calculate the intersection over union
         nr_classes: number of classes
         iou_threshold: only matches higher than this value will be considered
         border_pixels:  How to treat the border pixels of the bounding boxes.
@@ -191,11 +193,11 @@ def match_predictions(predictions: Sequence[Sequence[Tuple[int, float, float, in
                 continue
 
             # Compute the IoU of this prediction with all ground truth boxes of the same class.
-            overlaps = bounding_box_utils.iou(boxes1=gt[:, [1, 2, 3, 4]],
-                                              boxes2=pred_box,
-                                              coords='corners',
-                                              mode='element-wise',
-                                              border_pixels=border_pixels)
+            overlaps = iou_func(boxes1=gt[:, [1, 2, 3, 4]],
+                                boxes2=pred_box,
+                                coords='corners',
+                                mode='element-wise',
+                                border_pixels=border_pixels)
 
             # For each detection, match the ground truth box with the highest overlap.
             # It's possible that the same ground truth box will be matched to multiple

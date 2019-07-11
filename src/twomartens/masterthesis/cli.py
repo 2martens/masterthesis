@@ -26,9 +26,10 @@ Functions:
     prepare(...): prepares the SceneNet ground truth data
 """
 import argparse
-from typing import Callable, Union, Tuple, Sequence, Optional, Generator
+from typing import Callable, Union, Tuple, Sequence, Optional, Generator, List, Any, Dict
 
 import math
+import numpy as np
 
 import tensorflow as tf
 
@@ -299,8 +300,89 @@ def _ssd_test(args: argparse.Namespace) -> None:
                 nr_digits)
 
 
+def _ssd_evaluate(args: argparse.Namespace) -> None:
+    from twomartens.masterthesis import evaluate
+
+    from twomartens.masterthesis.ssd_keras.bounding_box_utils import bounding_box_utils
+    
+    _init_eager_mode()
+    
+    batch_size, iou_threshold, nr_classes, \
+        evaluation_path, output_path = _ssd_evaluate_get_config_values(config_get=conf.get_property)
+    
+    output_path, evaluation_path, \
+        result_file, label_file, \
+        predictions_file, predictions_per_class_file, \
+        predictions_glob_string, label_glob_string = _ssd_evaluate_prepare_paths(args,
+                                                                                 output_path,
+                                                                                 evaluation_path)
+    
+    labels = _ssd_evaluate_unbatch(label_glob_string)
+    _pickle(label_file, labels)
+    
+    predictions = _ssd_evaluate_unbatch(predictions_glob_string)
+    _pickle(predictions_file, predictions)
+    
+    predictions_per_class = evaluate.prepare_predictions(predictions, nr_classes)
+    _pickle(predictions_per_class_file, predictions_per_class)
+
+    number_gt_per_class = evaluate.get_number_gt_per_class(labels, nr_classes)
+
+    true_positives, false_positives, \
+        cum_true_positives, cum_false_positives, \
+        open_set_error = evaluate.match_predictions(predictions_per_class, labels,
+                                                    bounding_box_utils.iou,
+                                                    nr_classes, iou_threshold)
+    
+    cum_precisions, cum_recalls = evaluate.get_precision_recall(number_gt_per_class,
+                                                                cum_true_positives,
+                                                                cum_false_positives,
+                                                                nr_classes)
+    
+    f1_scores = evaluate.get_f1_score(cum_precisions, cum_recalls, nr_classes)
+    average_precisions = evaluate.get_mean_average_precisions(cum_precisions, cum_recalls, nr_classes)
+    mean_average_precision = evaluate.get_mean_average_precision(average_precisions)
+    
+    results = _ssd_evaluate_get_results(true_positives,
+                                        false_positives,
+                                        cum_true_positives,
+                                        cum_false_positives,
+                                        cum_precisions,
+                                        cum_recalls,
+                                        f1_scores,
+                                        average_precisions,
+                                        mean_average_precision,
+                                        open_set_error)
+    
+    _pickle(result_file, results)
+
+
 def _init_eager_mode() -> None:
     tf.enable_eager_execution()
+    
+
+def _pickle(filename: str, content: Any) -> None:
+    import pickle
+    
+    with open(filename, "wb") as file:
+        pickle.dump(content, file)
+    
+
+def _ssd_evaluate_unbatch(glob_string: str) -> List[np.ndarray]:
+    import glob
+    import pickle
+    
+    unbatched = []
+    files = glob.glob(glob_string)
+    for filename in files:
+        with open(filename, "rb") as file:
+            batched = pickle.load(file)
+            if type(batched) is dict:
+                # in this case we deal with labels
+                batched = batched["labels"]
+            unbatched.extend(batched)
+    
+    return unbatched
 
 
 def _ssd_train_get_config_values(config_get: Callable[[str], Union[str, float, int, bool]]
@@ -390,6 +472,18 @@ def _ssd_test_get_config_values(args: argparse.Namespace,
     )
 
 
+def _ssd_evaluate_get_config_values(config_get: Callable[[str], Union[str, int, float, bool]]
+                                    ) -> Tuple[int, float, int, str, str]:
+    batch_size = config_get("Parameters.batch_size")
+    iou_threshold = config_get("Parameters.iou_threshold")
+    nr_classes = config_get("Parameters.nr_classes")
+    
+    evaluation_path = config_get("Paths.evaluation")
+    output_path = config_get("Paths.output")
+    
+    return batch_size, iou_threshold, nr_classes, evaluation_path, output_path
+
+
 def _ssd_is_dropout(args: argparse.Namespace) -> bool:
     return False if args.network == "ssd" else True
 
@@ -419,6 +513,30 @@ def _ssd_test_prepare_paths(args: argparse.Namespace,
     os.makedirs(output_path, exist_ok=True)
     
     return output_path, checkpoint_path, weights_file
+
+
+def _ssd_evaluate_prepare_paths(args: argparse.Namespace,
+                                output_path: str, evaluation_path: str) -> Tuple[str, str,
+                                                                                 str, str, str, str,
+                                                                                 str, str]:
+    import os
+    
+    output_path = f"{output_path}/{args.network}/test/{args.iteration}"
+    evaluation_path = f"{evaluation_path}/{args.network}"
+    result_file = f"{evaluation_path}/results-{args.iteration}.bin"
+    label_file = f"{output_path}/labels.bin"
+    predictions_file = f"{output_path}/predictions.bin"
+    predictions_per_class_file = f"{output_path}/predictions_class.bin"
+    prediction_glob_string = f"{output_path}/*ssd_prediction*"
+    label_glob_string = f"{output_path}/*ssd_label*"
+    
+    os.makedirs(evaluation_path, exist_ok=True)
+    
+    return (
+        output_path, evaluation_path,
+        result_file, label_file, predictions_file, predictions_per_class_file,
+        prediction_glob_string, label_glob_string
+    )
 
 
 def _ssd_train_load_gt(train_gt_path: str, val_gt_path: str
@@ -588,6 +706,33 @@ def _ssd_save_history(summary_path: str, history: tf.keras.callbacks.History) ->
         pickle.dump(history.history, file)
 
 
+def _ssd_evaluate_get_results(true_positives: Sequence[np.ndarray],
+                              false_positives: Sequence[np.ndarray],
+                              cum_true_positives: Sequence[np.ndarray],
+                              cum_false_positives: Sequence[np.ndarray],
+                              cum_precisions: Sequence[np.ndarray],
+                              cum_recalls: Sequence[np.ndarray],
+                              f1_scores: Sequence[np.ndarray],
+                              average_precisions: Sequence[float],
+                              mean_average_precision: float,
+                              open_set_error: int
+                              ) -> Dict[str, Union[np.ndarray, float, int]]:
+    results = {
+        "true_positives":             true_positives,
+        "false_positives":            false_positives,
+        "cumulative_true_positives":  cum_true_positives,
+        "cumulative_false_positives": cum_false_positives,
+        "cumulative_precisions":      cum_precisions,
+        "cumulative_recalls":         cum_recalls,
+        "f1_scores":                  f1_scores,
+        "mean_average_precisions":    average_precisions,
+        "mean_average_precision":     mean_average_precision,
+        "open_set_error":             open_set_error
+    }
+    
+    return results
+
+
 def _auto_encoder_train(args: argparse.Namespace) -> None:
     import os
     
@@ -666,94 +811,3 @@ def _auto_encoder_test(args: argparse.Namespace) -> None:
                        weights_prefix=weights_path,
                        zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size,
                        image_size=image_size)
-
-
-def _ssd_evaluate(args: argparse.Namespace) -> None:
-    import glob
-    import os
-    import pickle
-    
-    import numpy as np
-    import tensorflow as tf
-    
-    from twomartens.masterthesis import evaluate
-    from twomartens.masterthesis import ssd
-    
-    tf.enable_eager_execution()
-    
-    batch_size = 16
-    use_dropout = False if args.network == "ssd" else True
-    output_path = conf.get_property("Paths.output")
-    evaluation_path = conf.get_property("Paths.evaluation")
-    output_path = f"{output_path}/{args.network}/val/{args.iteration}"
-    evaluation_path = f"{evaluation_path}/{args.network}"
-    result_file = f"{evaluation_path}/results-{args.iteration}.bin"
-    label_file = f"{output_path}/labels.bin"
-    predictions_file = f"{output_path}/predictions.bin"
-    predictions_per_class_file = f"{output_path}/predictions_class.bin"
-    os.makedirs(evaluation_path, exist_ok=True)
-    
-    # retrieve labels and un-batch them
-    files = glob.glob(f"{output_path}/*ssd_labels*")
-    labels = []
-    for filename in files:
-        with open(filename, "rb") as file:
-            # get labels per batch
-            label_dict = pickle.load(file)
-            labels.extend(label_dict['labels'])
-    
-    # store labels for later use
-    with open(label_file, "wb") as file:
-        pickle.dump(labels, file)
-    
-    number_gt_per_class = evaluate.get_number_gt_per_class(labels, ssd.N_CLASSES)
-    
-    # retrieve predictions and un-batch them
-    files = glob.glob(f"{output_path}/*ssd_predictions*")
-    predictions = []
-    for filename in files:
-        with open(filename, "rb") as file:
-            # get predictions per batch
-            _predictions = pickle.load(file)
-            predictions.extend(_predictions)
-    del _predictions
-    
-    # prepare predictions for further use
-    with open(predictions_file, "wb") as file:
-        pickle.dump(predictions, file)
-    
-    predictions_per_class = evaluate.prepare_predictions(predictions, ssd.N_CLASSES)
-    del predictions
-    
-    with open(predictions_per_class_file, "wb") as file:
-        pickle.dump(predictions_per_class, file)
-    
-    # compute matches between predictions and ground truth
-    true_positives, false_positives, \
-    cum_true_positives, cum_false_positives, open_set_error = evaluate.match_predictions(predictions_per_class,
-                                                                                         labels,
-                                                                                         ssd.N_CLASSES)
-    del labels
-    cum_precisions, cum_recalls = evaluate.get_precision_recall(number_gt_per_class,
-                                                                cum_true_positives,
-                                                                cum_false_positives,
-                                                                ssd.N_CLASSES)
-    f1_scores = evaluate.get_f1_score(cum_precisions, cum_recalls, ssd.N_CLASSES)
-    average_precisions = evaluate.get_mean_average_precisions(cum_precisions, cum_recalls, ssd.N_CLASSES)
-    mean_average_precision = evaluate.get_mean_average_precision(average_precisions)
-    
-    results = {
-        "true_positives":             true_positives,
-        "false_positives":            false_positives,
-        "cumulative_true_positives":  cum_true_positives,
-        "cumulative_false_positives": cum_false_positives,
-        "cumulative_precisions":      cum_precisions,
-        "cumulative_recalls":         cum_recalls,
-        "f1_scores":                  f1_scores,
-        "mean_average_precisions":    average_precisions,
-        "mean_average_precision":     mean_average_precision,
-        "open_set_error":             open_set_error
-    }
-    
-    with open(result_file, "wb") as file:
-        pickle.dump(results, file)
