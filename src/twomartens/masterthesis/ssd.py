@@ -302,7 +302,7 @@ def _transform_predictions(predictions: np.ndarray, inverse_transforms: Sequence
         y_pred=predictions,
         img_width=image_size,
         img_height=image_size,
-        coords="corners"
+        input_coords="corners"
     )
     transformed_predictions = inverse_transform_func(decoded_predictions, inverse_transforms)
     
