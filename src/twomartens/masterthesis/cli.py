@@ -301,14 +301,16 @@ def _ssd_test(args: argparse.Namespace) -> None:
 
 
 def _ssd_evaluate(args: argparse.Namespace) -> None:
+    from twomartens.masterthesis import debug
     from twomartens.masterthesis import evaluate
 
     from twomartens.masterthesis.ssd_keras.bounding_box_utils import bounding_box_utils
+    from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
     
     _init_eager_mode()
     
-    batch_size, iou_threshold, nr_classes, \
-        evaluation_path, output_path = _ssd_evaluate_get_config_values(config_get=conf.get_property)
+    batch_size, image_size, iou_threshold, nr_classes, \
+        evaluation_path, output_path, coco_path = _ssd_evaluate_get_config_values(config_get=conf.get_property)
     
     output_path, evaluation_path, \
         result_file, label_file, \
@@ -317,11 +319,15 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
                                                                                  output_path,
                                                                                  evaluation_path)
     
-    labels = _ssd_evaluate_unbatch(label_glob_string)
+    labels, filenames = _ssd_evaluate_unbatch_dict(label_glob_string)
     _pickle(label_file, labels)
     
-    predictions = _ssd_evaluate_unbatch(predictions_glob_string)
+    predictions = _ssd_evaluate_unbatch_list(predictions_glob_string)
     _pickle(predictions_file, predictions)
+
+    _ssd_evaluate_save_images(filenames, labels,
+                              coco_utils.get_coco_category_maps, debug.save_ssd_train_images,
+                              image_size, output_path, coco_path)
     
     predictions_per_class = evaluate.prepare_predictions(predictions, nr_classes)
     _pickle(predictions_per_class_file, predictions_per_class)
@@ -357,6 +363,20 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
     _pickle(result_file, results)
 
 
+def _ssd_evaluate_save_images(filenames: Sequence[str], labels: Sequence[np.ndarray],
+                              get_coco_cat_maps_func: callable, save_images: callable,
+                              image_size: int,
+                              output_path: str, coco_path: str) -> None:
+    from PIL import Image
+    
+    images = []
+    for filename in filenames:
+        with Image.open(filename) as image:
+            images.append(np.array(image, dtype=np.uint8))
+    
+    save_images(images, labels, output_path, coco_path, image_size, get_coco_cat_maps_func)
+
+
 def _init_eager_mode() -> None:
     tf.enable_eager_execution()
     
@@ -376,7 +396,28 @@ def _get_nr_digits(data_length: int, batch_size: int) -> int:
     return math.ceil(math.log10(math.ceil(data_length / batch_size)))
     
 
-def _ssd_evaluate_unbatch(glob_string: str) -> List[np.ndarray]:
+def _ssd_evaluate_unbatch_dict(glob_string: str) -> tuple:
+    import glob
+    import pickle
+    
+    unbatched_dict = None
+    files = glob.glob(glob_string)
+    nr_keys = None
+    for filename in files:
+        with open(filename, "rb") as file:
+            batched = pickle.load(file)
+            if unbatched_dict is None:
+                nr_keys = len(batched.keys())
+                unbatched_dict = tuple([[] for _ in range(nr_keys)])
+            
+            for i in range(nr_keys):
+                value = batched[i]
+                unbatched_dict[i].extend(value)
+    
+    return unbatched_dict
+
+
+def _ssd_evaluate_unbatch_list(glob_string: str) -> List[np.ndarray]:
     import glob
     import pickle
     
@@ -385,9 +426,6 @@ def _ssd_evaluate_unbatch(glob_string: str) -> List[np.ndarray]:
     for filename in files:
         with open(filename, "rb") as file:
             batched = pickle.load(file)
-            if type(batched) is dict:
-                # in this case we deal with labels
-                batched = batched["labels"]
             unbatched.extend(batched)
     
     return unbatched
@@ -481,15 +519,18 @@ def _ssd_test_get_config_values(args: argparse.Namespace,
 
 
 def _ssd_evaluate_get_config_values(config_get: Callable[[str], Union[str, int, float, bool]]
-                                    ) -> Tuple[int, float, int, str, str]:
+                                    ) -> Tuple[int, int, float, int,
+                                               str, str, str]:
     batch_size = config_get("Parameters.batch_size")
+    image_size = config_get("Parameters.ssd_image_size")
     iou_threshold = config_get("Parameters.ssd_iou_threshold")
     nr_classes = config_get("Parameters.nr_classes")
     
     evaluation_path = config_get("Paths.evaluation")
     output_path = config_get("Paths.output")
+    coco_path = config_get("Paths.coco")
     
-    return batch_size, iou_threshold, nr_classes, evaluation_path, output_path
+    return batch_size, image_size, iou_threshold, nr_classes, evaluation_path, output_path, coco_path
 
 
 def _ssd_is_dropout(args: argparse.Namespace) -> bool:
