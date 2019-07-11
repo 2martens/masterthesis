@@ -149,7 +149,7 @@ def predict(generator: callable,
             ssd_model: tf.keras.models.Model,
             use_dropout: bool,
             forward_passes_per_image: int,
-            image_size: Tuple[int, int],
+            image_size: int,
             output_path: str,
             nr_digits: int) -> None:
     """
@@ -175,6 +175,7 @@ def predict(generator: callable,
         filename = f"dropout-{filename}"
     output_file = os.path.join(output_path, filename)
     label_output_file = os.path.join(output_path, label_filename)
+    image_size = (image_size, image_size)
     
     batch_counter = 0
     for x, filenames, inverse_transforms, original_labels in generator:
