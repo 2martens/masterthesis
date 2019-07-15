@@ -382,4 +382,6 @@ def get_mean_average_precision(average_precisions: List[float]) -> float:
     Returns:
         mean average precision over all classes
     """
-    return np.average(average_precisions[1:])
+    average_precisions = np.copy(average_precisions)
+    average_precisions = average_precisions[average_precisions != 0.0]
+    return np.average(average_precisions[:])
