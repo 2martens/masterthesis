@@ -135,6 +135,7 @@ def visualise(args: argparse.Namespace) -> None:
 
 def measure_mapping(args: argparse.Namespace) -> None:
     import pickle
+    import os
     
     from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
     
@@ -142,8 +143,10 @@ def measure_mapping(args: argparse.Namespace) -> None:
         instances = pickle.load(file)
     
     output_path = f"{args.output_path}/measure/{args.tarball_id}"
+    os.makedirs(output_path, exist_ok=True)
     annotation_file_train = f"{args.coco_path}/annotations/instances_train2014.json"
     cats_to_classes, _, _, _ = coco_utils.get_coco_category_maps(annotation_file_train)
+    nr_digits = _get_nr_digits(len(instances), 1)
     
     for i, trajectory in enumerate(instances):
         counts = {cat_id: 0 for cat_id in cats_to_classes.keys()}
@@ -151,7 +154,7 @@ def measure_mapping(args: argparse.Namespace) -> None:
             for instance in labels:
                 counts[instance['coco_id']] += 1
         
-        with open(f"{output_path}/{i}.bin", "wb") as file:
+        with open(f"{output_path}/{str(i).zfill(nr_digits)}.bin", "wb") as file:
             pickle.dump(counts, file)
 
 
