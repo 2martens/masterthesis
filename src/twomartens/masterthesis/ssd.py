@@ -268,13 +268,16 @@ def _predict_loop(generator: Generator, use_dropout: bool, steps_per_epoch: int,
                   transform_func: callable, save_func: callable) -> None:
     
     batch_counter = 0
+    saved_images = False
     for inputs, filenames, inverse_transforms, original_labels in generator:
         if use_dropout:
             predictions = dropout_step(inputs)
         else:
             predictions = vanilla_step(inputs)
         
-        save_images(inputs, predictions)
+        if not saved_images:
+            save_images(inputs, predictions)
+            saved_images = True
         transformed_predictions = transform_func(predictions, inverse_transforms)
         save_func(transformed_predictions, original_labels, filenames,
                   batch_nr=batch_counter)
