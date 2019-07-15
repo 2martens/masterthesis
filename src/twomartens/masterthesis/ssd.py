@@ -274,8 +274,7 @@ def _predict_loop(generator: Generator, use_dropout: bool, steps_per_epoch: int,
         else:
             predictions = vanilla_step(inputs)
         
-        save_images(inputs, predictions)
-        print("test")
+        # save_images(inputs, predictions)
         print((
             f"Input shape: {inputs.shape}"
             f"Predictions shape: {predictions.shape}"
