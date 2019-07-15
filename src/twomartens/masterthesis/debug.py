@@ -23,6 +23,7 @@ Functions:
         saves the first batch of SSD train images with overlaid ground truth bounding boxes
 """
 import os
+from typing import Union, Sequence
 
 import math
 import numpy as np
@@ -30,7 +31,7 @@ from matplotlib import pyplot
 from PIL import Image
 
 
-def save_ssd_train_images(images: np.ndarray, labels: np.ndarray,
+def save_ssd_train_images(images: Union[np.ndarray, Sequence[str]], labels: np.ndarray,
                           output_path: str, coco_path: str,
                           image_size: int, get_coco_cat_maps_func: callable,
                           custom_string: str = None) -> None:
@@ -40,7 +41,7 @@ def save_ssd_train_images(images: np.ndarray, labels: np.ndarray,
     The images are saved both in a raw version and with bounding boxes printed on them.
     
     Args:
-        images: a NumPy array of images
+        images: a NumPy array of images or a list of filenames
         labels: a NumPy array of labels
         output_path: path to save the images in
         coco_path: path to the COCO data set
@@ -60,7 +61,11 @@ def save_ssd_train_images(images: np.ndarray, labels: np.ndarray,
     
     for i, train_image in enumerate(images):
         instances = labels[i]
-        image = Image.fromarray(train_image)
+        if type(train_image) is str:
+            with Image.open(train_image) as _image:
+                image = _image
+        else:
+            image = Image.fromarray(train_image)
         image.save(f"{output_path}/"
                    f"{custom_string}train_image{str(i).zfill(nr_digits)}.png")
         
