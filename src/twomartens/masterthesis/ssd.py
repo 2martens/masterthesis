@@ -276,9 +276,12 @@ def _predict_loop(generator: Generator, use_dropout: bool, steps_per_epoch: int,
             predictions = vanilla_step(inputs)
         
         if not saved_images:
-            save_images(inputs, predictions)
+            save_images(inputs, predictions, custom_string="after-prediction")
             saved_images = True
-        transformed_predictions = transform_func(predictions, inverse_transforms)
+        transformed_predictions = transform_func(predictions,
+                                                 inverse_transforms,
+                                                 functools.partial(save_images,
+                                                                   inputs))
         save_func(transformed_predictions, original_labels, filenames,
                   batch_nr=batch_counter)
         
@@ -311,6 +314,7 @@ def _predict_vanilla_step(inputs: np.ndarray, model: tf.keras.models.Model) -> n
 
 
 def _transform_predictions(predictions: np.ndarray, inverse_transforms: Sequence[np.ndarray],
+                           save_images: callable,
                            decode_func: callable, inverse_transform_func: callable,
                            image_size: int) -> np.ndarray:
     
@@ -320,6 +324,7 @@ def _transform_predictions(predictions: np.ndarray, inverse_transforms: Sequence
         img_height=image_size,
         input_coords="corners"
     )
+    save_images(decoded_predictions, custom_string="after-decoding")
     transformed_predictions = inverse_transform_func(decoded_predictions, inverse_transforms)
     
     return transformed_predictions
@@ -342,10 +347,10 @@ def _predict_save_images(inputs: np.ndarray, predictions: np.ndarray,
                          save_images: callable,
                          get_coco_cat_maps_func: callable,
                          output_path: str, coco_path: str,
-                         image_size: int) -> None:
+                         image_size: int, custom_string: str) -> None:
     save_images(inputs, predictions,
                 output_path, coco_path, image_size,
-                get_coco_cat_maps_func, "after-prediction")
+                get_coco_cat_maps_func, custom_string)
     
 
 def _get_observations(detections: Sequence[Sequence[np.ndarray]]) -> List[List[np.ndarray]]:
