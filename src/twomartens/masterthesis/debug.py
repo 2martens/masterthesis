@@ -63,9 +63,8 @@ def save_ssd_train_images(images: Union[np.ndarray, Sequence[str]], labels: np.n
         instances = labels[i]
         if type(train_image) is str:
             with Image.open(train_image) as _image:
-                image = _image
-        else:
-            image = Image.fromarray(train_image)
+                train_image = np.array(_image, dtype=np.uint8)
+        image = Image.fromarray(train_image)
         image.save(f"{output_path}/"
                    f"{custom_string}train_image{str(i).zfill(nr_digits)}.png")
         
