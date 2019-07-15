@@ -136,7 +136,7 @@ def visualise(args: argparse.Namespace) -> None:
 def measure_mapping(args: argparse.Namespace) -> None:
     from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
     
-    coco_path, output_path, ground_truth_path = _measure_get_config_values(conf.get_property)
+    output_path, coco_path, ground_truth_path = _measure_get_config_values(conf.get_property)
     output_path, annotation_file_train = _measure_prepare_paths(args, output_path, coco_path)
     instances, cats_to_classes = _measure_load_gt(ground_truth_path, annotation_file_train,
                                                   coco_utils.get_coco_category_maps)
