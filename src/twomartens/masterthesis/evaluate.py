@@ -305,8 +305,7 @@ def get_f1_score(cumulative_precisions: List[np.ndarray],
         if not np.count_nonzero(cumulative_precision + cumulative_recall):
             cumulative_f1_scores.append([])
             continue
-        f1_score = 2 * ((cumulative_precision[-1] * cumulative_recall[-1]) /
-                        (cumulative_precision[-1] + cumulative_recall[-1] + 0.001))
+        f1_score = 2 * ((cumulative_precision * cumulative_recall) / (cumulative_precision + cumulative_recall + 0.001))
         cumulative_f1_scores.append(f1_score)
     
     return cumulative_f1_scores
