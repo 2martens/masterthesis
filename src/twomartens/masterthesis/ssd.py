@@ -340,10 +340,10 @@ def _predict_save_images(inputs: np.ndarray, predictions: np.ndarray,
                          get_coco_cat_maps_func: callable,
                          output_path: str, coco_path: str,
                          image_size: int) -> None:
-    print(
+    print((
         f"Input shape: {inputs.shape}"
         f"Predictions shape: {predictions.shape}"
-    )
+    ))
     save_images(inputs, predictions,
                 output_path, coco_path, image_size,
                 get_coco_cat_maps_func, "after-prediction")
