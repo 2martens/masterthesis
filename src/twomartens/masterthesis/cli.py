@@ -46,8 +46,8 @@ def prepare(args: argparse.Namespace) -> None:
     from twomartens.masterthesis import data
     
     file_names_photos, file_names_instances, \
-    instances = data.prepare_scenenet_data(conf.get_property("Paths.scenenet"),
-                                           args.protobuf_path)
+        instances = data.prepare_scenenet_data(conf.get_property("Paths.scenenet"),
+                                               args.protobuf_path)
     with open(f"{conf.get_property('Paths.scenenet_gt')}/"
               f"{args.ground_truth_path}/photo_paths.bin", "wb") as file:
         pickle.dump(file_names_photos, file)
