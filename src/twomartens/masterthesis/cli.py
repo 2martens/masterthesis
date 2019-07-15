@@ -314,7 +314,7 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
         evaluation_path, output_path, coco_path = _ssd_evaluate_get_config_values(config_get=conf.get_property)
     
     output_path, evaluation_path, \
-        result_file, label_file, \
+        result_file, label_file, filenames_file, \
         predictions_file, predictions_per_class_file, \
         predictions_glob_string, label_glob_string = _ssd_evaluate_prepare_paths(args,
                                                                                  output_path,
@@ -322,6 +322,7 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
     
     labels, filenames = _ssd_evaluate_unbatch_dict(label_glob_string)
     _pickle(label_file, labels)
+    _pickle(filenames_file, filenames)
     
     predictions = _ssd_evaluate_unbatch_list(predictions_glob_string)
     _pickle(predictions_file, predictions)
@@ -563,7 +564,7 @@ def _ssd_test_prepare_paths(args: argparse.Namespace,
 
 
 def _ssd_evaluate_prepare_paths(args: argparse.Namespace,
-                                output_path: str, evaluation_path: str) -> Tuple[str, str,
+                                output_path: str, evaluation_path: str) -> Tuple[str, str, str,
                                                                                  str, str, str, str,
                                                                                  str, str]:
     import os
@@ -572,6 +573,7 @@ def _ssd_evaluate_prepare_paths(args: argparse.Namespace,
     evaluation_path = f"{evaluation_path}/{args.network}"
     result_file = f"{evaluation_path}/results-{args.iteration}.bin"
     label_file = f"{output_path}/labels.bin"
+    filenames_file = f"{output_path}/filenames.bin"
     predictions_file = f"{output_path}/predictions.bin"
     predictions_per_class_file = f"{output_path}/predictions_class.bin"
     prediction_glob_string = f"{output_path}/*ssd_prediction*"
@@ -581,7 +583,7 @@ def _ssd_evaluate_prepare_paths(args: argparse.Namespace,
     
     return (
         output_path, evaluation_path,
-        result_file, label_file, predictions_file, predictions_per_class_file,
+        result_file, label_file, filenames_file, predictions_file, predictions_per_class_file,
         prediction_glob_string, label_glob_string
     )
 
