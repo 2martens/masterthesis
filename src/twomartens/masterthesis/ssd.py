@@ -275,6 +275,11 @@ def _predict_loop(generator: Generator, use_dropout: bool, steps_per_epoch: int,
             predictions = vanilla_step(inputs)
         
         save_images(inputs, predictions)
+        print("test")
+        print((
+            f"Input shape: {inputs.shape}"
+            f"Predictions shape: {predictions.shape}"
+        ))
         transformed_predictions = transform_func(predictions, inverse_transforms)
         save_func(transformed_predictions, original_labels, filenames,
                   batch_nr=batch_counter)
@@ -340,10 +345,6 @@ def _predict_save_images(inputs: np.ndarray, predictions: np.ndarray,
                          get_coco_cat_maps_func: callable,
                          output_path: str, coco_path: str,
                          image_size: int) -> None:
-    print((
-        f"Input shape: {inputs.shape}"
-        f"Predictions shape: {predictions.shape}"
-    ))
     save_images(inputs, predictions,
                 output_path, coco_path, image_size,
                 get_coco_cat_maps_func, "after-prediction")
