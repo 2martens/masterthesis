@@ -369,22 +369,8 @@ def _ssd_evaluate_save_images(filenames: Sequence[str], labels: Sequence[np.ndar
                               get_coco_cat_maps_func: callable, save_images: callable,
                               image_size: int, batch_size: int,
                               output_path: str, coco_path: str) -> None:
-    from PIL import Image
     
-    images = []
-    for i, filename in enumerate(filenames):
-        if i == batch_size:
-            break
-        with Image.open(filename) as image:
-            images.append(np.array(image, dtype=np.uint8))
-    
-    cleaned_labels = []
-    for j, label in enumerate(labels):
-        if j == batch_size:
-            break
-        cleaned_labels.append(label)
-    
-    save_images(images, cleaned_labels, output_path, coco_path, image_size, get_coco_cat_maps_func)
+    save_images(filenames, labels, output_path, coco_path, image_size, get_coco_cat_maps_func)
 
 
 def _init_eager_mode() -> None:
