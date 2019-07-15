@@ -34,8 +34,10 @@ from typing import Optional
 import numpy as np
 import tensorflow as tf
 
+from twomartens.masterthesis import debug
 from twomartens.masterthesis.ssd_keras.bounding_box_utils import bounding_box_utils
 from twomartens.masterthesis.ssd_keras.data_generator import object_detection_2d_misc_utils
+from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
 from twomartens.masterthesis.ssd_keras.keras_loss_function import keras_ssd_loss
 from twomartens.masterthesis.ssd_keras.ssd_encoder_decoder import ssd_output_decoder
 
@@ -144,6 +146,7 @@ def predict(generator: callable,
             batch_size: int,
             forward_passes_per_image: int,
             output_path: str,
+            coco_path: str,
             use_dropout: bool,
             nr_digits: int) -> None:
     """
@@ -160,6 +163,7 @@ def predict(generator: callable,
         forward_passes_per_image: specifies number of forward passes per image
             used by DropoutSSD
         output_path: the path in which the results should be saved
+        coco_path: the path to the COCO data set
         use_dropout: if True, multiple forward passes and observations will be used
         nr_digits: number of digits needed to print largest batch number
     """
@@ -179,7 +183,14 @@ def predict(generator: callable,
                   functools.partial(_save_predictions,
                                     output_file=output_file,
                                     label_output_file=label_output_file,
-                                    nr_digits=nr_digits))
+                                    nr_digits=nr_digits),
+                  functools.partial(_predict_save_images,
+                                    save_images=debug.save_ssd_train_images,
+                                    get_coco_cat_maps_func=coco_utils.get_coco_category_maps,
+                                    output_path=output_path,
+                                    coco_path=coco_path,
+                                    image_size=image_size)
+                  )
 
 
 def train(train_generator: callable,
@@ -253,6 +264,7 @@ def _predict_prepare_paths(output_path: str, use_dropout: bool) -> Tuple[str, st
 
 def _predict_loop(generator: Generator, use_dropout: bool, steps_per_epoch: int,
                   dropout_step: callable, vanilla_step: callable,
+                  save_images: callable,
                   transform_func: callable, save_func: callable) -> None:
     
     batch_counter = 0
@@ -262,6 +274,7 @@ def _predict_loop(generator: Generator, use_dropout: bool, steps_per_epoch: int,
         else:
             predictions = vanilla_step(inputs)
         
+        save_images(inputs, predictions)
         transformed_predictions = transform_func(predictions, inverse_transforms)
         save_func(transformed_predictions, original_labels, filenames,
                   batch_nr=batch_counter)
@@ -321,6 +334,16 @@ def _save_predictions(transformed_predictions: np.ndarray, original_labels: np.n
         pickle.dump(transformed_predictions, file)
         pickle.dump({"labels": original_labels, "filenames": filenames}, label_file)
 
+
+def _predict_save_images(inputs: np.ndarray, predictions: np.ndarray,
+                         save_images: callable,
+                         get_coco_cat_maps_func: callable,
+                         output_path: str, coco_path: str,
+                         image_size: int) -> None:
+    save_images(inputs, predictions,
+                output_path, coco_path, image_size,
+                get_coco_cat_maps_func, "after-prediction")
+    
 
 def _get_observations(detections: Sequence[Sequence[np.ndarray]]) -> List[List[np.ndarray]]:
     batch_size = len(detections)

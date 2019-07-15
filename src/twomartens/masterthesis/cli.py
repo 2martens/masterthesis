@@ -296,6 +296,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
                 batch_size,
                 forward_passes_per_image,
                 output_path,
+                coco_path,
                 use_dropout,
                 nr_digits)
 
