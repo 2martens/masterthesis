@@ -134,20 +134,19 @@ def visualise(args: argparse.Namespace) -> None:
 
 
 def measure_mapping(args: argparse.Namespace) -> None:
-    import pickle
-    import os
-    
     from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
     
-    with open(f"{args.ground_truth_path}/instances.bin", "rb") as file:
-        instances = pickle.load(file)
-    
-    output_path = f"{args.output_path}/measure/{args.tarball_id}"
-    os.makedirs(output_path, exist_ok=True)
-    annotation_file_train = f"{args.coco_path}/annotations/instances_train2014.json"
-    cats_to_classes, _, _, _ = coco_utils.get_coco_category_maps(annotation_file_train)
-    nr_digits = _get_nr_digits(len(instances), 1)
-    
+    coco_path, output_path, ground_truth_path = _measure_get_config_values(conf.get_property)
+    output_path, annotation_file_train = _measure_prepare_paths(args, output_path, coco_path)
+    instances, cats_to_classes = _measure_load_gt(ground_truth_path, annotation_file_train,
+                                                  coco_utils.get_coco_category_maps)
+    nr_digits = _get_nr_digits(instances)
+    _measure(instances, cats_to_classes, nr_digits, output_path)
+
+
+def _measure(instances: Sequence[Sequence[Sequence[dict]]], cats_to_classes: Dict[int, int],
+             nr_digits: int, output_path: str) -> None:
+    import pickle
     for i, trajectory in enumerate(instances):
         counts = {cat_id: 0 for cat_id in cats_to_classes.keys()}
         for labels in trajectory:
@@ -392,7 +391,18 @@ def _get_nr_batches(data_length: int, batch_size: int) -> int:
     return int(math.floor(data_length / batch_size))
 
 
-def _get_nr_digits(data_length: int, batch_size: int) -> int:
+def _get_nr_digits(data_length: Union[int, Sequence], batch_size: int = 1) -> int:
+    """
+    
+    Args:
+        data_length: length of data or iterable with length
+        batch_size: size of a batch if applicable
+
+    Returns:
+        number of digits required to print largest number
+    """
+    if type(data_length) is not int:
+        data_length = len(data_length)
     return math.ceil(math.log10(math.ceil(data_length / batch_size)))
     
 
@@ -537,6 +547,15 @@ def _ssd_evaluate_get_config_values(config_get: Callable[[str], Union[str, int, 
     return batch_size, image_size, iou_threshold, nr_classes, evaluation_path, output_path, coco_path
 
 
+def _measure_get_config_values(config_get: Callable[[str], Union[str, int, float, bool]]
+                               ) -> Tuple[str, str, str]:
+    output_path = config_get("Paths.output")
+    coco_path = config_get("Paths.coco")
+    ground_truth_path = config_get("Paths.scenenet_gt_train")
+    
+    return output_path, coco_path, ground_truth_path
+
+
 def _ssd_is_dropout(args: argparse.Namespace) -> bool:
     return False if args.network == "ssd" else True
 
@@ -593,6 +612,18 @@ def _ssd_evaluate_prepare_paths(args: argparse.Namespace,
     )
 
 
+def _measure_prepare_paths(args: argparse.Namespace,
+                           output_path: str, coco_path: str) -> Tuple[str, str]:
+    import os
+
+    annotation_file_train = f"{coco_path}/annotations/instances_train2014.json"
+    output_path = f"{output_path}/measure/{args.tarball_id}"
+
+    os.makedirs(output_path, exist_ok=True)
+    
+    return output_path, annotation_file_train
+
+
 def _ssd_train_load_gt(train_gt_path: str, val_gt_path: str
                        ) -> Tuple[Sequence[Sequence[str]],
                                   Sequence[Sequence[Sequence[dict]]],
@@ -623,6 +654,18 @@ def _ssd_test_load_gt(gt_path: str) -> Tuple[Sequence[Sequence[str]],
         instances = pickle.load(file)
         
     return file_names, instances
+
+
+def _measure_load_gt(gt_path: str, annotation_file_train: str,
+                     get_coco_cat_maps_func: callable) -> Tuple[Sequence[Sequence[Sequence[dict]]],
+                                                                Dict[int, int]]:
+    import pickle
+    
+    with open(f"{gt_path}/instances.bin", "rb") as file:
+        instances = pickle.load(file)
+    cats_to_classes, _, _, _ = get_coco_cat_maps_func(annotation_file_train)
+    
+    return instances, cats_to_classes
 
 
 def _ssd_train_get_generators(args: argparse.Namespace,
