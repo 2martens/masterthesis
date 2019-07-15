@@ -399,6 +399,7 @@ def _ssd_evaluate_unbatch_dict(glob_string: str) -> tuple:
     
     unbatched_dict = None
     files = glob.glob(glob_string)
+    files.sort()
     nr_keys = None
     for filename in files:
         with open(filename, "rb") as file:
@@ -422,6 +423,7 @@ def _ssd_evaluate_unbatch_list(glob_string: str) -> List[np.ndarray]:
     
     unbatched = []
     files = glob.glob(glob_string)
+    files.sort()
     for filename in files:
         with open(filename, "rb") as file:
             batched = pickle.load(file)
