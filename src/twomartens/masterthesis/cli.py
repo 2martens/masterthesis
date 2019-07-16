@@ -137,7 +137,8 @@ def measure_mapping(args: argparse.Namespace) -> None:
     from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
     
     output_path, coco_path, ground_truth_path = _measure_get_config_values(conf.get_property)
-    output_path, annotation_file_train = _measure_prepare_paths(args, output_path, coco_path)
+    output_path, annotation_file_train, ground_truth_path = _measure_prepare_paths(args, output_path, coco_path,
+                                                                                   ground_truth_path)
     instances, cats_to_classes, cats_to_names = _measure_load_gt(ground_truth_path, annotation_file_train,
                                                                  coco_utils.get_coco_category_maps)
     nr_digits = _get_nr_digits(instances)
@@ -557,7 +558,7 @@ def _measure_get_config_values(config_get: Callable[[str], Union[str, int, float
                                ) -> Tuple[str, str, str]:
     output_path = config_get("Paths.output")
     coco_path = config_get("Paths.coco")
-    ground_truth_path = config_get("Paths.scenenet_gt_train")
+    ground_truth_path = config_get("Paths.scenenet_gt")
     
     return output_path, coco_path, ground_truth_path
 
@@ -619,15 +620,17 @@ def _ssd_evaluate_prepare_paths(args: argparse.Namespace,
 
 
 def _measure_prepare_paths(args: argparse.Namespace,
-                           output_path: str, coco_path: str) -> Tuple[str, str]:
+                           output_path: str, coco_path: str,
+                           ground_truth_path: str) -> Tuple[str, str, str]:
     import os
 
     annotation_file_train = f"{coco_path}/annotations/instances_train2014.json"
     output_path = f"{output_path}/measure/{args.tarball_id}"
+    ground_truth_path = f"{ground_truth_path}/{args.tarball_id}"
 
     os.makedirs(output_path, exist_ok=True)
     
-    return output_path, annotation_file_train
+    return output_path, annotation_file_train, ground_truth_path
 
 
 def _ssd_train_load_gt(train_gt_path: str, val_gt_path: str
