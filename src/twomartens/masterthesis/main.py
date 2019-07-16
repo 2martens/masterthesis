@@ -215,7 +215,7 @@ def _build_visualise(parser: argparse.ArgumentParser) -> None:
 
 
 def _build_measure(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("tarball_id", type=int, help="id of the used tarball")
+    parser.add_argument("tarball_id", type=str, help="id of the used tarball. number for training tarball or 'test'")
 
 
 if __name__ == "__main__":
