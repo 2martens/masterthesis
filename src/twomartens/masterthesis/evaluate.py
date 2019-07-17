@@ -20,8 +20,12 @@ Functionality to evaluate results of networks.
 
 Functions:
     get_number_gt_per_class(...): calculates the number of ground truth boxes per class
-    get_f1_score(...): computes the F1 score for every class
+    prepare-predictions(...): prepares the predictions for further processing
     match_predictions(...): matches predictions to ground truth boxes
+    get_precision_recall(...): computes the precision and recall values and returns them
+    get_f1_score(...): computes the F1 score for every class
+    get_mean_average_precisions(...): computes the mean average precision for each class and returns them
+    get_mean_average_precision(...): computes the mean average precision over all classes and returns it
 """
 from typing import Sequence, Union, Tuple, List
 
