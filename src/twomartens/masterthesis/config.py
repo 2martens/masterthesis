@@ -62,6 +62,7 @@ _CONFIG_PROPS = {
         "ssd_use_entropy_threshold": (bool, False),
         "ssd_entropy_threshold_min": (float, "0.1"),
         "ssd_entropy_threshold_max": (float, "2.5"),
+        "ssd_test_pretrained": (bool, False),
         "nr_trajectories": (int, "-1")
     }
 }
