@@ -80,57 +80,15 @@ def evaluate(args: argparse.Namespace) -> None:
 
 
 def visualise(args: argparse.Namespace) -> None:
-    import pickle
-    
-    from matplotlib import pyplot
-    import numpy as np
-    from PIL import Image
-    
     from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
     
-    with open(f"{args.ground_truth_path}/photo_paths.bin", "rb") as file:
-        file_names = pickle.load(file)
-    with open(f"{args.ground_truth_path}/instances.bin", "rb") as file:
-        instances = pickle.load(file)
+    output_path, coco_path, ground_truth_path = _visualise_get_config_values(conf.get_property)
+    output_path, annotation_file_train = _visualise_prepare_paths(args, output_path, coco_path)
+    file_names, instances, \
+        cats_to_classes, cats_to_names = _visualise_load_gt(ground_truth_path, annotation_file_train,
+                                                            coco_utils.get_coco_category_maps)
     
-    output_path = f"{args.output_path}/visualise/{args.trajectory}"
-    annotation_file_train = f"{args.coco_path}/annotations/instances_train2014.json"
-    cats_to_classes, _, cats_to_names, _ = coco_utils.get_coco_category_maps(annotation_file_train)
-    
-    colors = pyplot.cm.hsv(np.linspace(0, 1, 81)).tolist()
-    
-    i = 0
-    nr_images = len(file_names[args.trajectory])
-    nr_digits = math.ceil(math.log10(nr_images))
-    for file_name, labels in zip(file_names[args.trajectory], instances[args.trajectory]):
-        if not labels:
-            continue
-        
-        # only loop through selected trajectory
-        with Image.open(file_name) as image:
-            figure = pyplot.figure(figsize=(20, 12))
-            pyplot.imshow(image)
-            
-            current_axis = pyplot.gca()
-            
-            for instance in labels:
-                bbox = instance['bbox']
-                # Transform the predicted bounding boxes for the 300x300 image to the original image dimensions.
-                xmin = bbox[0]
-                ymin = bbox[1]
-                xmax = bbox[2]
-                ymax = bbox[3]
-                color = colors[cats_to_classes[int(instance['coco_id'])]]
-                label = f"{cats_to_names[int(instance['coco_id'])]}: {instance['wordnet_class_name']}, " \
-                    f"{instance['wordnet_id']}"
-                current_axis.add_patch(
-                    pyplot.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color=color, fill=False, linewidth=2))
-                current_axis.text(xmin, ymin, label, size='x-large', color='white',
-                                  bbox={'facecolor': color, 'alpha': 1.0})
-            pyplot.savefig(f"{output_path}/{str(i).zfill(nr_digits)}")
-            pyplot.close(figure)
-        
-        i += 1
+    _visualise_gt(args, file_names, instances, cats_to_classes, cats_to_names, output_path)
 
 
 def measure_mapping(args: argparse.Namespace) -> None:
@@ -390,6 +348,49 @@ def _ssd_evaluate_save_images(filenames: Sequence[str], labels: Sequence[np.ndar
     save_images(filenames, labels, output_path, coco_path, image_size, get_coco_cat_maps_func)
 
 
+def _visualise_gt(args: argparse.Namespace,
+                  file_names: Sequence[Sequence[str]], instances: Sequence[Sequence[Sequence[dict]]],
+                  cats_to_classes: Dict[int, int], cats_to_names: Dict[int, str],
+                  output_path: str):
+    from matplotlib import pyplot
+    from PIL import Image
+    
+    colors = pyplot.cm.hsv(np.linspace(0, 1, 81)).tolist()
+    
+    i = 0
+    nr_images = len(file_names[args.trajectory])
+    nr_digits = math.ceil(math.log10(nr_images))
+    for file_name, labels in zip(file_names[args.trajectory], instances[args.trajectory]):
+        if not labels:
+            continue
+        
+        # only loop through selected trajectory
+        with Image.open(file_name) as image:
+            figure = pyplot.figure()
+            pyplot.imshow(image)
+            
+            current_axis = pyplot.gca()
+            
+            for instance in labels:
+                bbox = instance['bbox']
+                # Transform the predicted bounding boxes for the 300x300 image to the original image dimensions.
+                xmin = bbox[0]
+                ymin = bbox[1]
+                xmax = bbox[2]
+                ymax = bbox[3]
+                color = colors[cats_to_classes[int(instance['coco_id'])]]
+                label = f"{cats_to_names[int(instance['coco_id'])]}: {instance['wordnet_class_name']}, " \
+                    f"{instance['wordnet_id']}"
+                current_axis.add_patch(
+                    pyplot.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, color=color, fill=False, linewidth=2))
+                current_axis.text(xmin, ymin, label, size='x-large', color='white',
+                                  bbox={'facecolor': color, 'alpha': 1.0})
+            pyplot.savefig(f"{output_path}/{str(i).zfill(nr_digits)}")
+            pyplot.close(figure)
+        
+        i += 1
+
+
 def _init_eager_mode() -> None:
     tf.enable_eager_execution()
     
@@ -582,6 +583,15 @@ def _measure_get_config_values(config_get: Callable[[str], Union[str, int, float
     return output_path, coco_path, ground_truth_path
 
 
+def _visualise_get_config_values(config_get: Callable[[str], Union[str, int, float, bool]]
+                                 ) -> Tuple[str, str, str]:
+    output_path = config_get("Paths.output")
+    coco_path = config_get("Paths.coco")
+    ground_truth_path = config_get("Paths.scenenet_gt")
+    
+    return output_path, coco_path, ground_truth_path
+
+
 def _ssd_is_dropout(args: argparse.Namespace) -> bool:
     return False if args.network == "ssd" else True
 
@@ -656,6 +666,15 @@ def _measure_prepare_paths(args: argparse.Namespace,
     return output_path, annotation_file_train, ground_truth_path
 
 
+def _visualise_prepare_paths(args: argparse.Namespace,
+                             output_path: str, coco_path: str) -> Tuple[str, str]:
+    
+    output_path = f"{output_path}/visualise/{args.trajectory}"
+    annotation_file_train = f"{coco_path}/annotations/instances_train2014.json"
+    
+    return output_path, annotation_file_train
+
+
 def _ssd_train_load_gt(train_gt_path: str, val_gt_path: str
                        ) -> Tuple[Sequence[Sequence[str]],
                                   Sequence[Sequence[Sequence[dict]]],
@@ -699,6 +718,23 @@ def _measure_load_gt(gt_path: str, annotation_file_train: str,
     cats_to_classes, _, cats_to_names, _ = get_coco_cat_maps_func(annotation_file_train)
     
     return instances, cats_to_classes, cats_to_names
+
+
+def _visualise_load_gt(gt_path: str, annotation_file_train: str,
+                       get_coco_cat_maps_func: callable) -> Tuple[Sequence[Sequence[str]],
+                                                                  Sequence[Sequence[Sequence[dict]]],
+                                                                  Dict[int, int],
+                                                                  Dict[int, str]]:
+    
+    import pickle
+    with open(f"{gt_path}/photo_paths.bin", "rb") as file:
+        file_names = pickle.load(file)
+    with open(f"{gt_path}/instances.bin", "rb") as file:
+        instances = pickle.load(file)
+
+    cats_to_classes, _, cats_to_names, _ = get_coco_cat_maps_func(annotation_file_train)
+    
+    return file_names, instances, cats_to_classes, cats_to_names
 
 
 def _ssd_train_get_generators(args: argparse.Namespace,
