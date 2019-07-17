@@ -353,9 +353,9 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
 
     true_positives, false_positives, \
         cum_true_positives, cum_false_positives, \
-        open_set_error = evaluate.match_predictions(predictions_per_class, labels,
-                                                    bounding_box_utils.iou,
-                                                    nr_classes, iou_threshold)
+        open_set_error, cumulative_open_set_error = evaluate.match_predictions(predictions_per_class, labels,
+                                                                               bounding_box_utils.iou,
+                                                                               nr_classes, iou_threshold)
     
     cum_precisions, cum_recalls = evaluate.get_precision_recall(number_gt_per_class,
                                                                 cum_true_positives,
@@ -375,7 +375,8 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
                                         f1_scores,
                                         average_precisions,
                                         mean_average_precision,
-                                        open_set_error)
+                                        open_set_error,
+                                        cumulative_open_set_error)
     
     _pickle(result_file, results)
 
@@ -829,7 +830,8 @@ def _ssd_evaluate_get_results(true_positives: Sequence[np.ndarray],
                               f1_scores: Sequence[np.ndarray],
                               average_precisions: Sequence[float],
                               mean_average_precision: float,
-                              open_set_error: int
+                              open_set_error: np.ndarray,
+                              cumulative_open_set_error: np.ndarray
                               ) -> Dict[str, Union[np.ndarray, float, int]]:
     results = {
         "true_positives":             true_positives,
@@ -841,7 +843,8 @@ def _ssd_evaluate_get_results(true_positives: Sequence[np.ndarray],
         "f1_scores":                  f1_scores,
         "mean_average_precisions":    average_precisions,
         "mean_average_precision":     mean_average_precision,
-        "open_set_error":             open_set_error
+        "open_set_error":             open_set_error,
+        "cumulative_open_set_error":  cumulative_open_set_error
     }
     
     return results
