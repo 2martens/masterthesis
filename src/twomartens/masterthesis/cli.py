@@ -263,7 +263,8 @@ def _ssd_test(args: argparse.Namespace) -> None:
     _init_eager_mode()
     
     batch_size, image_size, learning_rate, \
-        forward_passes_per_image, nr_classes, iou_threshold, dropout_rate, top_k, nr_trajectories, \
+        forward_passes_per_image, nr_classes, iou_threshold, dropout_rate, \
+        entropy_threshold, top_k, nr_trajectories, \
         coco_path, output_path, weights_path, ground_truth_path = _ssd_test_get_config_values(args, conf.get_property)
     
     use_dropout = _ssd_is_dropout(args)
@@ -304,6 +305,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
                 image_size,
                 batch_size,
                 forward_passes_per_image,
+                entropy_threshold,
                 output_path,
                 coco_path,
                 use_dropout,
@@ -500,7 +502,7 @@ def _ssd_train_get_config_values(config_get: Callable[[str], Union[str, float, i
 
 def _ssd_test_get_config_values(args: argparse.Namespace,
                                 config_get: Callable[[str], Union[str, float, int, bool]]
-                                ) -> Tuple[int, int, float, int, int, float, float, int, int,
+                                ) -> Tuple[int, int, float, int, int, float, float, float, int, int,
                                            str, str, str, str]:
     
     batch_size = config_get("Parameters.batch_size")
@@ -510,6 +512,7 @@ def _ssd_test_get_config_values(args: argparse.Namespace,
     nr_classes = config_get("Parameters.nr_classes")
     iou_threshold = config_get("Parameters.ssd_iou_threshold")
     dropout_rate = config_get("Parameters.ssd_dropout_rate")
+    entropy_threshold = config_get("Parameters.ssd_entropy_threshold")
     top_k = config_get("Parameters.ssd_top_k")
     nr_trajectories = config_get("Parameters.nr_trajectories")
 
@@ -529,6 +532,7 @@ def _ssd_test_get_config_values(args: argparse.Namespace,
         nr_classes,
         iou_threshold,
         dropout_rate,
+        entropy_threshold,
         top_k,
         nr_trajectories,
         #

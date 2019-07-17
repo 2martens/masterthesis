@@ -145,6 +145,7 @@ def predict(generator: callable,
             image_size: int,
             batch_size: int,
             forward_passes_per_image: int,
+            entropy_threshold: float,
             output_path: str,
             coco_path: str,
             use_dropout: bool,
@@ -162,6 +163,7 @@ def predict(generator: callable,
         batch_size: number of items in every batch
         forward_passes_per_image: specifies number of forward passes per image
             used by DropoutSSD
+        entropy_threshold: specifies the threshold for the entropy
         output_path: the path in which the results should be saved
         coco_path: the path to the COCO data set
         use_dropout: if True, multiple forward passes and observations will be used
@@ -185,7 +187,8 @@ def predict(generator: callable,
                   decode_func=functools.partial(
                       _decode_predictions,
                       decode_func=ssd_output_decoder.decode_detections_fast,
-                      image_size=image_size
+                      image_size=image_size,
+                      entropy_threshold=entropy_threshold
                   ),
                   transform_func=functools.partial(
                       _transform_predictions,
@@ -319,12 +322,14 @@ def _predict_vanilla_step(inputs: np.ndarray, model: tf.keras.models.Model) -> n
 
 def _decode_predictions(predictions: np.ndarray,
                         decode_func: callable,
-                        image_size: int) -> np.ndarray:
+                        image_size: int,
+                        entropy_threshold: float) -> np.ndarray:
     return decode_func(
         y_pred=predictions,
         img_width=image_size,
         img_height=image_size,
-        input_coords="corners"
+        input_coords="corners",
+        entropy_threshold=entropy_threshold
     )
 
 

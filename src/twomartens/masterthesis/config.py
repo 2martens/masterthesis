@@ -59,6 +59,7 @@ _CONFIG_PROPS = {
         "ssd_iou_threshold": (float, "0.45"),
         "ssd_top_k": (int, "200"),
         "ssd_dropout_rate": (float, "0.5"),
+        "ssd_entropy_threshold": (float, "2.5"),
         "nr_trajectories": (int, "-1")
     }
 }
