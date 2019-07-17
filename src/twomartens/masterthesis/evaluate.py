@@ -27,8 +27,6 @@ from typing import Sequence, Union, Tuple, List
 
 import numpy as np
 
-from twomartens.masterthesis.ssd_keras.bounding_box_utils import bounding_box_utils
-
 
 def get_number_gt_per_class(labels: Sequence[Sequence[Sequence[int]]],
                             nr_classes: int) -> np.ndarray:
