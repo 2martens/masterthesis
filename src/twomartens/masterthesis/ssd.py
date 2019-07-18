@@ -300,7 +300,7 @@ def _predict_loop(generator: Generator, use_dropout: bool, steps_per_epoch: int,
         if not saved_images_prediction:
             save_images(inputs, predictions, custom_string="after-prediction")
         for entropy_threshold in entropy_thresholds:
-            decoded_predictions = decode_func(predictions, entropy_thresh=entropy_threshold)
+            decoded_predictions = decode_func(predictions, entropy_threshold=entropy_threshold)
             if not saved_images_decoding:
                 custom_string = f"after-decoding-{entropy_threshold}" if use_entropy_threshold else "after-decoding"
                 save_images(inputs, decoded_predictions, custom_string=custom_string)
@@ -350,7 +350,7 @@ def _decode_predictions(predictions: np.ndarray,
         img_width=image_size,
         img_height=image_size,
         input_coords="corners",
-        entropy_threshold=entropy_threshold
+        entropy_thresh=entropy_threshold
     )
 
 
