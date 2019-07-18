@@ -312,16 +312,25 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
 
     true_positives, false_positives, \
         cum_true_positives, cum_false_positives, \
-        open_set_error, cumulative_open_set_error = evaluate.match_predictions(predictions_per_class, labels,
-                                                                               bounding_box_utils.iou,
-                                                                               nr_classes, iou_threshold)
+        open_set_error, cumulative_open_set_error, \
+        cum_true_positives_overall, cum_false_positives_overall = evaluate.match_predictions(predictions_per_class,
+                                                                                             labels,
+                                                                                             bounding_box_utils.iou,
+                                                                                             nr_classes, iou_threshold)
     
-    cum_precisions, cum_recalls = evaluate.get_precision_recall(number_gt_per_class,
-                                                                cum_true_positives,
-                                                                cum_false_positives,
-                                                                nr_classes)
+    cum_precisions, cum_recalls, \
+        cum_precisions_micro, cum_recalls_micro, \
+        cum_precisions_macro, cum_recalls_macro = evaluate.get_precision_recall(number_gt_per_class,
+                                                                                cum_true_positives,
+                                                                                cum_false_positives,
+                                                                                cum_true_positives_overall,
+                                                                                cum_false_positives_overall,
+                                                                                nr_classes)
     
-    f1_scores = evaluate.get_f1_score(cum_precisions, cum_recalls, nr_classes)
+    f1_scores, f1_scores_micro, f1_scores_macro = evaluate.get_f1_score(cum_precisions, cum_recalls,
+                                                                        cum_precisions_micro, cum_recalls_micro,
+                                                                        cum_precisions_macro, cum_recalls_macro,
+                                                                        nr_classes)
     average_precisions = evaluate.get_mean_average_precisions(cum_precisions, cum_recalls, nr_classes)
     mean_average_precision = evaluate.get_mean_average_precision(average_precisions)
     
@@ -329,9 +338,17 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
                                         false_positives,
                                         cum_true_positives,
                                         cum_false_positives,
+                                        cum_true_positives_overall,
+                                        cum_false_positives_overall,
                                         cum_precisions,
                                         cum_recalls,
+                                        cum_precisions_micro,
+                                        cum_recalls_micro,
+                                        cum_precisions_macro,
+                                        cum_recalls_macro,
                                         f1_scores,
+                                        f1_scores_micro,
+                                        f1_scores_macro,
                                         average_precisions,
                                         mean_average_precision,
                                         open_set_error,
@@ -868,9 +885,17 @@ def _ssd_evaluate_get_results(true_positives: Sequence[np.ndarray],
                               false_positives: Sequence[np.ndarray],
                               cum_true_positives: Sequence[np.ndarray],
                               cum_false_positives: Sequence[np.ndarray],
+                              cum_true_positives_micro: np.ndarray,
+                              cum_false_positives_micro: np.ndarray,
                               cum_precisions: Sequence[np.ndarray],
                               cum_recalls: Sequence[np.ndarray],
+                              cum_precision_micro: np.ndarray,
+                              cum_recall_micro: np.ndarray,
+                              cum_precision_macro: np.ndarray,
+                              cum_recall_macro: np.ndarray,
                               f1_scores: Sequence[np.ndarray],
+                              f1_scores_micro: np.ndarray,
+                              f1_scores_macro: np.ndarray,
                               average_precisions: Sequence[float],
                               mean_average_precision: float,
                               open_set_error: np.ndarray,
@@ -881,9 +906,17 @@ def _ssd_evaluate_get_results(true_positives: Sequence[np.ndarray],
         "false_positives":            false_positives,
         "cumulative_true_positives":  cum_true_positives,
         "cumulative_false_positives": cum_false_positives,
+        "cumulative_true_positives_micro": cum_true_positives_micro,
+        "cumulative_false_positives_micro": cum_false_positives_micro,
         "cumulative_precisions":      cum_precisions,
         "cumulative_recalls":         cum_recalls,
+        "cumulative_precision_micro": cum_precision_micro,
+        "cumulative_recall_micro":    cum_recall_micro,
+        "cumulative_precision_macro": cum_precision_macro,
+        "cumulative_recall_macro":    cum_recall_macro,
         "f1_scores":                  f1_scores,
+        "f1_scores_micro":            f1_scores_micro,
+        "f1_scores_macro":            f1_scores_macro,
         "mean_average_precisions":    average_precisions,
         "mean_average_precision":     mean_average_precision,
         "open_set_error":             open_set_error,

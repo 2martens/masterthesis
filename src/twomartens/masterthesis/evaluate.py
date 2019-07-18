@@ -101,6 +101,7 @@ def match_predictions(predictions: Sequence[Sequence[Tuple[int, float, float, in
                       border_pixels: str = "include",
                       sorting_algorithm: str = "quicksort") -> Tuple[List[np.ndarray], List[np.ndarray],
                                                                      List[np.ndarray], List[np.ndarray],
+                                                                     np.ndarray, np.ndarray,
                                                                      np.ndarray, np.ndarray]:
     """
     Matches predictions to ground truth boxes.
@@ -126,7 +127,8 @@ def match_predictions(predictions: Sequence[Sequence[Tuple[int, float, float, in
 
     Returns:
         true positives, false positives, cumulative true positives, and cumulative false positives for
-            each class, open set error as defined by Miller et al, cumulative open set error
+            each class, open set error as defined by Miller et al, cumulative open set error,
+            cumulative true positives and cumulative false positives over all classes
     """
     true_positives = [[]]  # The false positives for each class, sorted by descending confidence.
     false_positives = [[]]  # The true positives for each class, sorted by descending confidence.
@@ -140,7 +142,9 @@ def match_predictions(predictions: Sequence[Sequence[Tuple[int, float, float, in
             most_predictions = nr_predictions
     
     open_set_error = np.zeros(most_predictions, dtype=np.int)
-    
+    true_positives_micro = np.zeros(most_predictions, dtype=np.int)
+    false_positives_micro = np.zeros(most_predictions, dtype=np.int)
+
     for class_id in range(1, nr_classes + 1):
         predictions_class = predictions[class_id]
         
@@ -198,6 +202,7 @@ def match_predictions(predictions: Sequence[Sequence[Tuple[int, float, float, in
                 # If the image doesn't contain any objects of this class,
                 # the prediction becomes a false positive.
                 false_pos[i] = 1
+                false_positives_micro[i] += 1
                 open_set_error[i] += 1
                 continue
 
@@ -219,12 +224,14 @@ def match_predictions(predictions: Sequence[Sequence[Tuple[int, float, float, in
                 # Those predictions whose matched overlap is below the threshold become
                 # false positives.
                 false_pos[i] = 1
+                false_positives_micro[i] += 1
             else:
                 if image_id not in gt_matched:
                     # True positive:
                     # If the matched ground truth box for this prediction hasn't been matched to a
                     # different prediction already, we have a true positive.
                     true_pos[i] = 1
+                    true_positives_micro[i] += 1
                     gt_matched[image_id] = np.zeros(shape=(gt.shape[0]), dtype=np.bool)
                     gt_matched[image_id][gt_match_index] = True
                 elif not gt_matched[image_id][gt_match_index]:
@@ -232,6 +239,7 @@ def match_predictions(predictions: Sequence[Sequence[Tuple[int, float, float, in
                     # If the matched ground truth box for this prediction hasn't been matched to a
                     # different prediction already, we have a true positive.
                     true_pos[i] = 1
+                    true_positives_micro[i] += 1
                     gt_matched[image_id][gt_match_index] = True
                 else:
                     # False positive, duplicate detection:
@@ -239,6 +247,7 @@ def match_predictions(predictions: Sequence[Sequence[Tuple[int, float, float, in
                     # to a different prediction previously, it is a duplicate detection for an
                     # already detected object, which counts as a false positive.
                     false_pos[i] = 1
+                    false_positives_micro[i] += 1
         
         true_positives.append(true_pos)
         false_positives.append(false_pos)
@@ -250,17 +259,24 @@ def match_predictions(predictions: Sequence[Sequence[Tuple[int, float, float, in
         cumulative_false_positives.append(cumulative_false_pos)
     
     cumulative_open_set_error = np.cumsum(open_set_error)
+    cumulative_false_positives_micro = np.cumsum(false_positives_micro)
+    cumulative_true_positives_micro = np.cumsum(true_positives_micro)
     
     return (
         true_positives, false_positives, cumulative_true_positives, cumulative_false_positives,
-        open_set_error, cumulative_open_set_error
+        open_set_error, cumulative_open_set_error,
+        cumulative_true_positives_micro, cumulative_false_positives_micro
     )
 
 
 def get_precision_recall(number_gt_per_class: np.ndarray,
                          cumulative_true_positives: Sequence[np.ndarray],
                          cumulative_false_positives: Sequence[np.ndarray],
-                         nr_classes: int) -> Tuple[List[np.ndarray], List[np.ndarray]]:
+                         cumulative_true_positives_micro: np.ndarray,
+                         cumulative_false_positives_micro: np.ndarray,
+                         nr_classes: int) -> Tuple[List[np.ndarray], List[np.ndarray],
+                                                   np.ndarray, np.ndarray,
+                                                   np.ndarray, np.ndarray]:
     """
     Computes the precision and recall values and returns them.
     
@@ -268,13 +284,23 @@ def get_precision_recall(number_gt_per_class: np.ndarray,
         number_gt_per_class: number of ground truth bounding boxes per class
         cumulative_true_positives: cumulative true positives per class
         cumulative_false_positives: cumulative false positives per class
+        cumulative_true_positives_micro: cumulative true positives over all classes
+        cumulative_false_positives_micro: cumulative false positives over all classes
         nr_classes: number of classes
 
     Returns:
-        cumulative precisions and cumulative recalls per class
+        cumulative precisions and cumulative recalls per class,
+        micro averaged precision/recall, and
+        macro averaged precision/recall
     """
     cumulative_precisions = [[]]
     cumulative_recalls = [[]]
+    cumulative_precision_micro = np.zeros_like(cumulative_true_positives_micro)
+    cumulative_recall_micro = np.zeros_like(cumulative_true_positives_micro)
+    cumulative_precision_macro = np.zeros_like(cumulative_precision_micro)
+    cumulative_recall_macro = np.zeros_like(cumulative_recall_micro)
+    total_number_gt = 0
+    number_of_nonzero_classes = 0
 
     # Iterate over all classes.
     for class_id in range(1, nr_classes + 1):
@@ -288,27 +314,66 @@ def get_precision_recall(number_gt_per_class: np.ndarray,
         fp = cumulative_false_positives[class_id]
     
         cumulative_precision = np.where(tp + fp > 0, tp / (tp + fp), 0)  # 1D array with shape `(num_predictions,)`
-        cumulative_recall = tp / number_gt_per_class[class_id]  # 1D array with shape `(num_predictions,)`
+        number_gt = number_gt_per_class[class_id]
+        total_number_gt += number_gt
+        cumulative_recall = tp / number_gt  # 1D array with shape `(num_predictions,)`
     
         cumulative_precisions.append(cumulative_precision)
         cumulative_recalls.append(cumulative_recall)
+
+        diff_to_largest_class = cumulative_precision_micro.shape[0] - cumulative_precision.shape[0]
+        if diff_to_largest_class:
+            repeated_last_precision = np.tile(cumulative_precision[-1], diff_to_largest_class)
+            repeated_last_recall = np.tile(cumulative_recall[-1], diff_to_largest_class)
+            extended_precision = np.concatenate((cumulative_precision, repeated_last_precision))
+            extended_recall = np.concatenate((cumulative_recall, repeated_last_recall))
+            cumulative_precision_macro += extended_precision
+            cumulative_recall_macro += extended_recall
+        else:
+            cumulative_precision_macro += cumulative_precision
+            cumulative_recall_macro += cumulative_recall
+
+        number_of_nonzero_classes += 1
+
+    # calculate micro averaged precision and recall
+    tp = cumulative_true_positives_micro
+    fp = cumulative_false_positives_micro
+    cumulative_precision_micro = np.where(tp + fp > 0, tp / (tp + fp), 0)
+    cumulative_recall_micro = tp / total_number_gt
     
-    return cumulative_precisions, cumulative_recalls
+    # calculate macro averaged precision and recall
+    cumulative_precision_macro /= number_of_nonzero_classes
+    cumulative_recall_macro /= number_of_nonzero_classes
+
+    return (cumulative_precisions, cumulative_recalls,
+            cumulative_precision_micro, cumulative_recall_micro,
+            cumulative_precision_macro, cumulative_recall_macro
+    )
 
 
 def get_f1_score(cumulative_precisions: List[np.ndarray],
                  cumulative_recalls: List[np.ndarray],
-                 nr_classes: int) -> List[np.ndarray]:
+                 cumulative_precision_micro: np.ndarray,
+                 cumulative_recall_micro: np.ndarray,
+                 cumulative_precision_macro: np.ndarray,
+                 cumulative_recall_macro: np.ndarray,
+                 nr_classes: int) -> Tuple[List[np.ndarray],
+                                           np.ndarray, np.ndarray]:
     """
     Computes the F1 score for every class.
     
     Args:
         cumulative_precisions: cumulative precisions for each class
         cumulative_recalls: cumulative recalls for each class
+        cumulative_precision_micro: cumulative precision micro averaged
+        cumulative_recall_micro: cumulative recall micro averaged
+        cumulative_precision_macro: cumulative precision macro averaged
+        cumulative_recall_macro: cumulative recall macro averaged
         nr_classes: number of classes
 
     Returns:
-        cumulative F1 score per class
+        cumulative F1 score per class,
+        cumulative F1 score micro averaged, cumulative F1 score macro averaged
     """
     cumulative_f1_scores = [[]]
     
@@ -321,8 +386,13 @@ def get_f1_score(cumulative_precisions: List[np.ndarray],
             continue
         f1_score = 2 * ((cumulative_precision * cumulative_recall) / (cumulative_precision + cumulative_recall + 0.001))
         cumulative_f1_scores.append(f1_score)
+
+    f1_score_micro = 2 * ((cumulative_precision_micro * cumulative_recall_micro) /
+                          (cumulative_precision_micro + cumulative_recall_micro + 0.001))
+    f1_score_macro = 2 * ((cumulative_precision_macro * cumulative_recall_macro) /
+                          (cumulative_precision_macro + cumulative_recall_macro + 0.001))
     
-    return cumulative_f1_scores
+    return cumulative_f1_scores, f1_score_micro, f1_score_macro
 
 
 def get_mean_average_precisions(cumulative_precisions: List[np.ndarray],
