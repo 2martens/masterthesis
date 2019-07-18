@@ -228,8 +228,8 @@ def _ssd_test(args: argparse.Namespace) -> None:
     
     use_dropout = _ssd_is_dropout(args)
     
-    output_path, checkpoint_path, weights_file = _ssd_test_prepare_paths(args, output_path,
-                                                                         weights_path, test_pretrained)
+    output_path, weights_file = _ssd_test_prepare_paths(args, output_path,
+                                                        weights_path, test_pretrained)
     
     file_names, instances = _ssd_test_load_gt(ground_truth_path)
 
@@ -612,7 +612,7 @@ def _ssd_train_prepare_paths(args: argparse.Namespace,
 
 def _ssd_test_prepare_paths(args: argparse.Namespace,
                             output_path: str, weights_path: str,
-                            test_pretrained: bool) -> Tuple[str, str, str]:
+                            test_pretrained: bool) -> Tuple[str, str]:
     import os
     
     output_path = f"{output_path}/{args.network}/test/{args.iteration}/"
@@ -624,7 +624,7 @@ def _ssd_test_prepare_paths(args: argparse.Namespace,
     
     os.makedirs(output_path, exist_ok=True)
     
-    return output_path, checkpoint_path, weights_file
+    return output_path, weights_file
 
 
 def _ssd_evaluate_prepare_paths(args: argparse.Namespace,
