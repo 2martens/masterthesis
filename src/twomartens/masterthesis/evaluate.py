@@ -295,8 +295,8 @@ def get_precision_recall(number_gt_per_class: np.ndarray,
     """
     cumulative_precisions = [[]]
     cumulative_recalls = [[]]
-    cumulative_precision_micro = np.zeros_like(cumulative_true_positives_micro)
-    cumulative_recall_micro = np.zeros_like(cumulative_true_positives_micro)
+    cumulative_precision_micro = np.zeros(cumulative_true_positives_micro.shape, dtype=np.float)
+    cumulative_recall_micro = np.zeros(cumulative_true_positives_micro.shape, dtype=np.float)
     cumulative_precision_macro = np.zeros_like(cumulative_precision_micro)
     cumulative_recall_macro = np.zeros_like(cumulative_recall_micro)
     total_number_gt = 0
