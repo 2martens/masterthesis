@@ -323,6 +323,7 @@ def get_precision_recall(number_gt_per_class: np.ndarray,
 
         diff_to_largest_class = cumulative_precision_micro.shape[0] - cumulative_precision.shape[0]
         if diff_to_largest_class:
+            print(f"Diff to largest: {diff_to_largest_class}")
             repeated_last_precision = np.tile(cumulative_precision[-1], diff_to_largest_class)
             repeated_last_recall = np.tile(cumulative_recall[-1], diff_to_largest_class)
             extended_precision = np.concatenate((cumulative_precision, repeated_last_precision))
