@@ -114,12 +114,16 @@ def _measure(instances: Sequence[Sequence[Sequence[dict]]],
     
     for i, trajectory in enumerate(instances):
         counts = {cat_id: 0 for cat_id in cats_to_classes.keys()}
+        usable_frames = 0
         for labels in trajectory:
+            if labels:
+                usable_frames += 1
             for instance in labels:
                 counts[instance['coco_id']] += 1
         
+        pickle_content = {"usable_frames": usable_frames, "instance_counts": counts}
         with open(f"{output_path}/{str(i).zfill(nr_digits)}.bin", "wb") as file:
-            pickle.dump(counts, file)
+            pickle.dump(pickle_content, file)
 
 
 def _config_execute_action(args: argparse.Namespace, on_get: callable,
