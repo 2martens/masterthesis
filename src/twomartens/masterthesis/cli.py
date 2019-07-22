@@ -774,7 +774,7 @@ def _ssd_train_get_generators(args: argparse.Namespace,
                   predictor_sizes=predictor_sizes,
                   batch_size=batch_size,
                   image_size=image_size,
-                  training=True, evaluation=False, augment=False,
+                  training=True, evaluation=False, augment=True,
                   debug=args.debug,
                   nr_trajectories=nr_trajectories)
     
