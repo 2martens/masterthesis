@@ -429,7 +429,6 @@ def _visualise_metrics(visualise_precision_recall: callable,
     with open(metrics_file, "rb") as file:
         metrics = pickle.load(file)
     
-    print(metrics)
     precision_micro = metrics["cumulative_precision_micro"]
     recall_micro = metrics["cumulative_recall_micro"]
     visualise_precision_recall(precision_micro, recall_micro,
