@@ -424,8 +424,12 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
         for image_path, frame_instances in zip(traj_image_paths, traj_instances):
             labels = []
             
-            if not frame_instances:
-                continue  # skip images that do not contain instances
+            if training:
+                if not frame_instances:
+                    continue  # skip images that do not contain instances
+            elif evaluation:
+                if i >= 30:
+                    continue
             
             for instance in frame_instances:
                 bbox = instance['bbox']
