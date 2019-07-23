@@ -222,7 +222,16 @@ def _build_visualise(parser: argparse.ArgumentParser) -> None:
 
 
 def _build_visualise_metrics(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("iteration", type=int, help="the validation iteration to use")
+    sub_parsers = parser.add_subparsers(dest="network")
+    sub_parsers.required = True
+    
+    ssd_bayesian_parser = sub_parsers.add_parser("bayesian_ssd", help="SSD with dropout layers")
+    ssd_parser = sub_parsers.add_parser("ssd", help="SSD")
+    auto_encoder_parser = sub_parsers.add_parser("auto_encoder", help="Auto-encoder network")
+    
+    ssd_bayesian_parser.add_argument("iteration", type=int, help="the validation iteration to use")
+    ssd_parser.add_argument("iteration", type=int, help="the validation iteration to use")
+    auto_encoder_parser.add_argument("iteration", type=int, help="the validation iteration to use")
 
 
 def _build_measure(parser: argparse.ArgumentParser) -> None:
