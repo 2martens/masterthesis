@@ -78,7 +78,7 @@ def load_coco_train(data_path: str, category: int,
     file_names.update(file_names_val)
     ids_to_images = {image['id']: image for image in images}
     
-    checked_file_names, checked_bboxes = _clean_dataset(annotations, file_names, ids_to_images)
+    checked_file_names, checked_bboxes = clean_dataset(annotations, file_names, ids_to_images)
     length_dataset = len(checked_file_names)
     
     # build image data set
@@ -119,7 +119,7 @@ def load_coco_val(data_path: str, category: int,
     file_names = {image['id']: f"{data_path}/val2014/{image['file_name']}" for image in images}
     ids_to_images = {image['id']: image for image in images}
     
-    checked_file_names, checked_bboxes = _clean_dataset(annotations, file_names, ids_to_images)
+    checked_file_names, checked_bboxes = clean_dataset(annotations, file_names, ids_to_images)
     length_dataset = len(checked_file_names)
     
     # build image data set
@@ -133,8 +133,8 @@ def load_coco_val(data_path: str, category: int,
     return dataset
 
 
-def _clean_dataset(annotations: Sequence[dict], file_names: Mapping[str, str],
-                   ids_to_images: Mapping[str, dict]) -> Tuple[List[str], List[List[float]]]:
+def clean_dataset(annotations: Sequence[dict], file_names: Mapping[str, str],
+                  ids_to_images: Mapping[str, dict]) -> Tuple[List[str], List[List[float]]]:
     """
     Cleans a given data set from problematic cases and returns cleaned version.
     
@@ -152,7 +152,7 @@ def _clean_dataset(annotations: Sequence[dict], file_names: Mapping[str, str],
         img_id = annotation['image_id']
         image = ids_to_images[img_id]
         file_name = file_names[img_id]
-        bbox = annotation['bbox']
+        bbox = annotation['bbox']  # type: List[float]
         target_height = round(bbox[3])
         target_width = round(bbox[2])
         image_width, image_height = image['width'], image['height']
@@ -178,9 +178,16 @@ def _clean_dataset(annotations: Sequence[dict], file_names: Mapping[str, str],
             continue
         bbox[2] = target_width
         bbox[3] = target_height
+        new_bbox = [
+            annotation['category_id'],
+            x1,
+            y1,
+            round(bbox[0] + bbox[2]),
+            round(bbox[1] + bbox[3])
+        ]
         
         checked_file_names.append(file_name)
-        checked_bboxes.append(bbox)
+        checked_bboxes.append(new_bbox)
     
     return checked_file_names, checked_bboxes
 
@@ -230,6 +237,141 @@ def _load_images_callback(resized_shape: Sequence[int]) -> Callable[
         return processed_images
     
     return _load_images
+
+
+def group_bboxes_to_images(file_names: Sequence[str], bboxes: Sequence[Sequence[int]]) -> Tuple[List[str],
+                                                                                                List[List[List[int]]]]:
+    return_labels = {}
+    for file_name, bbox in zip(file_names, bboxes):
+        if file_name not in return_labels:
+            return_labels[file_name] = []
+        return_labels[file_name].append(bbox)
+    
+    return list(return_labels.keys()), list(return_labels.values())
+
+
+def load_coco_val_ssd(clean_dataset: callable,
+                      group_bboxes_to_images: callable,
+                      coco_path: str,
+                      batch_size: int,
+                      image_size: int,
+                      training: bool,
+                      evaluation: bool,
+                      augment: bool,
+                      debug: bool,
+                      predictor_sizes: Optional[np.ndarray]) -> Tuple[Generator, int, Optional[Generator]]:
+    """
+    Loads the COCO minival2014/val2017 data and returns a data set.
+
+    Args:
+        clean_dataset: function that cleans the data set
+        group_bboxes_to_images: function that groups bounding boxes to corresponding file name
+        coco_path: path to the COCO data set
+        batch_size: batch size
+        image_size: size of images after resizing them
+        training: True if training data is desired
+        evaluation: True if evaluation-ready data is desired
+        augment: True if training data should be augmented
+        debug: True if a more extensive generator should be added to output
+        predictor_sizes: sizes of the predictor layers, can be None for evaluation
+        
+    Returns:
+        coco data set generator
+        length of dataset
+        generator which offers processed_labels as well (only if debug is True)
+    """
+    from pycocotools import coco
+    
+    from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
+    
+    annotation_file_minival = f"{coco_path}/annotations/instances_minival2014.json"
+    resized_shape = (image_size, image_size)
+    
+    coco_val = coco.COCO(annotation_file_minival)
+    img_ids = coco_val.getImgIds()  # return all image IDs belonging to given category
+    images = coco_val.loadImgs(img_ids)  # load all images
+    annotation_ids = coco_val.getAnnIds(img_ids)
+    annotations = coco_val.loadAnns(annotation_ids)  # load all image annotations
+    file_names = {image['id']: f"{coco_path}/val2014/{image['file_name']}" for image in images}
+    ids_to_images = {image['id']: image for image in images}
+
+    annotation_file_train = f"{coco_path}/annotations/instances_train2014.json"
+    cats_to_classes, _, _, _ = coco_utils.get_coco_category_maps(annotation_file_train)
+    
+    checked_image_paths, checked_bboxes = clean_dataset(annotations, file_names, ids_to_images)
+    final_image_paths, final_labels = group_bboxes_to_images(checked_image_paths, checked_bboxes)
+
+    data_generator = object_detection_2d_data_generator.DataGenerator(
+        filenames=final_image_paths,
+        labels=final_labels
+    )
+
+    shuffle = True if training else False
+
+    if training and augment:
+        transformations = [data_augmentation_chain_original_ssd.SSDDataAugmentation(
+            img_width=resized_shape[0],
+            img_height=resized_shape[1]
+        )]
+    else:
+        transformations = [
+            object_detection_2d_photometric_ops.ConvertTo3Channels(),
+            object_detection_2d_geometric_ops.Resize(height=resized_shape[0],
+                                                     width=resized_shape[1])
+        ]
+
+    returns = {'processed_images', 'encoded_labels'}
+    returns_debug = {'processed_images', 'encoded_labels', 'processed_labels'}
+
+    if not training and evaluation:
+        returns = {
+            'processed_images',
+            'filenames',
+            'inverse_transform',
+            'original_labels'}
+        label_encoder = None
+    else:
+        if predictor_sizes is None:
+            raise ValueError("predictor_sizes cannot be None for training/validation")
+        label_encoder = ssd_input_encoder.SSDInputEncoder(
+            img_height=resized_shape[0],
+            img_width=resized_shape[1],
+            n_classes=len(cats_to_classes),  # 80
+            predictor_sizes=predictor_sizes,
+            steps=[8, 16, 32, 64, 100, 300],
+            coords="corners",
+            aspect_ratios_per_layer=[[1.0, 2.0, 0.5],
+                                     [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
+                                     [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
+                                     [1.0, 2.0, 0.5, 3.0, 1.0 / 3.0],
+                                     [1.0, 2.0, 0.5],
+                                     [1.0, 2.0, 0.5]]
+        )
+
+    if debug:
+        debug_generator = data_generator.generate(
+            batch_size=batch_size,
+            shuffle=shuffle,
+            transformations=transformations,
+            label_encoder=label_encoder,
+            returns=returns_debug,
+            keep_images_without_gt=False
+        )
+    else:
+        debug_generator = None
+
+    length_dataset = data_generator.dataset_size
+
+    generator = data_generator.generate(
+        batch_size=batch_size,
+        shuffle=shuffle,
+        transformations=transformations,
+        label_encoder=label_encoder,
+        returns=returns,
+        keep_images_without_gt=False
+    )
+    
+    return generator, length_dataset, debug_generator
 
 
 def load_scenenet_data(photo_paths: Sequence[Sequence[str]],

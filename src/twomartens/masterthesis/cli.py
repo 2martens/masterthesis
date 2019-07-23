@@ -227,6 +227,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
     batch_size, image_size, learning_rate, \
         forward_passes_per_image, nr_classes, iou_threshold, dropout_rate, \
         use_entropy_threshold, entropy_threshold_min, entropy_threshold_max, \
+        use_coco, \
         top_k, nr_trajectories, test_pretrained, \
         coco_path, output_path, weights_path, ground_truth_path = _ssd_test_get_config_values(args, conf.get_property)
     
@@ -252,6 +253,8 @@ def _ssd_test(args: argparse.Namespace) -> None:
     ssd.compile_model(ssd_model, learning_rate, loss_func)
 
     test_generator, length_dataset, test_debug_generator = _ssd_test_get_generators(args,
+                                                                                    use_coco,
+                                                                                    data.load_coco_val_ssd,
                                                                                     data.load_scenenet_data,
                                                                                     file_names,
                                                                                     instances,
@@ -531,6 +534,7 @@ def _ssd_test_get_config_values(args: argparse.Namespace,
                                 config_get: Callable[[str], Union[str, float, int, bool]]
                                 ) -> Tuple[int, int, float, int, int, float, float,
                                            bool, float, float,
+                                           bool,
                                            int, int, bool,
                                            str, str, str, str]:
     
@@ -544,6 +548,7 @@ def _ssd_test_get_config_values(args: argparse.Namespace,
     use_entropy_threshold = config_get("Parameters.ssd_use_entropy_threshold")
     entropy_threshold_min = config_get("Parameters.ssd_entropy_threshold_min")
     entropy_threshold_max = config_get("Parameters.ssd_entropy_threshold_max")
+    use_coco = config_get("Parameters.ssd_use_coco")
     top_k = config_get("Parameters.ssd_top_k")
     nr_trajectories = config_get("Parameters.nr_trajectories")
     test_pretrained = config_get("Parameters.ssd_test_pretrained")
@@ -568,6 +573,8 @@ def _ssd_test_get_config_values(args: argparse.Namespace,
         use_entropy_threshold,
         entropy_threshold_min,
         entropy_threshold_max,
+        #
+        use_coco,
         #
         top_k,
         nr_trajectories,
@@ -798,7 +805,9 @@ def _ssd_train_get_generators(args: argparse.Namespace,
 
 
 def _ssd_test_get_generators(args: argparse.Namespace,
-                             load_data: callable,
+                             use_coco: bool,
+                             load_data_coco: callable,
+                             load_data_scenenet: callable,
                              file_names: Sequence[Sequence[str]],
                              instances: Sequence[Sequence[Sequence[dict]]],
                              coco_path: str,
@@ -807,16 +816,27 @@ def _ssd_test_get_generators(args: argparse.Namespace,
                              nr_trajectories: int,
                              predictor_sizes: Sequence[Sequence[int]]) -> Tuple[Generator, int, Generator]:
     
+    from twomartens.masterthesis import data
+    
     if nr_trajectories == -1:
         nr_trajectories = None
     
-    generator, length, debug_generator = load_data(file_names, instances, coco_path,
-                                                   predictor_sizes=predictor_sizes,
-                                                   batch_size=batch_size,
-                                                   image_size=image_size,
-                                                   training=False, evaluation=True, augment=False,
-                                                   debug=args.debug,
-                                                   nr_trajectories=nr_trajectories)
+    if use_coco:
+        generator, length, debug_generator = load_data_coco(data.clean_dataset,
+                                                            data.group_bboxes_to_images,
+                                                            coco_path,
+                                                            batch_size,
+                                                            image_size,
+                                                            training=False, evaluation=True, augment=False,
+                                                            debug=args.debug)
+    else:
+        generator, length, debug_generator = load_data_scenenet(file_names, instances, coco_path,
+                                                                predictor_sizes=predictor_sizes,
+                                                                batch_size=batch_size,
+                                                                image_size=image_size,
+                                                                training=False, evaluation=True, augment=False,
+                                                                debug=args.debug,
+                                                                nr_trajectories=nr_trajectories)
     
     return generator, length, debug_generator
 
