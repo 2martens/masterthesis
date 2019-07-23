@@ -415,7 +415,6 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
     
     annotation_file_train = f"{coco_path}/annotations/instances_train2014.json"
     cats_to_classes, _, _, _ = coco_utils.get_coco_category_maps(annotation_file_train)
-    max_nr_labels = -1
     
     for i, trajectory in enumerate(trajectories):
         if nr_trajectories is not None and i >= nr_trajectories:
@@ -437,10 +436,6 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
                     float(bbox[2]),  # x max
                     float(bbox[3]),  # y max
                 ])
-            
-            len_labels = len(labels)
-            if len_labels > max_nr_labels:
-                max_nr_labels = len_labels
     
             final_image_paths.append(image_path)
             final_labels.append(labels)
