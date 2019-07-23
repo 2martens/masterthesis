@@ -43,7 +43,8 @@ def main() -> None:
     _build_test(sub_parsers[3])
     _build_evaluate(sub_parsers[4])
     _build_visualise(sub_parsers[5])
-    _build_measure(sub_parsers[6])
+    _build_visualise_metrics(sub_parsers[6])
+    _build_measure(sub_parsers[7])
     
     args = _get_user_input(parser)
     _execute_action(args,
@@ -53,6 +54,7 @@ def main() -> None:
                     cli.test,
                     cli.evaluate,
                     cli.visualise,
+                    cli.visualise_metrics,
                     cli.measure_mapping)
 
 
@@ -71,6 +73,7 @@ def _build_sub_parsers(parser: argparse.ArgumentParser) -> List[argparse.Argumen
     test_parser = sub_parsers.add_parser("test", help="Test a network")
     evaluate_parser = sub_parsers.add_parser("evaluate", help="Evaluate a network")
     visualise_parser = sub_parsers.add_parser("visualise", help="Visualise the ground truth")
+    visualise_metrics_parser = sub_parsers.add_parser("visualise_metrics", help="Visualise the evaluation results")
     measure_parser = sub_parsers.add_parser("measure_mapping", help="Measure the number of instances per COCO category")
     
     return [
@@ -80,6 +83,7 @@ def _build_sub_parsers(parser: argparse.ArgumentParser) -> List[argparse.Argumen
         test_parser,
         evaluate_parser,
         visualise_parser,
+        visualise_metrics_parser,
         measure_parser
     ]
 
@@ -99,6 +103,7 @@ def _execute_action(args: argparse.Namespace,
                     on_test: callable,
                     on_evaluate: callable,
                     on_visualise: callable,
+                    on_visualise_metrics: callable,
                     on_measure: callable) -> None:
     if args.component == "config":
         on_config(args)
@@ -112,6 +117,8 @@ def _execute_action(args: argparse.Namespace,
         on_evaluate(args)
     elif args.component == "visualise":
         on_visualise(args)
+    elif args.component == "visualise_metrics":
+        on_visualise_metrics(args)
     elif args.component == "measure_mapping":
         on_measure(args)
 
@@ -212,6 +219,10 @@ def _build_ssd_evaluate(parser: argparse.ArgumentParser) -> None:
 
 def _build_visualise(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("trajectory", type=int, help="trajectory to visualise")
+
+
+def _build_visualise_metrics(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("iteration", type=int, help="the validation iteration to use")
 
 
 def _build_measure(parser: argparse.ArgumentParser) -> None:

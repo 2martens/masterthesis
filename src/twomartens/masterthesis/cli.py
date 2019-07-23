@@ -91,6 +91,12 @@ def visualise(args: argparse.Namespace) -> None:
     _visualise_gt(args, file_names, instances, cats_to_classes, cats_to_names, output_path)
 
 
+def visualise_metrics(args: argparse.Namespace) -> None:
+    output_path, evaluation_path = _visualise_metrics_get_config_values(conf.get_property)
+    output_path, metrics_file = _visualise_metrics_prepare_paths(args, output_path, evaluation_path)
+    _visualise_metrics(_visualise_precision_recall, output_path, metrics_file)
+
+
 def measure_mapping(args: argparse.Namespace) -> None:
     from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
     
@@ -415,6 +421,27 @@ def _visualise_gt(args: argparse.Namespace,
         i += 1
 
 
+def _visualise_metrics(visualise_precision_recall: callable,
+                       output_path: str,
+                       metrics_file: str) -> None:
+    import pickle
+    
+    with open(metrics_file, "rb") as file:
+        metrics = pickle.load(file)
+    
+    precision_micro = metrics["cumulative_precision_micro"]
+    recall_micro = metrics["cumulative_recall_micro"]
+    visualise_precision_recall(precision_micro, recall_micro,
+                               output_path, "micro")
+
+    precision_macro = metrics["cumulative_precision_macro"]
+    recall_macro = metrics["cumulative_recall_macro"]
+    visualise_precision_recall(precision_macro, recall_macro,
+                               output_path, "macro")
+    
+    # TODO add further metrics
+
+
 def _init_eager_mode() -> None:
     tf.enable_eager_execution()
     
@@ -620,6 +647,14 @@ def _visualise_get_config_values(config_get: Callable[[str], Union[str, int, flo
     return output_path, coco_path, ground_truth_path
 
 
+def _visualise_metrics_get_config_values(config_get: Callable[[str], Union[str, int, float, bool]]
+                                         ) -> Tuple[str, str]:
+    output_path = config_get("Paths.output")
+    evaluation_path = config_get("Paths.evaluation")
+    
+    return output_path, evaluation_path
+
+
 def _ssd_is_dropout(args: argparse.Namespace) -> bool:
     return False if args.network == "ssd" else True
 
@@ -701,6 +736,19 @@ def _visualise_prepare_paths(args: argparse.Namespace,
     annotation_file_train = f"{coco_path}/annotations/instances_train2014.json"
     
     return output_path, annotation_file_train
+
+
+def _visualise_metrics_prepare_paths(args: argparse.Namespace,
+                                     output_path: str,
+                                     evaluation_path: str) -> Tuple[str, str]:
+    import os
+    
+    metrics_file = f"{evaluation_path}/{args.network}/results-{args.iteration}.bin"
+    output_path = f"{output_path}/{args.network}/visualise/{args.iteration}"
+    
+    os.makedirs(output_path, exist_ok=True)
+    
+    return output_path, metrics_file
 
 
 def _ssd_train_load_gt(train_gt_path: str, val_gt_path: str
@@ -948,6 +996,20 @@ def _ssd_evaluate_get_results(true_positives: Sequence[np.ndarray],
     }
     
     return results
+
+
+def _visualise_precision_recall(precision: np.ndarray, recall: np.ndarray,
+                                output_path: str, file_suffix: str) -> None:
+    from matplotlib import pyplot
+    
+    figure = pyplot.figure()
+    
+    pyplot.ylabel("precision")
+    pyplot.xlabel("recall")
+    pyplot.plot(recall, precision)
+    
+    pyplot.savefig(f"{output_path}/precision-recall-{file_suffix}.png")
+    pyplot.close(figure)
 
 
 def _auto_encoder_train(args: argparse.Namespace) -> None:
