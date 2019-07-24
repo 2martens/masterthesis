@@ -23,8 +23,13 @@ Functions:
     load_scenenet_data(...): loads the SceneNet RGB-D data into a Tensorflow data set
     prepare_scenenet_data(...): prepares the SceneNet RGB-D data and returns it in Python format
 """
-from typing import Callable, List, Mapping, Tuple, Optional, Generator
+from typing import Callable
+from typing import Generator
+from typing import List
+from typing import Mapping
+from typing import Optional
 from typing import Sequence
+from typing import Tuple
 
 import numpy as np
 import scipy
@@ -32,8 +37,10 @@ import tensorflow as tf
 import tqdm
 from scipy import ndimage
 
-from twomartens.masterthesis.ssd_keras.data_generator import object_detection_2d_data_generator, \
-    data_augmentation_chain_original_ssd, object_detection_2d_photometric_ops, object_detection_2d_geometric_ops
+from twomartens.masterthesis.ssd_keras.data_generator import data_augmentation_chain_original_ssd
+from twomartens.masterthesis.ssd_keras.data_generator import object_detection_2d_data_generator
+from twomartens.masterthesis.ssd_keras.data_generator import object_detection_2d_geometric_ops
+from twomartens.masterthesis.ssd_keras.data_generator import object_detection_2d_photometric_ops
 from twomartens.masterthesis.ssd_keras.ssd_encoder_decoder import ssd_input_encoder
 
 
@@ -299,7 +306,16 @@ def load_coco_val_ssd(clean_dataset: callable,
     cats_to_classes, _, _, _ = coco_utils.get_coco_category_maps(annotation_file_train)
     
     checked_image_paths, checked_bboxes = clean_dataset(annotations, file_names, ids_to_images)
-    final_image_paths, final_labels = group_bboxes_to_images(checked_image_paths, checked_bboxes)
+    bboxes_with_converted_cat_ids = []
+    for bbox in checked_bboxes:
+        bboxes_with_converted_cat_ids.append([
+            cats_to_classes[bbox[0]],
+            bbox[1],
+            bbox[2],
+            bbox[3],
+            bbox[4]
+        ])
+    final_image_paths, final_labels = group_bboxes_to_images(checked_image_paths, bboxes_with_converted_cat_ids)
 
     data_generator = object_detection_2d_data_generator.DataGenerator(
         filenames=final_image_paths,
