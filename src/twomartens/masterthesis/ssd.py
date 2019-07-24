@@ -27,9 +27,11 @@ Functions:
 import functools
 import os
 import pickle
-
-from typing import List, Sequence, Tuple, Generator
+from typing import Generator
+from typing import List
 from typing import Optional
+from typing import Sequence
+from typing import Tuple
 
 import math
 import numpy as np
@@ -299,6 +301,7 @@ def _predict_loop(generator: Generator, use_dropout: bool, steps_per_epoch: int,
         
         if not saved_images_prediction:
             save_images(inputs, predictions, custom_string="after-prediction")
+            saved_images_prediction = True
         for entropy_threshold in entropy_thresholds:
             decoded_predictions = decode_func(predictions, entropy_threshold=entropy_threshold)
             if not saved_images_decoding:
