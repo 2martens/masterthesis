@@ -26,11 +26,18 @@ Functions:
     prepare(...): prepares the SceneNet ground truth data
 """
 import argparse
-from typing import Callable, Union, Tuple, Sequence, Optional, Generator, List, Any, Dict
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Generator
+from typing import List
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import Union
 
 import math
 import numpy as np
-
 import tensorflow as tf
 
 from twomartens.masterthesis import config as conf
@@ -876,7 +883,8 @@ def _ssd_test_get_generators(args: argparse.Namespace,
                                                             batch_size,
                                                             image_size,
                                                             training=False, evaluation=True, augment=False,
-                                                            debug=args.debug)
+                                                            debug=args.debug,
+                                                            predictor_sizes=predictor_sizes)
     else:
         generator, length, debug_generator = load_data_scenenet(file_names, instances, coco_path,
                                                                 predictor_sizes=predictor_sizes,
