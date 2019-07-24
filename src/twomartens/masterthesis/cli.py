@@ -101,7 +101,8 @@ def visualise(args: argparse.Namespace) -> None:
 def visualise_metrics(args: argparse.Namespace) -> None:
     output_path, evaluation_path = _visualise_metrics_get_config_values(conf.get_property)
     output_path, metrics_file = _visualise_metrics_prepare_paths(args, output_path, evaluation_path)
-    _visualise_metrics(_visualise_precision_recall, output_path, metrics_file)
+    _visualise_metrics(_visualise_precision_recall, _visualise_ose_f1,
+                       output_path, metrics_file)
 
 
 def measure_mapping(args: argparse.Namespace) -> None:
@@ -429,6 +430,7 @@ def _visualise_gt(args: argparse.Namespace,
 
 
 def _visualise_metrics(visualise_precision_recall: callable,
+                       visualise_ose_f1: callable,
                        output_path: str,
                        metrics_file: str) -> None:
     import pickle
@@ -445,7 +447,16 @@ def _visualise_metrics(visualise_precision_recall: callable,
     recall_macro = metrics["cumulative_recall_macro"]
     visualise_precision_recall(precision_macro, recall_macro,
                                output_path, "macro")
-    
+
+    f1_scores_micro = metrics["f1_scores_micro"]
+    cumulative_ose = metrics["cumulative_open_set_error"]
+    visualise_ose_f1(cumulative_ose, f1_scores_micro,
+                     output_path, "micro")
+
+    f1_scores_macro = metrics["f1_scores_macro"]
+    visualise_ose_f1(cumulative_ose, f1_scores_macro,
+                     output_path, "macro")
+
     # TODO add further metrics
 
 
@@ -1017,6 +1028,20 @@ def _visualise_precision_recall(precision: np.ndarray, recall: np.ndarray,
     pyplot.plot(recall, precision)
     
     pyplot.savefig(f"{output_path}/precision-recall-{file_suffix}.png")
+    pyplot.close(figure)
+
+
+def _visualise_ose_f1(open_set_error: np.ndarray, f1_scores: np.ndarray,
+                      output_path: str, file_suffix: str) -> None:
+    from matplotlib import pyplot
+    
+    figure = pyplot.figure()
+
+    pyplot.ylabel("absolute ose")
+    pyplot.xlabel("f1 score")
+    pyplot.plot(f1_scores, open_set_error)
+    
+    pyplot.savefig(f"{output_path}/ose-f1-{file_suffix}.png")
     pyplot.close(figure)
 
 
