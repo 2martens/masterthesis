@@ -513,7 +513,7 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
         transformations=transformations,
         label_encoder=label_encoder,
         returns=returns,
-        keep_images_without_gt=evaluation
+        keep_images_without_gt=False
     )
     
     if debug:
@@ -523,7 +523,7 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
             transformations=transformations,
             label_encoder=label_encoder,
             returns=returns_debug,
-            keep_images_without_gt=evaluation
+            keep_images_without_gt=False
         )
     else:
         debug_generator = None
