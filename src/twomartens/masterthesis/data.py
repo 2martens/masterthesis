@@ -604,11 +604,12 @@ def prepare_scenenet_data(data_path: str, protobuf_path: str) -> Tuple[List[List
     trajectories = scenenet_pb2.Trajectories()
     with open(protobuf_path, 'rb') as file:
         trajectories.ParseFromString(file.read())
-    
+
+    sorted_trajectories = sorted(trajectories.trajectories, key=lambda k: k.render_path)
     file_names_photos = []
     file_names_instances = []
     instances = []
-    for trajectory in tqdm.tqdm(trajectories.trajectories, desc="preparing trajectories"):
+    for trajectory in tqdm.tqdm(sorted_trajectories, desc="preparing trajectories"):
         path = f"{data_path}/{trajectory.render_path}"
         file_names_photos_traj = []
         file_names_instances_traj = []
