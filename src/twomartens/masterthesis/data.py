@@ -443,7 +443,7 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
 
             if not frame_instances:
                 continue  # skip images that do not contain instances
-            if evaluation and used_images >= 30:
+            if evaluation and used_images >= 32:
                 continue
             
             for instance in frame_instances:
