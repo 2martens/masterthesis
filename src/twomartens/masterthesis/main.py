@@ -218,6 +218,7 @@ def _build_ssd_evaluate(parser: argparse.ArgumentParser) -> None:
 
 
 def _build_visualise(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("tarball_id", type=str, help="id of the used tarball. number for training tarball or 'test'")
     parser.add_argument("trajectory", type=int, help="trajectory to visualise")
 
 

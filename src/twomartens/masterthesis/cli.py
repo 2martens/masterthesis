@@ -90,7 +90,9 @@ def visualise(args: argparse.Namespace) -> None:
     from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
     
     output_path, coco_path, ground_truth_path = _visualise_get_config_values(conf.get_property)
-    output_path, annotation_file_train = _visualise_prepare_paths(args, output_path, coco_path)
+    output_path, annotation_file_train, \
+    ground_truth_path = _visualise_prepare_paths(args, output_path, coco_path,
+                                                 ground_truth_path)
     file_names, instances, \
         cats_to_classes, cats_to_names = _visualise_load_gt(ground_truth_path, annotation_file_train,
                                                             coco_utils.get_coco_category_maps)
@@ -748,12 +750,14 @@ def _measure_prepare_paths(args: argparse.Namespace,
 
 
 def _visualise_prepare_paths(args: argparse.Namespace,
-                             output_path: str, coco_path: str) -> Tuple[str, str]:
+                             output_path: str, coco_path: str,
+                             gt_path: str) -> Tuple[str, str, str]:
     
     output_path = f"{output_path}/visualise/{args.trajectory}"
     annotation_file_train = f"{coco_path}/annotations/instances_train2014.json"
-    
-    return output_path, annotation_file_train
+    ground_truth_path = f"{gt_path}/{args.tarball_id}/"
+
+    return output_path, annotation_file_train, ground_truth_path
 
 
 def _visualise_metrics_prepare_paths(args: argparse.Namespace,
