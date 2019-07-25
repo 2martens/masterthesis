@@ -752,10 +752,13 @@ def _measure_prepare_paths(args: argparse.Namespace,
 def _visualise_prepare_paths(args: argparse.Namespace,
                              output_path: str, coco_path: str,
                              gt_path: str) -> Tuple[str, str, str]:
+    import os
     
     output_path = f"{output_path}/visualise/{args.trajectory}"
     annotation_file_train = f"{coco_path}/annotations/instances_train2014.json"
     ground_truth_path = f"{gt_path}/{args.tarball_id}/"
+    
+    os.makedirs(output_path, exist_ok=True)
 
     return output_path, annotation_file_train, ground_truth_path
 
