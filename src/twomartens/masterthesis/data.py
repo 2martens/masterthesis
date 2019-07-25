@@ -437,15 +437,14 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
             break
         
         traj_image_paths, traj_instances = trajectory
+        used_images = 0
         for image_path, frame_instances in zip(traj_image_paths, traj_instances):
             labels = []
-            
-            if training:
-                if not frame_instances:
-                    continue  # skip images that do not contain instances
-            elif evaluation:
-                if i >= 30:
-                    continue
+
+            if not frame_instances:
+                continue  # skip images that do not contain instances
+            if evaluation and used_images >= 30:
+                continue
             
             for instance in frame_instances:
                 bbox = instance['bbox']
@@ -459,6 +458,7 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
     
             final_image_paths.append(image_path)
             final_labels.append(labels)
+            used_images += 1
     
     data_generator = object_detection_2d_data_generator.DataGenerator(
         filenames=final_image_paths,
