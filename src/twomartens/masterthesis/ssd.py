@@ -51,8 +51,9 @@ tfe = tf.contrib.eager
 def get_model(use_dropout: bool,
               dropout_model: callable, vanilla_model: callable,
               image_size: int, nr_classes: int, mode: str,
-              iou_threshold: float, dropout_rate: float, top_k: int,
-              pre_trained_weights_file: Optional[str] = None) -> Tuple[tf.keras.models.Model, np.ndarray]:
+              dropout_rate: float, top_k: int,
+              pre_trained_weights_file: Optional[str] = None,
+              iou_threshold: Optional[float] = None) -> Tuple[tf.keras.models.Model, np.ndarray]:
     """
     Returns the correct SSD model and the corresponding predictor sizes.
     
@@ -63,10 +64,11 @@ def get_model(use_dropout: bool,
         image_size: size of the resized images
         nr_classes: number of classes
         mode: one of "training", "inference", "inference_fast"
-        iou_threshold: all boxes with higher iou to local maximum box are suppressed
         dropout_rate: rate for dropout layers (only applies if dropout is used)
         top_k: number of highest scoring predictions kept for each batch item
         pre_trained_weights_file: path to h5 file with pre-trained weights
+        iou_threshold: all boxes with higher iou to local maximum box are suppressed
+                       (only relevant for inference modes)
 
     Returns:
         SSD model, predictor_sizes
@@ -151,6 +153,8 @@ def predict(generator: callable,
             use_entropy_threshold: bool,
             entropy_threshold_min: float,
             entropy_threshold_max: float,
+            confidence_threshold: float,
+            iou_threshold: float,
             output_path: str,
             coco_path: str,
             use_dropout: bool,
@@ -171,6 +175,9 @@ def predict(generator: callable,
         use_entropy_threshold: if True entropy thresholding is applied
         entropy_threshold_min: specifies the minimum threshold for the entropy
         entropy_threshold_max: specifies the maximum threshold for the entropy
+        confidence_threshold: minimum confidence required for box to count as positive
+        iou_threshold: all boxes with iou overlap larger than threshold to local maximum box
+                       will be suppressed
         output_path: the path in which the results should be saved
         coco_path: the path to the COCO data set
         use_dropout: if True, multiple forward passes and observations will be used
@@ -195,6 +202,8 @@ def predict(generator: callable,
                       _decode_predictions,
                       decode_func=ssd_output_decoder.decode_detections_fast,
                       image_size=image_size,
+                      confidence_threshold=confidence_threshold,
+                      iou_threshold=iou_threshold
                   ),
                   transform_func=functools.partial(
                       _transform_predictions,
@@ -347,13 +356,17 @@ def _predict_vanilla_step(inputs: np.ndarray, model: tf.keras.models.Model) -> n
 def _decode_predictions(predictions: np.ndarray,
                         decode_func: callable,
                         image_size: int,
-                        entropy_threshold: float) -> np.ndarray:
+                        entropy_threshold: float,
+                        confidence_threshold: float,
+                        iou_thresholdd: float) -> np.ndarray:
     return decode_func(
         y_pred=predictions,
         img_width=image_size,
         img_height=image_size,
         input_coords="corners",
-        entropy_thresh=entropy_threshold
+        entropy_thresh=entropy_threshold,
+        confidence_thresh=confidence_threshold,
+        iou_threshold=iou_thresholdd
     )
 
 

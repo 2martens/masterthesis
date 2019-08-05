@@ -171,7 +171,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
     _init_eager_mode()
     
     batch_size, image_size, learning_rate, steps_per_val_epoch, nr_classes, \
-        iou_threshold, dropout_rate, top_k, nr_trajectories, \
+        dropout_rate, top_k, nr_trajectories, \
         coco_path, summary_path, weights_path, train_gt_path, val_gt_path, \
         save_train_images, save_summaries = _ssd_train_get_config_values(conf.get_property)
     
@@ -188,7 +188,6 @@ def _ssd_train(args: argparse.Namespace) -> None:
                                                image_size,
                                                nr_classes,
                                                "training",
-                                               iou_threshold,
                                                dropout_rate,
                                                top_k,
                                                pre_trained_weights_file)
@@ -241,7 +240,8 @@ def _ssd_test(args: argparse.Namespace) -> None:
     _init_eager_mode()
     
     batch_size, image_size, learning_rate, \
-        forward_passes_per_image, nr_classes, iou_threshold, dropout_rate, \
+        forward_passes_per_image, nr_classes, confidence_threshold, iou_threshold, \
+        dropout_rate, \
         use_entropy_threshold, entropy_threshold_min, entropy_threshold_max, \
         use_coco, \
         top_k, nr_trajectories, test_pretrained, \
@@ -260,7 +260,6 @@ def _ssd_test(args: argparse.Namespace) -> None:
                                                image_size,
                                                nr_classes,
                                                "training",
-                                               iou_threshold,
                                                dropout_rate,
                                                top_k,
                                                weights_file)
@@ -291,6 +290,8 @@ def _ssd_test(args: argparse.Namespace) -> None:
                 use_entropy_threshold,
                 entropy_threshold_min,
                 entropy_threshold_max,
+                confidence_threshold,
+                iou_threshold,
                 output_path,
                 coco_path,
                 use_dropout,
@@ -532,7 +533,7 @@ def _ssd_evaluate_unbatch_list(glob_string: str) -> List[np.ndarray]:
 
 
 def _ssd_train_get_config_values(config_get: Callable[[str], Union[str, float, int, bool]]
-                                ) -> Tuple[int, int, float, int, int, float, float, int, int,
+                                ) -> Tuple[int, int, float, int, int, float, int, int,
                                            str, str, str, str, str,
                                            bool, bool]:
     
@@ -541,7 +542,6 @@ def _ssd_train_get_config_values(config_get: Callable[[str], Union[str, float, i
     learning_rate = config_get("Parameters.learning_rate")
     steps_per_val_epoch = config_get("Parameters.steps_per_val_epoch")
     nr_classes = config_get("Parameters.nr_classes")
-    iou_threshold = config_get("Parameters.ssd_iou_threshold")
     dropout_rate = config_get("Parameters.ssd_dropout_rate")
     top_k = config_get("Parameters.ssd_top_k")
     nr_trajectories = config_get("Parameters.nr_trajectories")
@@ -561,7 +561,6 @@ def _ssd_train_get_config_values(config_get: Callable[[str], Union[str, float, i
         learning_rate,
         steps_per_val_epoch,
         nr_classes,
-        iou_threshold,
         dropout_rate,
         top_k,
         nr_trajectories,
@@ -579,7 +578,7 @@ def _ssd_train_get_config_values(config_get: Callable[[str], Union[str, float, i
 
 def _ssd_test_get_config_values(args: argparse.Namespace,
                                 config_get: Callable[[str], Union[str, float, int, bool]]
-                                ) -> Tuple[int, int, float, int, int, float, float,
+                                ) -> Tuple[int, int, float, int, int, float, float, float,
                                            bool, float, float,
                                            bool,
                                            int, int, bool,
@@ -590,6 +589,7 @@ def _ssd_test_get_config_values(args: argparse.Namespace,
     learning_rate = config_get("Parameters.learning_rate")
     forward_passes_per_image = config_get("Parameters.ssd_forward_passes_per_image")
     nr_classes = config_get("Parameters.nr_classes")
+    confidence_threshold = config_get("Parameters.ssd_confidence_threshold")
     iou_threshold = config_get("Parameters.ssd_iou_threshold")
     dropout_rate = config_get("Parameters.ssd_dropout_rate")
     use_entropy_threshold = config_get("Parameters.ssd_use_entropy_threshold")
@@ -614,6 +614,7 @@ def _ssd_test_get_config_values(args: argparse.Namespace,
         learning_rate,
         forward_passes_per_image,
         nr_classes,
+        confidence_threshold,
         iou_threshold,
         dropout_rate,
         #
