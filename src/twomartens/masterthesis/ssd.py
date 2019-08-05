@@ -358,7 +358,7 @@ def _decode_predictions(predictions: np.ndarray,
                         image_size: int,
                         entropy_threshold: float,
                         confidence_threshold: float,
-                        iou_thresholdd: float) -> np.ndarray:
+                        iou_threshold: float) -> np.ndarray:
     return decode_func(
         y_pred=predictions,
         img_width=image_size,
@@ -366,7 +366,7 @@ def _decode_predictions(predictions: np.ndarray,
         input_coords="corners",
         entropy_thresh=entropy_threshold,
         confidence_thresh=confidence_threshold,
-        iou_threshold=iou_thresholdd
+        iou_threshold=iou_threshold
     )
 
 
