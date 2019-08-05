@@ -56,6 +56,7 @@ _CONFIG_PROPS = {
         "steps_per_val_epoch": (int, "20"),
         "ssd_forward_passes_per_image": (int, "10"),
         "nr_classes": (int, "80"),
+        "ssd_confidence_threshold": (float, "0.5"),
         "ssd_iou_threshold": (float, "0.45"),
         "ssd_top_k": (int, "200"),
         "ssd_dropout_rate": (float, "0.5"),
