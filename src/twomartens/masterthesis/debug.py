@@ -25,6 +25,7 @@ Functions:
 import os
 from typing import Union, Sequence
 
+import cv2
 import math
 import numpy as np
 from matplotlib import pyplot
@@ -64,6 +65,8 @@ def save_ssd_train_images(images: Union[np.ndarray, Sequence[str]], labels: np.n
         if type(train_image) is str:
             with Image.open(train_image) as _image:
                 train_image = np.array(_image, dtype=np.uint8)
+        else:
+            train_image = cv2.cvtColor(train_image, cv2.COLOR_BGR2RGB)
         image = Image.fromarray(train_image)
         image.save(f"{output_path}/"
                    f"{custom_string}train_image{str(i).zfill(nr_digits)}.png")
