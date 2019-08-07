@@ -475,6 +475,7 @@ def load_scenenet_data(photo_paths: Sequence[Sequence[str]],
     else:
         transformations = [
             object_detection_2d_photometric_ops.ConvertTo3Channels(),
+            object_detection_2d_photometric_ops.ConvertColor(current='RGB', to='BGR'),
             object_detection_2d_geometric_ops.Resize(height=resized_shape[0],
                                                      width=resized_shape[1])
         ]
