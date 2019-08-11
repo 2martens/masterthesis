@@ -91,8 +91,8 @@ def visualise(args: argparse.Namespace) -> None:
     
     output_path, coco_path, ground_truth_path = _visualise_get_config_values(conf.get_property)
     output_path, annotation_file_train, \
-    ground_truth_path = _visualise_prepare_paths(args, output_path, coco_path,
-                                                 ground_truth_path)
+        ground_truth_path = _visualise_prepare_paths(args, output_path, coco_path,
+                                                     ground_truth_path)
     file_names, instances, \
         cats_to_classes, cats_to_names = _visualise_load_gt(ground_truth_path, annotation_file_train,
                                                             coco_utils.get_coco_category_maps)
