@@ -53,7 +53,7 @@ def save_ssd_train_images(images: Union[np.ndarray, Sequence[str]], labels: np.n
     
     annotation_file_train = f"{coco_path}/annotations/instances_train2014.json"
     _, _, _, classes_to_names = get_coco_cat_maps_func(annotation_file_train)
-    colors = pyplot.cm.hsv(np.linspace(0, 1, 81)).tolist()
+    colors = pyplot.cm.hsv(np.linspace(0, 1, 61)).tolist()
     os.makedirs(output_path, exist_ok=True)
     
     nr_images = len(images)
