@@ -386,7 +386,7 @@ def _ssd_evaluate_save_images(filenames: Sequence[str], labels: Sequence[np.ndar
                               image_size: int, batch_size: int,
                               output_path: str, coco_path: str) -> None:
     
-    save_images(filenames, labels, output_path, coco_path, image_size, get_coco_cat_maps_func)
+    save_images(filenames[:batch_size], labels[:batch_size], output_path, coco_path, image_size, get_coco_cat_maps_func)
 
 
 def _visualise_gt(args: argparse.Namespace,
