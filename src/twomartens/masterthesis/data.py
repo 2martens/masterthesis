@@ -200,7 +200,7 @@ def clean_dataset(annotations: Sequence[dict], file_names: Mapping[str, str],
 
 
 def _load_images_callback(resized_shape: Sequence[int]) -> Callable[
-    [Sequence[str], Sequence[Sequence[float]]], tf.Tensor]:
+        [Sequence[str], Sequence[Sequence[float]]], tf.Tensor]:
     """
     Returns the callback function to load images.
     
