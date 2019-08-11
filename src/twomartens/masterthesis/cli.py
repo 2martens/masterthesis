@@ -702,7 +702,7 @@ def _ssd_test_prepare_paths(args: argparse.Namespace,
     output_path = f"{output_path}/{args.network}/test/{args.iteration}/"
     checkpoint_path = f"{weights_path}/{args.network}/train/{args.train_iteration}"
     if test_pretrained:
-        weights_file = f"{weights_path}/{args.network}/VGG_coco_SSD_300x300_iter_400000.h5"
+        weights_file = f"{weights_path}/{args.network}/VGG_coco_SSD_300x300_iter_400000_subsampled.h5"
     else:
         weights_file = f"{checkpoint_path}/ssd300_weights.h5"
     
