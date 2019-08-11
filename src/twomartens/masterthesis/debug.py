@@ -87,6 +87,12 @@ def save_ssd_train_images(images: Union[np.ndarray, Sequence[str]], labels: np.n
                 ymin = instance[4]
                 xmax = instance[5]
                 ymax = instance[6]
+            elif len(instance) == 6:  # predictions using Caffe method
+                class_id = int(instance[0])
+                xmin = instance[2]
+                ymin = instance[3]
+                xmax = instance[4]
+                ymax = instance[5]
             else:
                 instance = np.copy(instance)
                 class_id = np.argmax(instance[:-12], axis=0)
