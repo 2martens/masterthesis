@@ -298,7 +298,7 @@ def _predict_loop(generator: Generator, use_dropout: bool, steps_per_epoch: int,
     saved_images_decoding = False
     if use_entropy_threshold:
         nr_steps = math.floor((entropy_threshold_max - entropy_threshold_min) * 10)
-        entropy_thresholds = [i / 10 + entropy_threshold_min for i in range(nr_steps)]
+        entropy_thresholds = [round(i / 10 + entropy_threshold_min, 1) for i in range(nr_steps)]
     else:
         entropy_thresholds = [0]
     
