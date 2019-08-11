@@ -293,17 +293,16 @@ def load_coco_val_ssd(clean_dataset: callable,
     
     annotation_file_minival = f"{coco_path}/annotations/instances_minival2014.json"
     resized_shape = (image_size, image_size)
+    cats_to_classes, classes_to_cats, _, _ = coco_utils.get_coco_category_maps(annotation_file_minival)
+    inlier_cat_ids = [classes_to_cats[i] for i in range(1, 61)]
     
     coco_val = coco.COCO(annotation_file_minival)
     img_ids = coco_val.getImgIds()  # return all image IDs belonging to given category
     images = coco_val.loadImgs(img_ids)  # load all images
-    annotation_ids = coco_val.getAnnIds(img_ids)
+    annotation_ids = coco_val.getAnnIds(img_ids, catIds=inlier_cat_ids)
     annotations = coco_val.loadAnns(annotation_ids)  # load all image annotations
     file_names = {image['id']: f"{coco_path}/val2014/{image['file_name']}" for image in images}
     ids_to_images = {image['id']: image for image in images}
-
-    annotation_file_train = f"{coco_path}/annotations/instances_train2014.json"
-    cats_to_classes, _, _, _ = coco_utils.get_coco_category_maps(annotation_file_train)
     
     checked_image_paths, checked_bboxes = clean_dataset(annotations, file_names, ids_to_images)
     bboxes_with_converted_cat_ids = []
