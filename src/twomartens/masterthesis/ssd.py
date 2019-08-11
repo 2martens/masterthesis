@@ -200,7 +200,7 @@ def predict(generator: callable,
                                                 image_size=image_size),
                   decode_func=functools.partial(
                       _decode_predictions,
-                      decode_func=ssd_output_decoder.decode_detections_fast,
+                      decode_func=ssd_output_decoder.decode_detections,
                       image_size=image_size,
                       confidence_threshold=confidence_threshold,
                       iou_threshold=iou_threshold
