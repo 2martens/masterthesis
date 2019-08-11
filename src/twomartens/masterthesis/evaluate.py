@@ -54,6 +54,8 @@ def get_number_gt_per_class(labels: Sequence[Sequence[Sequence[int]]],
         # iterate over boxes in image
         for j in range(boxes.shape[0]):
             class_id = int(boxes[j, 0])
+            if class_id > nr_classes:
+                continue
             number_gt_per_class[class_id] += 1
     
     return number_gt_per_class
@@ -93,10 +95,10 @@ def prepare_predictions(predictions: Sequence[Sequence[Sequence[Union[int, float
             class_id = int(box[0])
             # Round the box coordinates to reduce the required memory.
             confidence = box[1]
-            xmin = round(box[xmin])
-            ymin = round(box[ymin])
-            xmax = round(box[xmax])
-            ymax = round(box[ymax])
+            xmin = round(box[2])
+            ymin = round(box[3])
+            xmax = round(box[4])
+            ymax = round(box[5])
             prediction = (image_id, confidence, xmin, ymin, xmax, ymax)
             # Append the predicted box to the results list for its class.
             results[class_id].append(prediction)
