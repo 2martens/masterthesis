@@ -69,7 +69,7 @@ def save_ssd_train_images(images: Union[np.ndarray, Sequence[str]], labels: np.n
         image.save(f"{output_path}/"
                    f"{custom_string}train_image{str(i).zfill(nr_digits)}.png")
         
-        figure = pyplot.figure(figsize=(20, 12))
+        figure = pyplot.figure(figsize=(6.4, 4.8))
         pyplot.imshow(image)
         
         current_axis = pyplot.gca()
