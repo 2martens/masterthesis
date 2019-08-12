@@ -412,7 +412,7 @@ def _get_observations(detections: Sequence[np.ndarray]) -> List[List[np.ndarray]
                                           mode="outer_product",
                                           border_pixels="include")
         image_observations = []
-        used_boxes = set()
+        used_boxes = None
         for j in range(overlaps.shape[0]):
             # check if box is already in existing observation
             if j in used_boxes:
@@ -420,7 +420,9 @@ def _get_observations(detections: Sequence[np.ndarray]) -> List[List[np.ndarray]
             
             box_overlaps = overlaps[j]
             overlap_detections = np.nonzero(box_overlaps >= 0.95)
-            observation_set = set(overlap_detections)
+            if not len(overlap_detections[0]):
+                continue
+            observation_set = np.unique(overlap_detections, axis=0)
             for k in overlap_detections:
                 # check if box was already removed from observation, then skip
                 if k not in observation_set:
@@ -429,17 +431,38 @@ def _get_observations(detections: Sequence[np.ndarray]) -> List[List[np.ndarray]
                 # check if other found detections are also overlapping with this
                 # detection
                 second_overlaps = overlaps[k]
-                second_detections = set(np.nonzero(second_overlaps >= 0.95))
-                difference = observation_set - second_detections
-                observation_set = observation_set - difference
+                second_detections = np.unique(np.nonzero(second_overlaps >= 0.95), axis=0)
+                difference = _set_difference(observation_set, second_detections)
+                observation_set = _set_difference(observation_set, difference)
             
-            used_boxes.update(observation_set)
+            if used_boxes is None:
+                used_boxes = observation_set
+            else:
+                used_boxes = np.unique(np.concatenate([used_boxes, observation_set],
+                                                      axis=0), axis=0)
             image_observations.append(observation_set)
         
         for observation in image_observations:
-            observation_detections = detections_image[np.asarray(list(observation))]
+            observation_detections = detections_image[observation]
             # average over class probabilities
             observation_mean = np.mean(observation_detections, axis=0)
             observations[i].append(observation_mean)
     
     return observations
+
+
+def _set_difference(first_array: np.ndarray, second_array: np.ndarray) -> np.ndarray:
+    """
+    Removes all elements from first_array that are present in second_array.
+    
+    Args:
+        first_array: the first array
+        second_array: the second array
+    
+    Returns:
+        set difference between first_array and second_array
+    """
+    dims = np.maximum(second_array.max(axis=0),
+                      first_array.max(axis=0)) + 1
+    return second_array[~np.in1d(np.ravel_multi_index(second_array.T, dims),
+                                 np.ravel_multi_index(first_array.T, dims))]
