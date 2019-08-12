@@ -292,6 +292,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
                 entropy_threshold_max,
                 confidence_threshold,
                 iou_threshold,
+                top_k,
                 output_path,
                 coco_path,
                 use_dropout,
