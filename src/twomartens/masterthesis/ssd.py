@@ -541,6 +541,8 @@ def _get_observations(detections: Sequence[np.ndarray]) -> List[np.ndarray]:
             observations[i].append(observation_mean)
         
         final_observations.append(np.asarray(observations[i]))
+        if not len(observations[i]):
+            continue
         final_observations[i][:, -1] = -np.sum(final_observations[i][:, :-5] * np.log(final_observations[i][:, :-5]),
                                                axis=-1)
         
