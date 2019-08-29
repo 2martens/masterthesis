@@ -429,7 +429,7 @@ def _apply_entropy_threshold(observations: Sequence[np.ndarray], entropy_thresho
 def _apply_top_k(detections: Sequence[np.ndarray], top_k: float) -> List[np.ndarray]:
     final_detections = []
     batch_size = len(detections)
-    data_type = np.dtype([('image_id', np.int32),
+    data_type = np.dtype([('class_id', np.int32),
                           ('confidence', 'f4'),
                           ('entropy', 'f4'),
                           ('xmin', 'f4'),
@@ -438,7 +438,8 @@ def _apply_top_k(detections: Sequence[np.ndarray], top_k: float) -> List[np.ndar
                           ('ymax', 'f4')])
     for i in range(batch_size):
         image_detections = detections[i]
-        image_detections_structured = np.array(image_detections, dtype=data_type)
+        image_detections_structured = np.core.records.fromarrays(image_detections.transpose(),
+                                                                 dtype=data_type)
         descending_indices = np.argsort(-image_detections_structured['confidence'])
         image_detections_sorted = np.asarray(image_detections_structured[descending_indices])
         top_k_indices = np.argpartition(image_detections_sorted[:, 1],
