@@ -471,7 +471,7 @@ def _get_observations(detections: Sequence[np.ndarray]) -> List[np.ndarray]:
         used_boxes = None
         for j in range(overlaps.shape[0]):
             # check if box is already in existing observation
-            if j in used_boxes:
+            if used_boxes is not None and j in used_boxes:
                 continue
             
             box_overlaps = overlaps[j]
