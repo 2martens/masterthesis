@@ -438,6 +438,10 @@ def _apply_top_k(detections: Sequence[np.ndarray], top_k: float) -> List[np.ndar
                           ('ymax', 'f4')])
     for i in range(batch_size):
         image_detections = detections[i]
+        if not image_detections.size:
+            final_detections.append(image_detections)
+            continue
+        
         image_detections_structured = np.core.records.fromarrays(image_detections.transpose(),
                                                                  dtype=data_type)
         descending_indices = np.argsort(-image_detections_structured['confidence'])
