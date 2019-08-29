@@ -407,6 +407,10 @@ def _apply_entropy_threshold(observations: Sequence[np.ndarray], entropy_thresho
     final_observations = []
     batch_size = len(observations)
     for i in range(batch_size):
+        if not observations[i].size:
+            final_observations.append(observations[i])
+            continue
+        
         filtered_image_observations = observations[observations[i][-1] < entropy_threshold]
         final_image_observations = np.copy(filtered_image_observations[:, :, -8:-1])
         final_image_observations[:, :, 0] = np.argmax(filtered_image_observations[:, :, :-5], axis=-1)
@@ -455,6 +459,10 @@ def _get_observations(detections: Sequence[np.ndarray]) -> List[np.ndarray]:
     # iterate over images
     for i in range(batch_size):
         detections_image = np.asarray(detections[i])
+        if not detections_image.size:
+            final_observations.append(detections_image)
+            continue
+        
         overlaps = bounding_box_utils.iou(detections_image[:, -5:-1],
                                           detections_image[:, -5:-1],
                                           mode="outer_product",
