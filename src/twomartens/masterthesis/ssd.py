@@ -411,7 +411,7 @@ def _apply_entropy_threshold(observations: Sequence[np.ndarray], entropy_thresho
             final_observations.append(observations[i])
             continue
         
-        filtered_image_observations = observations[observations[i][:, -1] < entropy_threshold]
+        filtered_image_observations = observations[i][observations[i][:, -1] < entropy_threshold]
         final_image_observations = np.copy(filtered_image_observations[:, -8:-1])
         final_image_observations[:, 0] = np.argmax(filtered_image_observations[:, :-5], axis=-1)
         final_image_observations[:, 1] = np.amax(filtered_image_observations[:, :-5], axis=-1)
