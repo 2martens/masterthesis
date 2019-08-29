@@ -411,11 +411,11 @@ def _apply_entropy_threshold(observations: Sequence[np.ndarray], entropy_thresho
             final_observations.append(observations[i])
             continue
         
-        filtered_image_observations = observations[observations[i][-1] < entropy_threshold]
-        final_image_observations = np.copy(filtered_image_observations[:, :, -8:-1])
-        final_image_observations[:, :, 0] = np.argmax(filtered_image_observations[:, :, :-5], axis=-1)
-        final_image_observations[:, :, 1] = np.amax(filtered_image_observations[:, :, :-5], axis=-1)
-        final_image_observations[:, :, 2] = filtered_image_observations[:, :, -1]
+        filtered_image_observations = observations[observations[i][:, -1] < entropy_threshold]
+        final_image_observations = np.copy(filtered_image_observations[:, -8:-1])
+        final_image_observations[:, 0] = np.argmax(filtered_image_observations[:, :-5], axis=-1)
+        final_image_observations[:, 1] = np.amax(filtered_image_observations[:, :-5], axis=-1)
+        final_image_observations[:, 2] = filtered_image_observations[:, -1]
         final_observations.append(final_image_observations)
     
     return final_observations
@@ -479,7 +479,7 @@ def _get_observations(detections: Sequence[np.ndarray]) -> List[np.ndarray]:
             if not len(overlap_detections[0]):
                 continue
             observation_set = np.unique(overlap_detections, axis=0)
-            for k in overlap_detections:
+            for k in overlap_detections[0]:
                 # check if box was already removed from observation, then skip
                 if k not in observation_set:
                     continue
@@ -488,8 +488,8 @@ def _get_observations(detections: Sequence[np.ndarray]) -> List[np.ndarray]:
                 # detection
                 second_overlaps = overlaps[k]
                 second_detections = np.unique(np.nonzero(second_overlaps >= 0.95), axis=0)
-                difference = _set_difference(observation_set, second_detections)
-                observation_set = _set_difference(observation_set, difference)
+                difference = np.setdiff1d(observation_set, second_detections, assume_unique=True)
+                observation_set = np.setdiff1d(observation_set, difference)
             
             if used_boxes is None:
                 used_boxes = observation_set
@@ -522,7 +522,11 @@ def _set_difference(first_array: np.ndarray, second_array: np.ndarray) -> np.nda
     Returns:
         set difference between first_array and second_array
     """
-    dims = np.maximum(second_array.max(axis=0),
-                      first_array.max(axis=0)) + 1
-    return second_array[~np.in1d(np.ravel_multi_index(second_array.T, dims),
-                                 np.ravel_multi_index(first_array.T, dims))]
+    max2 = second_array.max(axis=0)
+    max1 = first_array.max(axis=0)
+    dims = np.maximum(max2,
+                      max1) + 1
+    rmi2 = np.ravel_multi_index(second_array.T, dims)
+    rmi1 = np.ravel_multi_index(first_array.T, dims)
+    in1d = np.in1d(rmi2, rmi1)
+    return second_array[~in1d]
