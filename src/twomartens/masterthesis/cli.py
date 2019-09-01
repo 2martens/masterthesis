@@ -312,19 +312,27 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
         predictions_glob_string, label_glob_string = _ssd_evaluate_prepare_paths(args,
                                                                                  output_path,
                                                                                  evaluation_path)
-    
-    _ssd_evaluate_entropy_loop(use_entropy_threshold, entropy_threshold_min, entropy_threshold_max,
-                               predictions_glob_string, label_glob_string,
-                               label_file, filenames_file, predictions_file,
-                               predictions_per_class_file, result_file,
-                               output_path, coco_path,
-                               image_size, batch_size, nr_classes,
-                               iou_threshold)
+
+    labels, filenames = _ssd_evaluate_unbatch_dict(label_glob_string)
+    _pickle(label_file, labels)
+    _pickle(filenames_file, filenames)
+
+    _ssd_evaluate_entropy_loop(use_entropy_threshold=use_entropy_threshold,
+                               entropy_threshold_min=entropy_threshold_min,
+                               entropy_threshold_max=entropy_threshold_max,
+                               predictions_glob_string=predictions_glob_string,
+                               predictions_file=predictions_file,
+                               labels=labels, filenames=filenames,
+                               predictions_per_class_file=predictions_per_class_file,
+                               result_file=result_file,
+                               output_path=output_path, coco_path=coco_path,
+                               image_size=image_size, batch_size=batch_size, nr_classes=nr_classes,
+                               iou_threshold=iou_threshold)
 
 
 def _ssd_evaluate_entropy_loop(use_entropy_threshold: bool, entropy_threshold_min: float, entropy_threshold_max: float,
-                               predictions_glob_string: str, label_glob_string: str,
-                               label_file: str, filenames_file: str, predictions_file: str,
+                               predictions_glob_string: str, predictions_file: str,
+                               labels: Sequence[Sequence], filenames: Sequence[str],
                                predictions_per_class_file: str, result_file: str,
                                output_path: str, coco_path: str,
                                image_size: int, batch_size: int, nr_classes: int,
@@ -341,15 +349,9 @@ def _ssd_evaluate_entropy_loop(use_entropy_threshold: bool, entropy_threshold_mi
         entropy_thresholds = [round(i / 10 + entropy_threshold_min, 1) for i in range(nr_steps)]
     else:
         entropy_thresholds = [0]
-
+        
     for entropy_threshold in entropy_thresholds:
     
-        labels, filenames = _ssd_evaluate_unbatch_dict(f"{label_glob_string}-{entropy_threshold}"
-                                                       if use_entropy_threshold else label_glob_string)
-        _pickle(f"{label_file}-{entropy_threshold}.bin" if use_entropy_threshold else f"{label_file}.bin", labels)
-        _pickle(f"{filenames_file}-{entropy_threshold}.bin"
-                if use_entropy_threshold else f"{filenames_file}.bin", filenames)
-        
         predictions = _ssd_evaluate_unbatch_list(f"{predictions_glob_string}-{entropy_threshold}"
                                                  if use_entropy_threshold else predictions_glob_string)
         _pickle(f"{predictions_file}-{entropy_threshold}.bin"
@@ -763,8 +765,8 @@ def _ssd_evaluate_prepare_paths(args: argparse.Namespace,
     output_path = f"{output_path}/{args.network}/test/{args.iteration}"
     evaluation_path = f"{evaluation_path}/{args.network}"
     result_file = f"{evaluation_path}/results-{args.iteration}"
-    label_file = f"{output_path}/labels"
-    filenames_file = f"{output_path}/filenames"
+    label_file = f"{output_path}/labels.bin"
+    filenames_file = f"{output_path}/filenames.bin"
     predictions_file = f"{output_path}/predictions"
     predictions_per_class_file = f"{output_path}/predictions_class"
     prediction_glob_string = f"{output_path}/*ssd_prediction*"
@@ -892,7 +894,8 @@ def _ssd_train_get_generators(args: argparse.Namespace,
                               batch_size: int,
                               image_size: int,
                               nr_trajectories: int,
-                              predictor_sizes: Sequence[Sequence[int]]) -> Tuple[Generator, int, Generator, Generator, int, Generator]:
+                              predictor_sizes: Sequence[Sequence[int]]) -> Tuple[Generator, int,
+                                                                                 Generator, Generator, int, Generator]:
     
     if nr_trajectories == -1:
         nr_trajectories = None
