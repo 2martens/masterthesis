@@ -80,7 +80,7 @@ def test(args: argparse.Namespace) -> None:
 
 
 def evaluate(args: argparse.Namespace) -> None:
-    if args.network == "ssd":
+    if args.network == "ssd" or args.network == "bayesian_ssd":
         _ssd_evaluate(args)
     else:
         raise NotImplementedError
@@ -300,15 +300,10 @@ def _ssd_test(args: argparse.Namespace) -> None:
 
 
 def _ssd_evaluate(args: argparse.Namespace) -> None:
-    from twomartens.masterthesis import debug
-    from twomartens.masterthesis import evaluate
-
-    from twomartens.masterthesis.ssd_keras.bounding_box_utils import bounding_box_utils
-    from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
-    
     _init_eager_mode()
     
     batch_size, image_size, iou_threshold, nr_classes, \
+        use_entropy_threshold, entropy_threshold_min, entropy_threshold_max, \
         evaluation_path, output_path, coco_path = _ssd_evaluate_get_config_values(config_get=conf.get_property)
     
     output_path, evaluation_path, \
@@ -318,68 +313,106 @@ def _ssd_evaluate(args: argparse.Namespace) -> None:
                                                                                  output_path,
                                                                                  evaluation_path)
     
-    labels, filenames = _ssd_evaluate_unbatch_dict(label_glob_string)
-    _pickle(label_file, labels)
-    _pickle(filenames_file, filenames)
-    
-    predictions = _ssd_evaluate_unbatch_list(predictions_glob_string)
-    _pickle(predictions_file, predictions)
+    _ssd_evaluate_entropy_loop(use_entropy_threshold, entropy_threshold_min, entropy_threshold_max,
+                               predictions_glob_string, label_glob_string,
+                               label_file, filenames_file, predictions_file,
+                               predictions_per_class_file, result_file,
+                               output_path, coco_path,
+                               image_size, batch_size, nr_classes,
+                               iou_threshold)
 
-    _ssd_evaluate_save_images(filenames, predictions,
-                              coco_utils.get_coco_category_maps, debug.save_ssd_train_images,
-                              image_size, batch_size,
-                              output_path, coco_path)
-    
-    predictions_per_class = evaluate.prepare_predictions(predictions, nr_classes)
-    _pickle(predictions_per_class_file, predictions_per_class)
 
-    number_gt_per_class = evaluate.get_number_gt_per_class(labels, nr_classes)
+def _ssd_evaluate_entropy_loop(use_entropy_threshold: bool, entropy_threshold_min: float, entropy_threshold_max: float,
+                               predictions_glob_string: str, label_glob_string: str,
+                               label_file: str, filenames_file: str, predictions_file: str,
+                               predictions_per_class_file: str, result_file: str,
+                               output_path: str, coco_path: str,
+                               image_size: int, batch_size: int, nr_classes: int,
+                               iou_threshold: float) -> None:
+    
+    from twomartens.masterthesis import debug
+    from twomartens.masterthesis import evaluate
+    
+    from twomartens.masterthesis.ssd_keras.bounding_box_utils import bounding_box_utils
+    from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
+    
+    if use_entropy_threshold:
+        nr_steps = math.floor((entropy_threshold_max - entropy_threshold_min) * 10)
+        entropy_thresholds = [round(i / 10 + entropy_threshold_min, 1) for i in range(nr_steps)]
+    else:
+        entropy_thresholds = [0]
 
-    true_positives, false_positives, \
-        cum_true_positives, cum_false_positives, \
-        open_set_error, cumulative_open_set_error, \
-        cum_true_positives_overall, cum_false_positives_overall = evaluate.match_predictions(predictions_per_class,
-                                                                                             labels,
-                                                                                             bounding_box_utils.iou,
-                                                                                             nr_classes, iou_threshold)
+    for entropy_threshold in entropy_thresholds:
     
-    cum_precisions, cum_recalls, \
-        cum_precisions_micro, cum_recalls_micro, \
-        cum_precisions_macro, cum_recalls_macro = evaluate.get_precision_recall(number_gt_per_class,
-                                                                                cum_true_positives,
-                                                                                cum_false_positives,
-                                                                                cum_true_positives_overall,
-                                                                                cum_false_positives_overall,
-                                                                                nr_classes)
-    
-    f1_scores, f1_scores_micro, f1_scores_macro = evaluate.get_f1_score(cum_precisions, cum_recalls,
-                                                                        cum_precisions_micro, cum_recalls_micro,
-                                                                        cum_precisions_macro, cum_recalls_macro,
-                                                                        nr_classes)
-    average_precisions = evaluate.get_mean_average_precisions(cum_precisions, cum_recalls, nr_classes)
-    mean_average_precision = evaluate.get_mean_average_precision(average_precisions)
-    
-    results = _ssd_evaluate_get_results(true_positives,
-                                        false_positives,
-                                        cum_true_positives,
-                                        cum_false_positives,
-                                        cum_true_positives_overall,
-                                        cum_false_positives_overall,
-                                        cum_precisions,
-                                        cum_recalls,
-                                        cum_precisions_micro,
-                                        cum_recalls_micro,
-                                        cum_precisions_macro,
-                                        cum_recalls_macro,
-                                        f1_scores,
-                                        f1_scores_micro,
-                                        f1_scores_macro,
-                                        average_precisions,
-                                        mean_average_precision,
-                                        open_set_error,
-                                        cumulative_open_set_error)
-    
-    _pickle(result_file, results)
+        labels, filenames = _ssd_evaluate_unbatch_dict(f"{label_glob_string}-{entropy_threshold}"
+                                                       if use_entropy_threshold else label_glob_string)
+        _pickle(f"{label_file}-{entropy_threshold}.bin" if use_entropy_threshold else f"{label_file}.bin", labels)
+        _pickle(f"{filenames_file}-{entropy_threshold}.bin"
+                if use_entropy_threshold else f"{filenames_file}.bin", filenames)
+        
+        predictions = _ssd_evaluate_unbatch_list(f"{predictions_glob_string}-{entropy_threshold}"
+                                                 if use_entropy_threshold else predictions_glob_string)
+        _pickle(f"{predictions_file}-{entropy_threshold}.bin"
+                if use_entropy_threshold else f"{predictions_file}.bin", predictions)
+        
+        _ssd_evaluate_save_images(filenames, predictions,
+                                  coco_utils.get_coco_category_maps, debug.save_ssd_train_images,
+                                  image_size, batch_size,
+                                  output_path, coco_path)
+        
+        predictions_per_class = evaluate.prepare_predictions(predictions, nr_classes)
+        _pickle(f"{predictions_per_class_file}-{entropy_threshold}.bin"
+                if use_entropy_threshold else f"{predictions_per_class_file}.bin", predictions_per_class)
+        
+        number_gt_per_class = evaluate.get_number_gt_per_class(labels, nr_classes)
+        
+        true_positives, false_positives, \
+            cum_true_positives, cum_false_positives, \
+            open_set_error, cumulative_open_set_error, \
+            cum_true_positives_overall, cum_false_positives_overall = evaluate.match_predictions(predictions_per_class,
+                                                                                                 labels,
+                                                                                                 bounding_box_utils.iou,
+                                                                                                 nr_classes,
+                                                                                                 iou_threshold)
+        
+        cum_precisions, cum_recalls, \
+            cum_precisions_micro, cum_recalls_micro, \
+            cum_precisions_macro, cum_recalls_macro = evaluate.get_precision_recall(number_gt_per_class,
+                                                                                    cum_true_positives,
+                                                                                    cum_false_positives,
+                                                                                    cum_true_positives_overall,
+                                                                                    cum_false_positives_overall,
+                                                                                    nr_classes)
+        
+        f1_scores, f1_scores_micro, f1_scores_macro = evaluate.get_f1_score(cum_precisions, cum_recalls,
+                                                                            cum_precisions_micro, cum_recalls_micro,
+                                                                            cum_precisions_macro, cum_recalls_macro,
+                                                                            nr_classes)
+        average_precisions = evaluate.get_mean_average_precisions(cum_precisions, cum_recalls, nr_classes)
+        mean_average_precision = evaluate.get_mean_average_precision(average_precisions)
+        
+        results = _ssd_evaluate_get_results(true_positives,
+                                            false_positives,
+                                            cum_true_positives,
+                                            cum_false_positives,
+                                            cum_true_positives_overall,
+                                            cum_false_positives_overall,
+                                            cum_precisions,
+                                            cum_recalls,
+                                            cum_precisions_micro,
+                                            cum_recalls_micro,
+                                            cum_precisions_macro,
+                                            cum_recalls_macro,
+                                            f1_scores,
+                                            f1_scores_micro,
+                                            f1_scores_macro,
+                                            average_precisions,
+                                            mean_average_precision,
+                                            open_set_error,
+                                            cumulative_open_set_error)
+        
+        _pickle(f"{result_file}-{entropy_threshold}.bin"
+                if use_entropy_threshold else f"{result_file}.bin", results)
 
 
 def _ssd_evaluate_save_images(filenames: Sequence[str], labels: Sequence[np.ndarray],
@@ -638,17 +671,26 @@ def _ssd_test_get_config_values(args: argparse.Namespace,
 
 def _ssd_evaluate_get_config_values(config_get: Callable[[str], Union[str, int, float, bool]]
                                     ) -> Tuple[int, int, float, int,
+                                               bool, float, float,
                                                str, str, str]:
     batch_size = config_get("Parameters.batch_size")
     image_size = config_get("Parameters.ssd_image_size")
     iou_threshold = config_get("Parameters.ssd_iou_threshold")
     nr_classes = config_get("Parameters.nr_classes")
     
+    use_entropy_threshold = config_get("Parameters.ssd_use_entropy_threshold")
+    entropy_threshold_min = config_get("Parameters.ssd_entropy_threshold_min")
+    entropy_threshold_max = config_get("Parameters.ssd_entropy_threshold_max")
+    
     evaluation_path = config_get("Paths.evaluation")
     output_path = config_get("Paths.output")
     coco_path = config_get("Paths.coco")
     
-    return batch_size, image_size, iou_threshold, nr_classes, evaluation_path, output_path, coco_path
+    return (
+        batch_size, image_size, iou_threshold, nr_classes,
+        use_entropy_threshold, entropy_threshold_min, entropy_threshold_max,
+        evaluation_path, output_path, coco_path
+    )
 
 
 def _measure_get_config_values(config_get: Callable[[str], Union[str, int, float, bool]]
@@ -720,11 +762,11 @@ def _ssd_evaluate_prepare_paths(args: argparse.Namespace,
     
     output_path = f"{output_path}/{args.network}/test/{args.iteration}"
     evaluation_path = f"{evaluation_path}/{args.network}"
-    result_file = f"{evaluation_path}/results-{args.iteration}.bin"
-    label_file = f"{output_path}/labels.bin"
-    filenames_file = f"{output_path}/filenames.bin"
-    predictions_file = f"{output_path}/predictions.bin"
-    predictions_per_class_file = f"{output_path}/predictions_class.bin"
+    result_file = f"{evaluation_path}/results-{args.iteration}"
+    label_file = f"{output_path}/labels"
+    filenames_file = f"{output_path}/filenames"
+    predictions_file = f"{output_path}/predictions"
+    predictions_per_class_file = f"{output_path}/predictions_class"
     prediction_glob_string = f"{output_path}/*ssd_prediction*"
     label_glob_string = f"{output_path}/*ssd_label*"
     
