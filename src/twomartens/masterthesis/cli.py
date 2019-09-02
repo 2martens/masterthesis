@@ -572,10 +572,10 @@ def _ssd_evaluate_unbatch_list(glob_string: str) -> List[np.ndarray]:
     return unbatched
 
 
-def _ssd_train_get_config_values(config_get: Callable[[str], Union[str, float, int, bool]]
-                                ) -> Tuple[int, int, float, int, int, float, int, int,
-                                           str, str, str, str, str,
-                                           bool, bool]:
+def _ssd_train_get_config_values(config_get: Callable[[str], Union[str, float, int, bool]]) \
+        -> Tuple[int, int, float, int, int, float, int, int,
+                 str, str, str, str, str,
+                 bool, bool]:
     
     batch_size = config_get("Parameters.batch_size")
     image_size = config_get("Parameters.ssd_image_size")
