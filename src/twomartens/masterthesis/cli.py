@@ -44,10 +44,12 @@ from twomartens.masterthesis import config as conf
 
 
 def config(args: argparse.Namespace) -> None:
+    """Executes the config action from the CLI."""
     _config_execute_action(args, conf.get_property, conf.set_property, conf.list_property_values)
 
 
 def prepare(args: argparse.Namespace) -> None:
+    """Executes the prepare action from the CLI."""
     import pickle
     
     from twomartens.masterthesis import data
@@ -69,15 +71,18 @@ def prepare(args: argparse.Namespace) -> None:
 
 
 def train(args: argparse.Namespace) -> None:
+    """Executes the train action from the CLI."""
     _train_execute_action(args, _ssd_train)
 
 
 def test(args: argparse.Namespace) -> None:
+    """Executes the test action from the CLI."""
     if args.network == "ssd" or args.network == "bayesian_ssd":
         _ssd_test(args)
 
 
 def evaluate(args: argparse.Namespace) -> None:
+    """Executes the evaluate action from the CLI."""
     if args.network == "ssd" or args.network == "bayesian_ssd":
         _ssd_evaluate(args)
     else:
@@ -85,6 +90,7 @@ def evaluate(args: argparse.Namespace) -> None:
 
 
 def visualise(args: argparse.Namespace) -> None:
+    """Executes the visualise action from the CLI."""
     from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
     
     output_path, coco_path, ground_truth_path = _visualise_get_config_values(conf.get_property)
@@ -99,6 +105,7 @@ def visualise(args: argparse.Namespace) -> None:
 
 
 def visualise_metrics(args: argparse.Namespace) -> None:
+    """Executes the visualise_metrics action from the CLI."""
     output_path, evaluation_path = _visualise_metrics_get_config_values(conf.get_property)
     output_path, metrics_file = _visualise_metrics_prepare_paths(args, output_path, evaluation_path)
     _visualise_metrics(_visualise_precision_recall, _visualise_ose_f1,
@@ -106,6 +113,7 @@ def visualise_metrics(args: argparse.Namespace) -> None:
 
 
 def measure_mapping(args: argparse.Namespace) -> None:
+    """Executes the measure_mapping action from the CLI."""
     from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
     
     output_path, coco_path, ground_truth_path = _measure_get_config_values(conf.get_property)
