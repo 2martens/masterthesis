@@ -10,3 +10,4 @@ beautifulsoup4
 matplotlib
 protobuf
 imutils
+attributedict
