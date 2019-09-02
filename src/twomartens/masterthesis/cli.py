@@ -69,14 +69,12 @@ def prepare(args: argparse.Namespace) -> None:
 
 
 def train(args: argparse.Namespace) -> None:
-    _train_execute_action(args, _ssd_train, _auto_encoder_train)
+    _train_execute_action(args, _ssd_train)
 
 
 def test(args: argparse.Namespace) -> None:
     if args.network == "ssd" or args.network == "bayesian_ssd":
         _ssd_test(args)
-    elif args.network == "auto_encoder":
-        _auto_encoder_test(args)
 
 
 def evaluate(args: argparse.Namespace) -> None:
@@ -152,11 +150,9 @@ def _config_execute_action(args: argparse.Namespace, on_get: callable,
         on_list()
 
 
-def _train_execute_action(args: argparse.Namespace, on_ssd: callable, on_auto_encoder: callable) -> None:
+def _train_execute_action(args: argparse.Namespace, on_ssd: callable) -> None:
     if args.network == "ssd" or args.network == "bayesian_ssd":
         on_ssd(args)
-    elif args.network == "auto_encoder":
-        on_auto_encoder(args)
 
 
 def _ssd_train(args: argparse.Namespace) -> None:
@@ -1060,81 +1056,3 @@ def _visualise_ose_f1(open_set_error: np.ndarray, f1_scores: np.ndarray,
     
     pyplot.savefig(f"{output_path}/ose-f1-{file_suffix}.png")
     pyplot.close(figure)
-
-
-def _auto_encoder_train(args: argparse.Namespace) -> None:
-    import os
-    
-    from tensorflow.python.ops import summary_ops_v2
-    
-    from twomartens.masterthesis import data
-    from twomartens.masterthesis.aae import train
-    
-    tf.enable_eager_execution()
-    coco_path = args.coco_path
-    category = args.category
-    batch_size = 16
-    image_size = 256
-    coco_data = data.load_coco_train(coco_path, category, num_epochs=args.num_epochs, batch_size=batch_size,
-                                     resized_shape=(image_size, image_size))
-    summary_path = conf.get_property("Paths.summary")
-    summary_path = f"{summary_path}/{args.network}/train/category-{category}/{args.iteration}"
-    train_summary_writer = summary_ops_v2.create_file_writer(
-        summary_path
-    )
-    os.makedirs(summary_path, exist_ok=True)
-    
-    weights_path = conf.get_property("Paths.weights")
-    weights_path = f"{weights_path}/{args.network}/category-{category}"
-    os.makedirs(weights_path, exist_ok=True)
-    if args.debug:
-        with train_summary_writer.as_default():
-            train.train_simple(coco_data, iteration=args.iteration,
-                               weights_prefix=weights_path,
-                               zsize=16, lr=0.0001, verbose=args.verbose, image_size=image_size,
-                               channels=3, train_epoch=args.num_epochs, batch_size=batch_size)
-    else:
-        train.train_simple(coco_data, iteration=args.iteration,
-                           weights_prefix=weights_path,
-                           zsize=16, lr=0.0001, verbose=args.verbose, image_size=image_size,
-                           channels=3, train_epoch=args.num_epochs, batch_size=batch_size)
-
-
-def _auto_encoder_test(args: argparse.Namespace) -> None:
-    import os
-    
-    from tensorflow.python.ops import summary_ops_v2
-    
-    from twomartens.masterthesis import data
-    from twomartens.masterthesis.aae import run
-    
-    tf.enable_eager_execution()
-    coco_path = conf.get_property("Paths.coco")
-    category = args.category
-    category_trained = args.category_trained
-    batch_size = 16
-    image_size = 256
-    coco_data = data.load_coco_val(coco_path, category, num_epochs=1,
-                                   batch_size=batch_size, resized_shape=(image_size, image_size))
-    
-    summary_path = conf.get_property("Paths.summary")
-    summary_path = f"{summary_path}/{args.network}/val/category-{category}/{args.iteration}"
-    os.makedirs(summary_path, exist_ok=True)
-    use_summary_writer = summary_ops_v2.create_file_writer(
-        summary_path
-    )
-    
-    weights_path = conf.get_property("Paths.weights")
-    weights_path = f"{weights_path}/{args.network}/category-{category_trained}"
-    os.makedirs(weights_path, exist_ok=True)
-    if args.debug:
-        with use_summary_writer.as_default():
-            run.run_simple(coco_data, iteration=args.iteration_trained,
-                           weights_prefix=weights_path,
-                           zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size,
-                           image_size=image_size)
-    else:
-        run.run_simple(coco_data, iteration=args.iteration_trained,
-                       weights_prefix=weights_path,
-                       zsize=16, verbose=args.verbose, channels=3, batch_size=batch_size,
-                       image_size=image_size)

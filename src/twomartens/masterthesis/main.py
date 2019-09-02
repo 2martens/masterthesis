@@ -155,22 +155,12 @@ def _build_train(parser: argparse.ArgumentParser) -> None:
     sub_parsers.required = True
     
     ssd_parser = sub_parsers.add_parser("ssd", help="SSD")
-    # ssd_bayesian_parser = sub_parsers.add_parser("bayesian_ssd", help="SSD with dropout layers")
-    auto_encoder_parser = sub_parsers.add_parser("auto_encoder", help="Auto-encoder network")
     
     # build sub parsers
     _build_ssd_train(ssd_parser)
-    # _build_bayesian_ssd(ssd_bayesian_parser)
-    _build_auto_encoder_train(auto_encoder_parser)
  
 
 def _build_ssd_train(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("num_epochs", type=int, help="the number of epochs to train", default=80)
-    parser.add_argument("iteration", type=int, help="the training iteration")
-    
-
-def _build_auto_encoder_train(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("category", type=int, help="the COCO category to use")
     parser.add_argument("num_epochs", type=int, help="the number of epochs to train", default=80)
     parser.add_argument("iteration", type=int, help="the training iteration")
     
@@ -181,24 +171,15 @@ def _build_test(parser: argparse.ArgumentParser) -> None:
     
     ssd_bayesian_parser = sub_parsers.add_parser("bayesian_ssd", help="SSD with dropout layers")
     ssd_parser = sub_parsers.add_parser("ssd", help="SSD")
-    auto_encoder_parser = sub_parsers.add_parser("auto_encoder", help="Auto-encoder network")
     
     # build sub parsers
     _build_ssd_test(ssd_bayesian_parser)
     _build_ssd_test(ssd_parser)
-    _build_auto_encoder_test(auto_encoder_parser)
 
 
 def _build_ssd_test(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("iteration", type=int, help="the validation iteration")
     parser.add_argument("train_iteration", type=int, help="the train iteration")
-    
-
-def _build_auto_encoder_test(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("category", type=int, help="the COCO category to validate")
-    parser.add_argument("category_trained", type=int, help="the trained COCO category")
-    parser.add_argument("iteration", type=int, help="the validation iteration")
-    parser.add_argument("iteration_trained", type=int, help="the training iteration")
 
 
 def _build_evaluate(parser: argparse.ArgumentParser) -> None:
@@ -228,11 +209,9 @@ def _build_visualise_metrics(parser: argparse.ArgumentParser) -> None:
     
     ssd_bayesian_parser = sub_parsers.add_parser("bayesian_ssd", help="SSD with dropout layers")
     ssd_parser = sub_parsers.add_parser("ssd", help="SSD")
-    auto_encoder_parser = sub_parsers.add_parser("auto_encoder", help="Auto-encoder network")
     
     ssd_bayesian_parser.add_argument("iteration", type=int, help="the validation iteration to use")
     ssd_parser.add_argument("iteration", type=int, help="the validation iteration to use")
-    auto_encoder_parser.add_argument("iteration", type=int, help="the validation iteration to use")
 
 
 def _build_measure(parser: argparse.ArgumentParser) -> None:
