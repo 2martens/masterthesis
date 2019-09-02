@@ -393,25 +393,25 @@ def _ssd_evaluate_entropy_loop(use_entropy_threshold: bool, entropy_threshold_mi
         average_precisions = evaluate.get_mean_average_precisions(cum_precisions, cum_recalls, nr_classes)
         mean_average_precision = evaluate.get_mean_average_precision(average_precisions)
         
-        results = _ssd_evaluate_get_results(true_positives,
-                                            false_positives,
-                                            cum_true_positives,
-                                            cum_false_positives,
-                                            cum_true_positives_overall,
-                                            cum_false_positives_overall,
-                                            cum_precisions,
-                                            cum_recalls,
-                                            cum_precisions_micro,
-                                            cum_recalls_micro,
-                                            cum_precisions_macro,
-                                            cum_recalls_macro,
-                                            f1_scores,
-                                            f1_scores_micro,
-                                            f1_scores_macro,
-                                            average_precisions,
-                                            mean_average_precision,
-                                            open_set_error,
-                                            cumulative_open_set_error)
+        results = _ssd_evaluate_get_results(true_positives=true_positives,
+                                            false_positives=false_positives,
+                                            cum_true_positives=cum_true_positives,
+                                            cum_false_positives=cum_false_positives,
+                                            cum_true_positives_overall=cum_true_positives_overall,
+                                            cum_false_positives_overall=cum_false_positives_overall,
+                                            cum_precisions=cum_precisions,
+                                            cum_recalls=cum_recalls,
+                                            cum_precisions_micro=cum_precisions_micro,
+                                            cum_recalls_micro=cum_recalls_micro,
+                                            cum_precisions_macro=cum_precisions_macro,
+                                            cum_recalls_macro=cum_recalls_macro,
+                                            f1_scores=f1_scores,
+                                            f1_scores_micro=f1_scores_micro,
+                                            f1_scores_macro=f1_scores_macro,
+                                            average_precisions=average_precisions,
+                                            mean_average_precision=mean_average_precision,
+                                            open_set_error=open_set_error,
+                                            cumulative_open_set_error=cumulative_open_set_error)
         
         _pickle(f"{result_file}-{entropy_threshold}.bin"
                 if use_entropy_threshold else f"{result_file}.bin", results)
@@ -1026,47 +1026,10 @@ def _ssd_save_history(summary_path: str, history: tf.keras.callbacks.History) ->
         pickle.dump(history.history, file)
 
 
-def _ssd_evaluate_get_results(true_positives: Sequence[np.ndarray],
-                              false_positives: Sequence[np.ndarray],
-                              cum_true_positives: Sequence[np.ndarray],
-                              cum_false_positives: Sequence[np.ndarray],
-                              cum_true_positives_micro: np.ndarray,
-                              cum_false_positives_micro: np.ndarray,
-                              cum_precisions: Sequence[np.ndarray],
-                              cum_recalls: Sequence[np.ndarray],
-                              cum_precision_micro: np.ndarray,
-                              cum_recall_micro: np.ndarray,
-                              cum_precision_macro: np.ndarray,
-                              cum_recall_macro: np.ndarray,
-                              f1_scores: Sequence[np.ndarray],
-                              f1_scores_micro: np.ndarray,
-                              f1_scores_macro: np.ndarray,
-                              average_precisions: Sequence[float],
-                              mean_average_precision: float,
-                              open_set_error: np.ndarray,
-                              cumulative_open_set_error: np.ndarray
-                              ) -> Dict[str, Union[np.ndarray, float, int]]:
-    results = {
-        "true_positives":             true_positives,
-        "false_positives":            false_positives,
-        "cumulative_true_positives":  cum_true_positives,
-        "cumulative_false_positives": cum_false_positives,
-        "cumulative_true_positives_micro": cum_true_positives_micro,
-        "cumulative_false_positives_micro": cum_false_positives_micro,
-        "cumulative_precisions":      cum_precisions,
-        "cumulative_recalls":         cum_recalls,
-        "cumulative_precision_micro": cum_precision_micro,
-        "cumulative_recall_micro":    cum_recall_micro,
-        "cumulative_precision_macro": cum_precision_macro,
-        "cumulative_recall_macro":    cum_recall_macro,
-        "f1_scores":                  f1_scores,
-        "f1_scores_micro":            f1_scores_micro,
-        "f1_scores_macro":            f1_scores_macro,
-        "mean_average_precisions":    average_precisions,
-        "mean_average_precision":     mean_average_precision,
-        "open_set_error":             open_set_error,
-        "cumulative_open_set_error":  cumulative_open_set_error
-    }
+def _ssd_evaluate_get_results(**kwargs) -> Dict[str, Union[np.ndarray, float, int]]:
+    results = {}
+    for key in kwargs:
+        results[key] = kwargs[key]
     
     return results
 
