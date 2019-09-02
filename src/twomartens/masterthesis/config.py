@@ -31,6 +31,8 @@ import configparser
 import os
 from typing import Union
 
+from attributedict.collections import AttributeDict
+
 CONFIG_FILE = "tm-masterthesis-config.ini"
 _CONFIG_PROPS = {
     "Paths": {
@@ -68,6 +70,22 @@ _CONFIG_PROPS = {
         "nr_trajectories": (int, "-1")
     }
 }
+
+
+class Config:
+    """
+    Data class for config values.
+    """
+    def __init__(self):
+        self.paths = AttributeDict({})
+        self.debug = AttributeDict({})
+        self.parameters = AttributeDict({})
+        for group in _CONFIG_PROPS:
+            for value in _CONFIG_PROPS[group]:
+                self[group.lower()][value] = get_property(f"{group}.{value}")
+    
+    def __getitem__(self, item):
+        return getattr(self, item)
 
 
 def get_property(key: str) -> Union[str, float, int, bool]:

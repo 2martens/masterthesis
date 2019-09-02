@@ -39,6 +39,7 @@ from typing import Union
 import math
 import numpy as np
 import tensorflow as tf
+from attributedict.collections import AttributeDict
 
 from twomartens.masterthesis import config as conf
 
@@ -174,64 +175,51 @@ def _ssd_train(args: argparse.Namespace) -> None:
     
     _init_eager_mode()
     
-    batch_size, image_size, learning_rate, steps_per_val_epoch, nr_classes, \
-        dropout_rate, top_k, nr_trajectories, \
-        coco_path, summary_path, weights_path, train_gt_path, val_gt_path, \
-        save_train_images, save_summaries = _ssd_train_get_config_values(conf.get_property)
+    conf_obj = conf.Config()
     
     use_dropout = _ssd_is_dropout(args)
-    summary_path, weights_path, \
-        pre_trained_weights_file = _ssd_train_prepare_paths(args, summary_path, weights_path)
+    paths = _ssd_train_prepare_paths(args, conf_obj)
     
-    file_names_train, instances_train, \
-        file_names_val, instances_val = _ssd_train_load_gt(train_gt_path, val_gt_path)
+    ground_truth = _ssd_train_load_gt(conf_obj)
     
     ssd_model, predictor_sizes = ssd.get_model(use_dropout,
                                                keras_ssd300_dropout.ssd_300_dropout,
                                                keras_ssd300.ssd_300,
-                                               image_size,
-                                               nr_classes,
+                                               conf_obj.parameters.ssd_image_size,
+                                               conf_obj.parameters.nr_classes,
                                                "training",
-                                               dropout_rate,
-                                               top_k,
-                                               pre_trained_weights_file)
+                                               conf_obj.parameters.ssd_dropout_rate,
+                                               conf_obj.parameters.ssd_top_k,
+                                               paths.pre_trained_weights_file)
     loss_func = ssd.get_loss_func()
-    ssd.compile_model(ssd_model, learning_rate, loss_func)
+    ssd.compile_model(ssd_model, conf_obj.parameters.learning_rate, loss_func)
     
-    train_generator, train_length, train_debug_generator, \
-        val_generator, val_length, val_debug_generator = _ssd_train_get_generators(args,
-                                                                                   data.load_scenenet_data,
-                                                                                   file_names_train,
-                                                                                   instances_train,
-                                                                                   file_names_val,
-                                                                                   instances_val,
-                                                                                   coco_path,
-                                                                                   batch_size,
-                                                                                   image_size,
-                                                                                   nr_trajectories,
-                                                                                   predictor_sizes)
+    generators = _ssd_train_get_generators(args, conf_obj,
+                                           data.load_scenenet_data,
+                                           ground_truth,
+                                           predictor_sizes)
     
-    _ssd_debug_save_images(args, save_train_images,
+    _ssd_debug_save_images(args, conf_obj, paths,
                            debug.save_ssd_train_images, coco_utils.get_coco_category_maps,
-                           summary_path, coco_path,
-                           image_size, train_debug_generator)
+                           generators.train_debug_generator)
     
-    nr_batches_train = _get_nr_batches(train_length, batch_size)
-    tensorboard_callback = _ssd_get_tensorboard_callback(args, save_summaries, summary_path)
-    
-    history = _ssd_train_call(
-        args,
-        ssd.train,
-        train_generator,
+    nr_batches_train = _get_nr_batches(generators.train_length, conf_obj.parameters.batch_size)
+    tensorboard_callback = _ssd_get_tensorboard_callback(args, conf_obj.debug.summaries, paths.summary_path)
+
+    history = ssd.train(
+        generators.train_generator,
         nr_batches_train,
-        val_generator,
-        steps_per_val_epoch,
+        generators.val_generator,
+        conf_obj.parameters.steps_per_val_epoch,
         ssd_model,
-        weights_path,
-        tensorboard_callback
+        paths.weights_path,
+        args.iteration,
+        initial_epoch=0,
+        nr_epochs=args.num_epochs,
+        tensorboard_callback=tensorboard_callback
     )
     
-    _ssd_save_history(summary_path, history)
+    _ssd_save_history(paths.summary_path, history)
 
 
 def _ssd_test(args: argparse.Namespace) -> None:
@@ -243,62 +231,47 @@ def _ssd_test(args: argparse.Namespace) -> None:
     
     _init_eager_mode()
     
-    batch_size, image_size, learning_rate, \
-        forward_passes_per_image, nr_classes, confidence_threshold, iou_threshold, \
-        dropout_rate, \
-        use_entropy_threshold, entropy_threshold_min, entropy_threshold_max, \
-        use_coco, \
-        top_k, nr_trajectories, test_pretrained, \
-        coco_path, output_path, weights_path, ground_truth_path = _ssd_test_get_config_values(args, conf.get_property)
-    
+    conf_obj = conf.Config()
     use_dropout = _ssd_is_dropout(args)
-    
-    output_path, weights_file = _ssd_test_prepare_paths(args, output_path,
-                                                        weights_path, test_pretrained)
-    
-    file_names, instances = _ssd_test_load_gt(ground_truth_path)
+    paths = _ssd_test_prepare_paths(args, conf_obj)
+    ground_truth = _ssd_test_load_gt(conf_obj)
 
     ssd_model, predictor_sizes = ssd.get_model(use_dropout,
                                                keras_ssd300_dropout.ssd_300_dropout,
                                                keras_ssd300.ssd_300,
-                                               image_size,
-                                               nr_classes,
+                                               conf_obj.parameters.ssd_image_size,
+                                               conf_obj.parameters.nr_classes,
                                                "training",
-                                               dropout_rate,
-                                               top_k,
-                                               weights_file)
+                                               conf_obj.parameters.ssd_dropout_rate,
+                                               conf_obj.parameters.ssd_top_k,
+                                               paths.weights_file)
 
     loss_func = ssd.get_loss_func()
-    ssd.compile_model(ssd_model, learning_rate, loss_func)
+    ssd.compile_model(ssd_model, conf_obj.parameters.learning_rate, loss_func)
 
-    test_generator, length_dataset, test_debug_generator = _ssd_test_get_generators(args,
-                                                                                    use_coco,
-                                                                                    data.load_coco_val_ssd,
-                                                                                    data.load_scenenet_data,
-                                                                                    file_names,
-                                                                                    instances,
-                                                                                    coco_path,
-                                                                                    batch_size,
-                                                                                    image_size,
-                                                                                    nr_trajectories,
-                                                                                    predictor_sizes)
+    generators = _ssd_test_get_generators(args,
+                                          conf_obj,
+                                          data.load_coco_val_ssd,
+                                          data.load_scenenet_data,
+                                          ground_truth,
+                                          predictor_sizes)
     
-    nr_digits = _get_nr_digits(length_dataset, batch_size)
-    steps_per_epoch = _get_nr_batches(length_dataset, batch_size)
-    ssd.predict(test_generator,
+    nr_digits = _get_nr_digits(generators.length, conf_obj.parameters.batch_size)
+    steps_per_epoch = _get_nr_batches(generators.length, conf_obj.parameters.batch_size)
+    ssd.predict(generators.generator,
                 ssd_model,
                 steps_per_epoch,
-                image_size,
-                batch_size,
-                forward_passes_per_image,
-                use_entropy_threshold,
-                entropy_threshold_min,
-                entropy_threshold_max,
-                confidence_threshold,
-                iou_threshold,
-                top_k,
-                output_path,
-                coco_path,
+                conf_obj.parameters.ssd_image_size,
+                conf_obj.parameters.batch_size,
+                conf_obj.parameters.ssd_forward_passes_per_image,
+                conf_obj.parameters.ssd_use_entropy_threshold,
+                conf_obj.parameters.ssd_entropy_threshold_min,
+                conf_obj.parameters.ssd_entropy_threshold_max,
+                conf_obj.parameters.ssd_confidence_threshold,
+                conf_obj.parameters.ssd_iou_threshold,
+                conf_obj.parameters.ssd_top_k,
+                paths.output_path,
+                conf_obj.paths.coco_path,
                 use_dropout,
                 nr_digits)
 
@@ -306,41 +279,32 @@ def _ssd_test(args: argparse.Namespace) -> None:
 def _ssd_evaluate(args: argparse.Namespace) -> None:
     _init_eager_mode()
     
-    batch_size, image_size, iou_threshold, nr_classes, \
-        use_entropy_threshold, entropy_threshold_min, entropy_threshold_max, \
-        evaluation_path, output_path, coco_path = _ssd_evaluate_get_config_values(config_get=conf.get_property)
+    conf_obj = conf.Config()
     
-    output_path, evaluation_path, \
-        result_file, label_file, filenames_file, \
-        predictions_file, predictions_per_class_file, \
-        predictions_glob_string, label_glob_string = _ssd_evaluate_prepare_paths(args,
-                                                                                 output_path,
-                                                                                 evaluation_path)
+    paths = _ssd_evaluate_prepare_paths(args, conf_obj)
 
-    labels, filenames = _ssd_evaluate_unbatch_dict(label_glob_string)
-    _pickle(label_file, labels)
-    _pickle(filenames_file, filenames)
+    labels, filenames = _ssd_evaluate_unbatch_dict(paths.label_glob_string)
+    _pickle(paths.label_file, labels)
+    _pickle(paths.filenames_file, filenames)
+    
+    entropy_thresholds = _get_entropy_thresholds(conf_obj.parameters.ssd_entropy_threshold_min,
+                                                 conf_obj.parameters.ssd_entropy_threshold_max)
 
-    _ssd_evaluate_entropy_loop(use_entropy_threshold=use_entropy_threshold,
-                               entropy_threshold_min=entropy_threshold_min,
-                               entropy_threshold_max=entropy_threshold_max,
-                               predictions_glob_string=predictions_glob_string,
-                               predictions_file=predictions_file,
-                               labels=labels, filenames=filenames,
-                               predictions_per_class_file=predictions_per_class_file,
-                               result_file=result_file,
-                               output_path=output_path, coco_path=coco_path,
-                               image_size=image_size, batch_size=batch_size, nr_classes=nr_classes,
-                               iou_threshold=iou_threshold)
+    _ssd_evaluate_entropy_loop(conf_obj=conf_obj, paths=paths,
+                               entropy_thresholds=entropy_thresholds,
+                               labels=labels, filenames=filenames)
 
 
-def _ssd_evaluate_entropy_loop(use_entropy_threshold: bool, entropy_threshold_min: float, entropy_threshold_max: float,
-                               predictions_glob_string: str, predictions_file: str,
-                               labels: Sequence[Sequence], filenames: Sequence[str],
-                               predictions_per_class_file: str, result_file: str,
-                               output_path: str, coco_path: str,
-                               image_size: int, batch_size: int, nr_classes: int,
-                               iou_threshold: float) -> None:
+def _get_entropy_thresholds(min_threshold: float, max_threshold: float) -> List[float]:
+    nr_steps = math.floor((max_threshold - min_threshold) * 10)
+    entropy_thresholds = [round(i / 10 + min_threshold, 1) for i in range(nr_steps)]
+    
+    return entropy_thresholds
+
+
+def _ssd_evaluate_entropy_loop(conf_obj: conf.Config, paths: AttributeDict,
+                               entropy_thresholds: Sequence[float],
+                               labels: Sequence[Sequence], filenames: Sequence[str]) -> None:
     
     from twomartens.masterthesis import debug
     from twomartens.masterthesis import evaluate
@@ -348,38 +312,37 @@ def _ssd_evaluate_entropy_loop(use_entropy_threshold: bool, entropy_threshold_mi
     from twomartens.masterthesis.ssd_keras.bounding_box_utils import bounding_box_utils
     from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
     
-    if use_entropy_threshold:
-        nr_steps = math.floor((entropy_threshold_max - entropy_threshold_min) * 10)
-        entropy_thresholds = [round(i / 10 + entropy_threshold_min, 1) for i in range(nr_steps)]
-    else:
+    if not conf_obj.parameters.ssd_use_entropy_threshold:
         entropy_thresholds = [0]
         
     for entropy_threshold in entropy_thresholds:
     
-        predictions = _ssd_evaluate_unbatch_list(f"{predictions_glob_string}-{entropy_threshold}"
-                                                 if use_entropy_threshold else predictions_glob_string)
-        _pickle(f"{predictions_file}-{entropy_threshold}.bin"
-                if use_entropy_threshold else f"{predictions_file}.bin", predictions)
+        predictions = _ssd_evaluate_unbatch_list(f"{paths.predictions_glob_string}-{entropy_threshold}"
+                                                 if conf_obj.parameters.ssd_use_entropy_threshold
+                                                 else paths.predictions_glob_string)
+        _pickle(f"{paths.predictions_file}-{entropy_threshold}.bin"
+                if conf_obj.parameters.ssd_use_entropy_threshold else f"{paths.predictions_file}.bin", predictions)
         
         _ssd_evaluate_save_images(filenames, predictions,
                                   coco_utils.get_coco_category_maps, debug.save_ssd_train_images,
-                                  image_size, batch_size,
-                                  output_path, coco_path)
+                                  conf_obj, paths)
         
-        predictions_per_class = evaluate.prepare_predictions(predictions, nr_classes)
-        _pickle(f"{predictions_per_class_file}-{entropy_threshold}.bin"
-                if use_entropy_threshold else f"{predictions_per_class_file}.bin", predictions_per_class)
+        predictions_per_class = evaluate.prepare_predictions(predictions, conf_obj.parameters.nr_classes)
+        _pickle(f"{paths.predictions_per_class_file}-{entropy_threshold}.bin"
+                if conf_obj.parameters.ssd_use_entropy_threshold
+                else f"{paths.predictions_per_class_file}.bin", predictions_per_class)
         
-        number_gt_per_class = evaluate.get_number_gt_per_class(labels, nr_classes)
+        number_gt_per_class = evaluate.get_number_gt_per_class(labels, conf_obj.parameters.nr_classes)
         
         true_positives, false_positives, \
             cum_true_positives, cum_false_positives, \
             open_set_error, cumulative_open_set_error, \
-            cum_true_positives_overall, cum_false_positives_overall = evaluate.match_predictions(predictions_per_class,
-                                                                                                 labels,
-                                                                                                 bounding_box_utils.iou,
-                                                                                                 nr_classes,
-                                                                                                 iou_threshold)
+            cum_true_positives_overall, \
+            cum_false_positives_overall = evaluate.match_predictions(predictions_per_class,
+                                                                     labels,
+                                                                     bounding_box_utils.iou,
+                                                                     conf_obj.parameters.nr_classes,
+                                                                     conf_obj.parameters.ssd_iou_threshold)
         
         cum_precisions, cum_recalls, \
             cum_precisions_micro, cum_recalls_micro, \
@@ -388,13 +351,14 @@ def _ssd_evaluate_entropy_loop(use_entropy_threshold: bool, entropy_threshold_mi
                                                                                     cum_false_positives,
                                                                                     cum_true_positives_overall,
                                                                                     cum_false_positives_overall,
-                                                                                    nr_classes)
+                                                                                    conf_obj.parameters.nr_classes)
         
         f1_scores, f1_scores_micro, f1_scores_macro = evaluate.get_f1_score(cum_precisions, cum_recalls,
                                                                             cum_precisions_micro, cum_recalls_micro,
                                                                             cum_precisions_macro, cum_recalls_macro,
-                                                                            nr_classes)
-        average_precisions = evaluate.get_mean_average_precisions(cum_precisions, cum_recalls, nr_classes)
+                                                                            conf_obj.parameters.nr_classes)
+        average_precisions = evaluate.get_mean_average_precisions(cum_precisions, cum_recalls,
+                                                                  conf_obj.parameters.nr_classes)
         mean_average_precision = evaluate.get_mean_average_precision(average_precisions)
         
         results = _ssd_evaluate_get_results(true_positives=true_positives,
@@ -417,16 +381,19 @@ def _ssd_evaluate_entropy_loop(use_entropy_threshold: bool, entropy_threshold_mi
                                             open_set_error=open_set_error,
                                             cumulative_open_set_error=cumulative_open_set_error)
         
-        _pickle(f"{result_file}-{entropy_threshold}.bin"
-                if use_entropy_threshold else f"{result_file}.bin", results)
+        _pickle(f"{paths.result_file}-{entropy_threshold}.bin"
+                if conf_obj.parameters.ssd_use_entropy_threshold else f"{paths.result_file}.bin", results)
 
 
 def _ssd_evaluate_save_images(filenames: Sequence[str], labels: Sequence[np.ndarray],
                               get_coco_cat_maps_func: callable, save_images: callable,
-                              image_size: int, batch_size: int,
-                              output_path: str, coco_path: str) -> None:
+                              conf_obj: conf.Config, paths: AttributeDict) -> None:
     
-    save_images(filenames[:batch_size], labels[:batch_size], output_path, coco_path, image_size, get_coco_cat_maps_func)
+    save_images(filenames[:conf_obj.parameters.batch_size],
+                labels[:conf_obj.parameters.batch_size],
+                paths.output_path, conf_obj.paths.coco_path,
+                conf_obj.parameters.ssd_image_size,
+                get_coco_cat_maps_func)
 
 
 def _visualise_gt(args: argparse.Namespace,
@@ -572,109 +539,6 @@ def _ssd_evaluate_unbatch_list(glob_string: str) -> List[np.ndarray]:
     return unbatched
 
 
-def _ssd_train_get_config_values(config_get: Callable[[str], Union[str, float, int, bool]]) \
-        -> Tuple[int, int, float, int, int, float, int, int,
-                 str, str, str, str, str,
-                 bool, bool]:
-    
-    batch_size = config_get("Parameters.batch_size")
-    image_size = config_get("Parameters.ssd_image_size")
-    learning_rate = config_get("Parameters.learning_rate")
-    steps_per_val_epoch = config_get("Parameters.steps_per_val_epoch")
-    nr_classes = config_get("Parameters.nr_classes")
-    dropout_rate = config_get("Parameters.ssd_dropout_rate")
-    top_k = config_get("Parameters.ssd_top_k")
-    nr_trajectories = config_get("Parameters.nr_trajectories")
-    
-    coco_path = config_get("Paths.coco")
-    summary_path = config_get("Paths.summaries")
-    weights_path = config_get("Paths.weights")
-    train_gt_path = config_get('Paths.scenenet_gt_train')
-    val_gt_path = config_get('Paths.scenenet_gt_val')
-    
-    save_train_images = config_get("Debug.train_images")
-    save_summaries = config_get("Debug.summaries")
-    
-    return (
-        batch_size,
-        image_size,
-        learning_rate,
-        steps_per_val_epoch,
-        nr_classes,
-        dropout_rate,
-        top_k,
-        nr_trajectories,
-        #
-        coco_path,
-        summary_path,
-        weights_path,
-        train_gt_path,
-        val_gt_path,
-        #
-        save_train_images,
-        save_summaries
-    )
-
-
-def _ssd_test_get_config_values(args: argparse.Namespace,
-                                config_get: Callable[[str], Union[str, float, int, bool]]
-                                ) -> Tuple[int, int, float, int, int, float, float, float,
-                                           bool, float, float,
-                                           bool,
-                                           int, int, bool,
-                                           str, str, str, str]:
-    
-    batch_size = config_get("Parameters.batch_size")
-    image_size = config_get("Parameters.ssd_image_size")
-    learning_rate = config_get("Parameters.learning_rate")
-    forward_passes_per_image = config_get("Parameters.ssd_forward_passes_per_image")
-    nr_classes = config_get("Parameters.nr_classes")
-    confidence_threshold = config_get("Parameters.ssd_confidence_threshold")
-    iou_threshold = config_get("Parameters.ssd_iou_threshold")
-    dropout_rate = config_get("Parameters.ssd_dropout_rate")
-    use_entropy_threshold = config_get("Parameters.ssd_use_entropy_threshold")
-    entropy_threshold_min = config_get("Parameters.ssd_entropy_threshold_min")
-    entropy_threshold_max = config_get("Parameters.ssd_entropy_threshold_max")
-    use_coco = config_get("Parameters.ssd_use_coco")
-    top_k = config_get("Parameters.ssd_top_k")
-    nr_trajectories = config_get("Parameters.nr_trajectories")
-    test_pretrained = config_get("Parameters.ssd_test_pretrained")
-
-    coco_path = config_get("Paths.coco")
-    output_path = config_get("Paths.output")
-    weights_path = config_get("Paths.weights")
-    if args.debug:
-        ground_truth_path = config_get("Paths.scenenet_gt_train")
-    else:
-        ground_truth_path = config_get("Paths.scenenet_gt_test")
-    
-    return (
-        batch_size,
-        image_size,
-        learning_rate,
-        forward_passes_per_image,
-        nr_classes,
-        confidence_threshold,
-        iou_threshold,
-        dropout_rate,
-        #
-        use_entropy_threshold,
-        entropy_threshold_min,
-        entropy_threshold_max,
-        #
-        use_coco,
-        #
-        top_k,
-        nr_trajectories,
-        test_pretrained,
-        #
-        coco_path,
-        output_path,
-        weights_path,
-        ground_truth_path
-    )
-
-
 def _ssd_evaluate_get_config_values(config_get: Callable[[str], Union[str, int, float, bool]]
                                     ) -> Tuple[int, int, float, int,
                                                bool, float, float,
@@ -730,59 +594,69 @@ def _ssd_is_dropout(args: argparse.Namespace) -> bool:
 
 
 def _ssd_train_prepare_paths(args: argparse.Namespace,
-                             summary_path: str, weights_path: str) -> Tuple[str, str, str]:
+                             conf_obj: conf.Config) -> AttributeDict:
     import os
     
-    summary_path = f"{summary_path}/{args.network}/train/{args.iteration}"
-    pre_trained_weights_file = f"{weights_path}/{args.network}/VGG_coco_SSD_300x300_iter_400000.h5"
-    weights_path = f"{weights_path}/{args.network}/train/"
+    summary_path = f"{conf_obj.paths.summary_path}/{args.network}/train/{args.iteration}"
+    pre_trained_weights_file = f"{conf_obj.paths.weights_path}/{args.network}/VGG_coco_SSD_300x300_iter_400000.h5"
+    weights_path = f"{conf_obj.paths.weights_path}/{args.network}/train/"
     
     os.makedirs(summary_path, exist_ok=True)
     os.makedirs(weights_path, exist_ok=True)
     
-    return summary_path, weights_path, pre_trained_weights_file
+    return AttributeDict({
+        "summary_path": summary_path,
+        "weights_path": weights_path,
+        "pre_trained_weights_file": pre_trained_weights_file
+    })
 
 
 def _ssd_test_prepare_paths(args: argparse.Namespace,
-                            output_path: str, weights_path: str,
-                            test_pretrained: bool) -> Tuple[str, str]:
+                            conf_obj: conf.Config) -> AttributeDict:
     import os
     
-    output_path = f"{output_path}/{args.network}/test/{args.iteration}/"
-    checkpoint_path = f"{weights_path}/{args.network}/train/{args.train_iteration}"
-    if test_pretrained:
-        weights_file = f"{weights_path}/ssd/VGG_coco_SSD_300x300_iter_400000_subsampled.h5"
+    output_path = f"{conf_obj.paths.output_path}/{args.network}/test/{args.iteration}/"
+    checkpoint_path = f"{conf_obj.paths.weights_path}/{args.network}/train/{args.train_iteration}"
+    if conf_obj.parameters.ssd_test_pretrained:
+        weights_file = f"{conf_obj.paths.weights_path}/ssd/VGG_coco_SSD_300x300_iter_400000_subsampled.h5"
     else:
         weights_file = f"{checkpoint_path}/ssd300_weights.h5"
     
     os.makedirs(output_path, exist_ok=True)
     
-    return output_path, weights_file
+    return AttributeDict({
+        "output_path": output_path,
+        "weights_file": weights_file
+    })
 
 
 def _ssd_evaluate_prepare_paths(args: argparse.Namespace,
-                                output_path: str, evaluation_path: str) -> Tuple[str, str, str,
-                                                                                 str, str, str, str,
-                                                                                 str, str]:
+                                conf_obj: conf.Config) -> AttributeDict:
     import os
     
-    output_path = f"{output_path}/{args.network}/test/{args.iteration}"
-    evaluation_path = f"{evaluation_path}/{args.network}"
+    output_path = f"{conf_obj.paths.output_path}/{args.network}/test/{args.iteration}"
+    evaluation_path = f"{conf_obj.paths.evaluation_path}/{args.network}"
     result_file = f"{evaluation_path}/results-{args.iteration}"
     label_file = f"{output_path}/labels.bin"
     filenames_file = f"{output_path}/filenames.bin"
     predictions_file = f"{output_path}/predictions"
     predictions_per_class_file = f"{output_path}/predictions_class"
-    prediction_glob_string = f"{output_path}/*ssd_prediction*"
+    predictions_glob_string = f"{output_path}/*ssd_prediction*"
     label_glob_string = f"{output_path}/*ssd_label*"
     
     os.makedirs(evaluation_path, exist_ok=True)
     
-    return (
-        output_path, evaluation_path,
-        result_file, label_file, filenames_file, predictions_file, predictions_per_class_file,
-        prediction_glob_string, label_glob_string
-    )
+    return AttributeDict({
+        "output_path": output_path,
+        "evaluation_path": evaluation_path,
+        "result_file": result_file,
+        "label_file": label_file,
+        "filenames_file": filenames_file,
+        "predictions_file": predictions_file,
+        "predictions_per_class_file": predictions_per_class_file,
+        "predictions_glob_string": predictions_glob_string,
+        "label_glob_string": label_glob_string
+    })
 
 
 def _measure_prepare_paths(args: argparse.Namespace,
@@ -826,36 +700,39 @@ def _visualise_metrics_prepare_paths(args: argparse.Namespace,
     return output_path, metrics_file
 
 
-def _ssd_train_load_gt(train_gt_path: str, val_gt_path: str
-                       ) -> Tuple[Sequence[Sequence[str]],
-                                  Sequence[Sequence[Sequence[dict]]],
-                                  Sequence[Sequence[str]],
-                                  Sequence[Sequence[Sequence[dict]]]]:
+def _ssd_train_load_gt(conf_obj: conf.Config) -> AttributeDict:
 
     import pickle
 
-    with open(f"{train_gt_path}/photo_paths.bin", "rb") as file:
+    with open(f"{conf_obj.paths.scenenet_gt_train}/photo_paths.bin", "rb") as file:
         file_names_train = pickle.load(file)
-    with open(f"{train_gt_path}/instances.bin", "rb") as file:
+    with open(f"{conf_obj.paths.scenenet_gt_train}/instances.bin", "rb") as file:
         instances_train = pickle.load(file)
-    with open(f"{val_gt_path}/photo_paths.bin", "rb") as file:
+    with open(f"{conf_obj.paths.scenenet_gt_val}/photo_paths.bin", "rb") as file:
         file_names_val = pickle.load(file)
-    with open(f"{val_gt_path}/instances.bin", "rb") as file:
+    with open(f"{conf_obj.paths.scenenet_gt_val}/instances.bin", "rb") as file:
         instances_val = pickle.load(file)
         
-    return file_names_train, instances_train, file_names_val, instances_val
+    return AttributeDict({
+        "file_names_train": file_names_train,
+        "instances_train": instances_train,
+        "file_names_val": file_names_val,
+        "instances_val": instances_val
+    })
 
 
-def _ssd_test_load_gt(gt_path: str) -> Tuple[Sequence[Sequence[str]],
-                                             Sequence[Sequence[Sequence[dict]]]]:
+def _ssd_test_load_gt(conf_obj: conf.Config) -> AttributeDict:
     import pickle
     
-    with open(f"{gt_path}/photo_paths.bin", "rb") as file:
+    with open(f"{conf_obj.paths.scenenet_gt_test}/photo_paths.bin", "rb") as file:
         file_names = pickle.load(file)
-    with open(f"{gt_path}/instances.bin", "rb") as file:
+    with open(f"{conf_obj.paths.scenenet_gt_test}/instances.bin", "rb") as file:
         instances = pickle.load(file)
         
-    return file_names, instances
+    return AttributeDict({
+        "file_names": file_names,
+        "instances": instances
+    })
 
 
 def _measure_load_gt(gt_path: str, annotation_file_train: str,
@@ -889,101 +766,93 @@ def _visualise_load_gt(gt_path: str, annotation_file_train: str,
 
 
 def _ssd_train_get_generators(args: argparse.Namespace,
+                              conf_obj: conf.Config,
                               load_data: callable,
-                              file_names_train: Sequence[Sequence[str]],
-                              instances_train: Sequence[Sequence[Sequence[dict]]],
-                              file_names_val: Sequence[Sequence[str]],
-                              instances_val: Sequence[Sequence[Sequence[dict]]],
-                              coco_path: str,
-                              batch_size: int,
-                              image_size: int,
-                              nr_trajectories: int,
-                              predictor_sizes: Sequence[Sequence[int]]) -> Tuple[Generator, int,
-                                                                                 Generator, Generator, int, Generator]:
-    
-    if nr_trajectories == -1:
-        nr_trajectories = None
+                              gt: AttributeDict,
+                              predictor_sizes: Sequence[Sequence[int]]) -> AttributeDict:
+    nr_trajectories = conf_obj.parameters.nr_trajectories if conf_obj.parameters.nr_trajectories != -1 else None
         
     train_generator, train_length, train_debug_generator = \
-        load_data(file_names_train, instances_train, coco_path,
+        load_data(gt.file_names_train, gt.instances_train, conf_obj.paths.coco_path,
                   predictor_sizes=predictor_sizes,
-                  batch_size=batch_size,
-                  image_size=image_size,
+                  batch_size=conf_obj.parameters.batch_size,
+                  image_size=conf_obj.parameters.ssd_image_size,
                   training=True, evaluation=False, augment=False,
                   debug=args.debug,
                   nr_trajectories=nr_trajectories)
     
     val_generator, val_length, val_debug_generator = \
-        load_data(file_names_val, instances_val, coco_path,
+        load_data(gt.file_names_val, gt.instances_val, conf_obj.paths.coco_path,
                   predictor_sizes=predictor_sizes,
-                  batch_size=batch_size,
-                  image_size=image_size,
+                  batch_size=conf_obj.parameters.batch_size,
+                  image_size=conf_obj.parameters.ssd_image_size,
                   training=False, evaluation=False, augment=False,
                   debug=args.debug,
                   nr_trajectories=nr_trajectories)
     
-    return (
-        train_generator, train_length, train_debug_generator,
-        val_generator, val_length, val_debug_generator
-    )
+    return AttributeDict({
+        "train_generator": train_generator,
+        "train_length": train_length,
+        "train_debug_generator": train_debug_generator,
+        "val_generator": val_generator,
+        "val_length": val_length,
+        "val_debug_generator": val_debug_generator
+    })
 
 
 def _ssd_test_get_generators(args: argparse.Namespace,
-                             use_coco: bool,
+                             conf_obj: conf.Config,
                              load_data_coco: callable,
                              load_data_scenenet: callable,
-                             file_names: Sequence[Sequence[str]],
-                             instances: Sequence[Sequence[Sequence[dict]]],
-                             coco_path: str,
-                             batch_size: int,
-                             image_size: int,
-                             nr_trajectories: int,
-                             predictor_sizes: Sequence[Sequence[int]]) -> Tuple[Generator, int, Generator]:
+                             gt: AttributeDict,
+                             predictor_sizes: Sequence[Sequence[int]]) -> AttributeDict:
     
     from twomartens.masterthesis import data
     
-    if nr_trajectories == -1:
-        nr_trajectories = None
+    nr_trajectories = conf_obj.parameters.nr_trajectories if conf_obj.parameters.nr_trajectories != -1 else None
     
-    if use_coco:
+    if conf_obj.parameters.ssd_use_coco:
         generator, length, debug_generator = load_data_coco(data.clean_dataset,
                                                             data.group_bboxes_to_images,
-                                                            coco_path,
-                                                            batch_size,
-                                                            image_size,
+                                                            conf_obj.paths.pcoco_path,
+                                                            conf_obj.parameters.batch_size,
+                                                            conf_obj.parameters.ssd_image_size,
                                                             training=False, evaluation=True, augment=False,
                                                             debug=args.debug,
                                                             predictor_sizes=predictor_sizes)
     else:
-        generator, length, debug_generator = load_data_scenenet(file_names, instances, coco_path,
+        generator, length, debug_generator = load_data_scenenet(gt.file_names, gt.instances, conf_obj.paths.coco_path,
                                                                 predictor_sizes=predictor_sizes,
-                                                                batch_size=batch_size,
-                                                                image_size=image_size,
+                                                                batch_size=conf_obj.parameters.batch_size,
+                                                                image_size=conf_obj.parameters.ssd_image_size,
                                                                 training=False, evaluation=True, augment=False,
                                                                 debug=args.debug,
                                                                 nr_trajectories=nr_trajectories)
     
-    return generator, length, debug_generator
+    return AttributeDict({
+        "generator": generator,
+        "length": length,
+        "debug_generator": debug_generator
+    })
 
 
-def _ssd_debug_save_images(args: argparse.Namespace, save_images_on_debug: bool,
+def _ssd_debug_save_images(args: argparse.Namespace, conf_obj: conf.Config,
+                           paths: AttributeDict,
                            save_images: callable, get_coco_cat_maps_func: callable,
-                           summary_path: str, coco_path: str,
-                           image_size: int,
                            train_generator: Generator) -> None:
     
-    if args.debug and save_images_on_debug:
+    if args.debug and conf_obj.debug.train_images:
         train_data = next(train_generator)
         train_images = train_data[0]
         train_labels = train_data[1]
         train_labels_not_encoded = train_data[2]
         
         save_images(train_images, train_labels_not_encoded,
-                    summary_path, coco_path, image_size,
+                    paths.summary_path, conf_obj.paths.coco_path, conf_obj.parameters.ssd_image_size,
                     get_coco_cat_maps_func, "before-encoding")
 
         save_images(train_images, train_labels,
-                    summary_path, coco_path, image_size,
+                    paths.summary_path, conf_obj.paths.coco_path, conf_obj.parameters.ssd_image_size,
                     get_coco_cat_maps_func, "after-encoding")
 
 
@@ -998,29 +867,6 @@ def _ssd_get_tensorboard_callback(args: argparse.Namespace, save_summaries_on_de
         tensorboard_callback = None
     
     return tensorboard_callback
-
-
-def _ssd_train_call(args: argparse.Namespace, train_function: callable,
-                    train_generator: Generator, nr_batches_train: int,
-                    val_generator: Generator, nr_batches_val: int,
-                    model: tf.keras.models.Model,
-                    weights_path: str,
-                    tensorboard_callback: Optional[tf.keras.callbacks.TensorBoard]) -> tf.keras.callbacks.History:
-    
-    history = train_function(
-        train_generator,
-        nr_batches_train,
-        val_generator,
-        nr_batches_val,
-        model,
-        weights_path,
-        args.iteration,
-        initial_epoch=0,
-        nr_epochs=args.num_epochs,
-        tensorboard_callback=tensorboard_callback
-    )
-    
-    return history
 
 
 def _ssd_save_history(summary_path: str, history: tf.keras.callbacks.History) -> None:
