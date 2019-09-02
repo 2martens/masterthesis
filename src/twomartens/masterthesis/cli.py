@@ -1065,7 +1065,6 @@ def _visualise_ose_f1(open_set_error: np.ndarray, f1_scores: np.ndarray,
 def _auto_encoder_train(args: argparse.Namespace) -> None:
     import os
     
-    import tensorflow as tf
     from tensorflow.python.ops import summary_ops_v2
     
     from twomartens.masterthesis import data
@@ -1104,7 +1103,6 @@ def _auto_encoder_train(args: argparse.Namespace) -> None:
 def _auto_encoder_test(args: argparse.Namespace) -> None:
     import os
     
-    import tensorflow as tf
     from tensorflow.python.ops import summary_ops_v2
     
     from twomartens.masterthesis import data
