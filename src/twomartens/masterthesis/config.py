@@ -137,7 +137,8 @@ def _initialise_config(config_file: str) -> None:
     
     try:
         with open(config_file, "r"):
-            pass
+            # if we reach this branch then the file exists and everything is fine
+            return
     except FileNotFoundError:
         with open(config_file, "w") as file:
             parser = configparser.ConfigParser()
