@@ -466,8 +466,31 @@ def _visualise_metrics(visualise_precision_recall: callable,
     f1_scores_macro = metrics["f1_scores_macro"]
     visualise_ose_f1(cumulative_ose, f1_scores_macro,
                      output_path, "macro")
-
-    # TODO add further metrics
+    
+    max_f1_score_micro_index = np.argmax(f1_scores_micro, axis=0)
+    max_f1_score_micro = f1_scores_micro[max_f1_score_micro_index]
+    precision_at_max_f1_micro = precision_micro[max_f1_score_micro_index]
+    recall_at_max_f1_micro = recall_micro[max_f1_score_micro_index]
+    ose_at_max_f1_micro = cumulative_ose[max_f1_score_micro_index]
+    
+    max_f1_score_macro_index = np.argmax(f1_scores_macro, axis=0)
+    max_f1_score_macro = f1_scores_macro[max_f1_score_macro_index]
+    precision_at_max_f1_macro = precision_macro[max_f1_score_macro_index]
+    recall_at_max_f1_macro = recall_macro[max_f1_score_macro_index]
+    ose_at_max_f1_macro = cumulative_ose[max_f1_score_macro_index]
+    
+    import json
+    with open(f"{output_path}/scores.json", "w") as file:
+        json.dump({
+            "max_f1_score_micro": max_f1_score_micro,
+            "precision_at_max_f1_micro": precision_at_max_f1_micro,
+            "recall_at_max_f1_micro": recall_at_max_f1_micro,
+            "ose_at_max_f1_micro": ose_at_max_f1_micro,
+            "max_f1_score_macro":        max_f1_score_macro,
+            "precision_at_max_f1_macro": precision_at_max_f1_macro,
+            "recall_at_max_f1_macro":    recall_at_max_f1_macro,
+            "ose_at_max_f1_macro":       ose_at_max_f1_macro,
+        }, file)
 
 
 def _init_eager_mode() -> None:
