@@ -271,7 +271,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
                 conf_obj.parameters.ssd_iou_threshold,
                 conf_obj.parameters.ssd_top_k,
                 paths.output_path,
-                conf_obj.paths.coco_path,
+                conf_obj.paths.coco,
                 use_dropout,
                 nr_digits)
 
@@ -391,7 +391,7 @@ def _ssd_evaluate_save_images(filenames: Sequence[str], labels: Sequence[np.ndar
     
     save_images(filenames[:conf_obj.parameters.batch_size],
                 labels[:conf_obj.parameters.batch_size],
-                paths.output_path, conf_obj.paths.coco_path,
+                paths.output_path, conf_obj.paths.coco,
                 conf_obj.parameters.ssd_image_size,
                 get_coco_cat_maps_func)
 
@@ -620,9 +620,9 @@ def _ssd_train_prepare_paths(args: argparse.Namespace,
                              conf_obj: conf.Config) -> AttributeDict:
     import os
     
-    summary_path = f"{conf_obj.paths.summary_path}/{args.network}/train/{args.iteration}"
-    pre_trained_weights_file = f"{conf_obj.paths.weights_path}/{args.network}/VGG_coco_SSD_300x300_iter_400000.h5"
-    weights_path = f"{conf_obj.paths.weights_path}/{args.network}/train/"
+    summary_path = f"{conf_obj.paths.summary}/{args.network}/train/{args.iteration}"
+    pre_trained_weights_file = f"{conf_obj.paths.weights}/{args.network}/VGG_coco_SSD_300x300_iter_400000.h5"
+    weights_path = f"{conf_obj.paths.weights}/{args.network}/train/"
     
     os.makedirs(summary_path, exist_ok=True)
     os.makedirs(weights_path, exist_ok=True)
@@ -638,10 +638,10 @@ def _ssd_test_prepare_paths(args: argparse.Namespace,
                             conf_obj: conf.Config) -> AttributeDict:
     import os
     
-    output_path = f"{conf_obj.paths.output_path}/{args.network}/test/{args.iteration}/"
-    checkpoint_path = f"{conf_obj.paths.weights_path}/{args.network}/train/{args.train_iteration}"
+    output_path = f"{conf_obj.paths.output}/{args.network}/test/{args.iteration}/"
+    checkpoint_path = f"{conf_obj.paths.weights}/{args.network}/train/{args.train_iteration}"
     if conf_obj.parameters.ssd_test_pretrained:
-        weights_file = f"{conf_obj.paths.weights_path}/ssd/VGG_coco_SSD_300x300_iter_400000_subsampled.h5"
+        weights_file = f"{conf_obj.paths.weights}/ssd/VGG_coco_SSD_300x300_iter_400000_subsampled.h5"
     else:
         weights_file = f"{checkpoint_path}/ssd300_weights.h5"
     
@@ -657,8 +657,8 @@ def _ssd_evaluate_prepare_paths(args: argparse.Namespace,
                                 conf_obj: conf.Config) -> AttributeDict:
     import os
     
-    output_path = f"{conf_obj.paths.output_path}/{args.network}/test/{args.iteration}"
-    evaluation_path = f"{conf_obj.paths.evaluation_path}/{args.network}"
+    output_path = f"{conf_obj.paths.output}/{args.network}/test/{args.iteration}"
+    evaluation_path = f"{conf_obj.paths.evaluation}/{args.network}"
     result_file = f"{evaluation_path}/results-{args.iteration}"
     label_file = f"{output_path}/labels.bin"
     filenames_file = f"{output_path}/filenames.bin"
@@ -796,7 +796,7 @@ def _ssd_train_get_generators(args: argparse.Namespace,
     nr_trajectories = conf_obj.parameters.nr_trajectories if conf_obj.parameters.nr_trajectories != -1 else None
         
     train_generator, train_length, train_debug_generator = \
-        load_data(gt.file_names_train, gt.instances_train, conf_obj.paths.coco_path,
+        load_data(gt.file_names_train, gt.instances_train, conf_obj.paths.coco,
                   predictor_sizes=predictor_sizes,
                   batch_size=conf_obj.parameters.batch_size,
                   image_size=conf_obj.parameters.ssd_image_size,
@@ -805,7 +805,7 @@ def _ssd_train_get_generators(args: argparse.Namespace,
                   nr_trajectories=nr_trajectories)
     
     val_generator, val_length, val_debug_generator = \
-        load_data(gt.file_names_val, gt.instances_val, conf_obj.paths.coco_path,
+        load_data(gt.file_names_val, gt.instances_val, conf_obj.paths.coco,
                   predictor_sizes=predictor_sizes,
                   batch_size=conf_obj.parameters.batch_size,
                   image_size=conf_obj.parameters.ssd_image_size,
@@ -837,14 +837,14 @@ def _ssd_test_get_generators(args: argparse.Namespace,
     if conf_obj.parameters.ssd_use_coco:
         generator, length, debug_generator = load_data_coco(data.clean_dataset,
                                                             data.group_bboxes_to_images,
-                                                            conf_obj.paths.pcoco_path,
+                                                            conf_obj.paths.coco,
                                                             conf_obj.parameters.batch_size,
                                                             conf_obj.parameters.ssd_image_size,
                                                             training=False, evaluation=True, augment=False,
                                                             debug=args.debug,
                                                             predictor_sizes=predictor_sizes)
     else:
-        generator, length, debug_generator = load_data_scenenet(gt.file_names, gt.instances, conf_obj.paths.coco_path,
+        generator, length, debug_generator = load_data_scenenet(gt.file_names, gt.instances, conf_obj.paths.coco,
                                                                 predictor_sizes=predictor_sizes,
                                                                 batch_size=conf_obj.parameters.batch_size,
                                                                 image_size=conf_obj.parameters.ssd_image_size,
@@ -871,11 +871,11 @@ def _ssd_debug_save_images(args: argparse.Namespace, conf_obj: conf.Config,
         train_labels_not_encoded = train_data[2]
         
         save_images(train_images, train_labels_not_encoded,
-                    paths.summary_path, conf_obj.paths.coco_path, conf_obj.parameters.ssd_image_size,
+                    paths.summary_path, conf_obj.paths.coco, conf_obj.parameters.ssd_image_size,
                     get_coco_cat_maps_func, "before-encoding")
 
         save_images(train_images, train_labels,
-                    paths.summary_path, conf_obj.paths.coco_path, conf_obj.parameters.ssd_image_size,
+                    paths.summary_path, conf_obj.paths.coco, conf_obj.parameters.ssd_image_size,
                     get_coco_cat_maps_func, "after-encoding")
 
 
