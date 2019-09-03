@@ -485,11 +485,11 @@ def _visualise_metrics(visualise_precision_recall: callable,
             "max_f1_score_micro": max_f1_score_micro,
             "precision_at_max_f1_micro": precision_at_max_f1_micro,
             "recall_at_max_f1_micro": recall_at_max_f1_micro,
-            "ose_at_max_f1_micro": ose_at_max_f1_micro,
+            "ose_at_max_f1_micro": int(ose_at_max_f1_micro),
             "max_f1_score_macro":        max_f1_score_macro,
             "precision_at_max_f1_macro": precision_at_max_f1_macro,
             "recall_at_max_f1_macro":    recall_at_max_f1_macro,
-            "ose_at_max_f1_macro":       ose_at_max_f1_macro,
+            "ose_at_max_f1_macro":       int(ose_at_max_f1_macro),
         }, file)
 
 
