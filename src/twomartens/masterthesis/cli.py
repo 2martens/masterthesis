@@ -107,9 +107,10 @@ def visualise(args: argparse.Namespace) -> None:
 
 def visualise_metrics(args: argparse.Namespace) -> None:
     """Executes the visualise_metrics action from the CLI."""
-    output_path, evaluation_path = _visualise_metrics_get_config_values(conf.get_property)
-    output_path, metrics_file = _visualise_metrics_prepare_paths(args, output_path, evaluation_path)
+    conf_obj = conf.Config()
+    output_path, metrics_file = _visualise_metrics_prepare_paths(args, conf_obj)
     _visualise_metrics(_visualise_precision_recall, _visualise_ose_f1,
+                       conf_obj,
                        output_path, metrics_file)
 
 
@@ -441,56 +442,73 @@ def _visualise_gt(args: argparse.Namespace,
 
 def _visualise_metrics(visualise_precision_recall: callable,
                        visualise_ose_f1: callable,
+                       conf_obj: conf.Config,
                        output_path: str,
                        metrics_file: str) -> None:
     import pickle
     
-    with open(metrics_file, "rb") as file:
-        metrics = pickle.load(file)
+    use_entropy_threshold = conf_obj.parameters.ssd_use_entropy_threshold
+    if use_entropy_threshold:
+        entropy_thresholds = _get_entropy_thresholds(conf_obj.parameters.ssd_entropy_threshold_min,
+                                                     conf_obj.parameters.ssd_entropy_threshold_max)
+    else:
+        entropy_thresholds = [0]
     
-    precision_micro = metrics["cumulative_precision_micro"]
-    recall_micro = metrics["cumulative_recall_micro"]
-    visualise_precision_recall(precision_micro, recall_micro,
-                               output_path, "micro")
-
-    precision_macro = metrics["cumulative_precision_macro"]
-    recall_macro = metrics["cumulative_recall_macro"]
-    visualise_precision_recall(precision_macro, recall_macro,
-                               output_path, "macro")
-
-    f1_scores_micro = metrics["f1_scores_micro"]
-    cumulative_ose = metrics["cumulative_open_set_error"]
-    visualise_ose_f1(cumulative_ose, f1_scores_micro,
-                     output_path, "micro")
-
-    f1_scores_macro = metrics["f1_scores_macro"]
-    visualise_ose_f1(cumulative_ose, f1_scores_macro,
-                     output_path, "macro")
+    for threshold in entropy_thresholds:
+        with open(f"{metrics_file}-{threshold}.bin"
+                  if use_entropy_threshold
+                  else f"{metrics_file}.bin", "rb") as file:
+            metrics = pickle.load(file)
+        
+        precision_micro = metrics["cumulative_precision_micro"]
+        recall_micro = metrics["cumulative_recall_micro"]
+        visualise_precision_recall(precision_micro, recall_micro,
+                                   output_path, f"micro-{threshold}"
+                                   if use_entropy_threshold else "micro")
     
-    max_f1_score_micro_index = np.argmax(f1_scores_micro, axis=0)
-    max_f1_score_micro = f1_scores_micro[max_f1_score_micro_index]
-    precision_at_max_f1_micro = precision_micro[max_f1_score_micro_index]
-    recall_at_max_f1_micro = recall_micro[max_f1_score_micro_index]
-    ose_at_max_f1_micro = cumulative_ose[max_f1_score_micro_index]
+        precision_macro = metrics["cumulative_precision_macro"]
+        recall_macro = metrics["cumulative_recall_macro"]
+        visualise_precision_recall(precision_macro, recall_macro,
+                                   output_path, f"macro-{threshold}"
+                                   if use_entropy_threshold else "macro")
     
-    max_f1_score_macro_index = np.argmax(f1_scores_macro, axis=0)
-    max_f1_score_macro = f1_scores_macro[max_f1_score_macro_index]
-    precision_at_max_f1_macro = precision_macro[max_f1_score_macro_index]
-    recall_at_max_f1_macro = recall_macro[max_f1_score_macro_index]
-    ose_at_max_f1_macro = cumulative_ose[max_f1_score_macro_index]
+        f1_scores_micro = metrics["f1_scores_micro"]
+        cumulative_ose = metrics["cumulative_open_set_error"]
+        visualise_ose_f1(cumulative_ose, f1_scores_micro,
+                         output_path, f"micro-{threshold}"
+                         if use_entropy_threshold else "micro")
     
-    import json
-    with open(f"{output_path}/scores.json", "w") as file:
-        json.dump({
-            "max_f1_score_micro": max_f1_score_micro,
-            "precision_at_max_f1_micro": precision_at_max_f1_micro,
-            "recall_at_max_f1_micro": recall_at_max_f1_micro,
-            "ose_at_max_f1_micro": int(ose_at_max_f1_micro),
-            "max_f1_score_macro":        max_f1_score_macro,
-            "precision_at_max_f1_macro": precision_at_max_f1_macro,
-            "recall_at_max_f1_macro":    recall_at_max_f1_macro,
-            "ose_at_max_f1_macro":       int(ose_at_max_f1_macro),
-        }, file, indent=2)
+        f1_scores_macro = metrics["f1_scores_macro"]
+        visualise_ose_f1(cumulative_ose, f1_scores_macro,
+                         output_path, f"macro-{threshold}"
+                         if use_entropy_threshold else "macro")
+        
+        max_f1_score_micro_index = np.argmax(f1_scores_micro, axis=0)
+        max_f1_score_micro = f1_scores_micro[max_f1_score_micro_index]
+        precision_at_max_f1_micro = precision_micro[max_f1_score_micro_index]
+        recall_at_max_f1_micro = recall_micro[max_f1_score_micro_index]
+        ose_at_max_f1_micro = cumulative_ose[max_f1_score_micro_index]
+        
+        max_f1_score_macro_index = np.argmax(f1_scores_macro, axis=0)
+        max_f1_score_macro = f1_scores_macro[max_f1_score_macro_index]
+        precision_at_max_f1_macro = precision_macro[max_f1_score_macro_index]
+        recall_at_max_f1_macro = recall_macro[max_f1_score_macro_index]
+        ose_at_max_f1_macro = cumulative_ose[max_f1_score_macro_index]
+        
+        import json
+        with open(f"{output_path}/scores-{threshold}.json"
+                  if use_entropy_threshold else f"{output_path}/scores.json", "w") as file:
+            
+            json.dump({
+                "max_f1_score_micro": max_f1_score_micro,
+                "precision_at_max_f1_micro": precision_at_max_f1_micro,
+                "recall_at_max_f1_micro": recall_at_max_f1_micro,
+                "ose_at_max_f1_micro": int(ose_at_max_f1_micro),
+                "max_f1_score_macro":        max_f1_score_macro,
+                "precision_at_max_f1_macro": precision_at_max_f1_macro,
+                "recall_at_max_f1_macro":    recall_at_max_f1_macro,
+                "ose_at_max_f1_macro":       int(ose_at_max_f1_macro),
+            }, file, indent=2)
 
 
 def _init_eager_mode() -> None:
@@ -604,14 +622,6 @@ def _visualise_get_config_values(config_get: Callable[[str], Union[str, int, flo
     return output_path, coco_path, ground_truth_path
 
 
-def _visualise_metrics_get_config_values(config_get: Callable[[str], Union[str, int, float, bool]]
-                                         ) -> Tuple[str, str]:
-    output_path = config_get("Paths.output")
-    evaluation_path = config_get("Paths.evaluation")
-    
-    return output_path, evaluation_path
-
-
 def _ssd_is_dropout(args: argparse.Namespace) -> bool:
     return False if args.network == "ssd" else True
 
@@ -711,12 +721,11 @@ def _visualise_prepare_paths(args: argparse.Namespace,
 
 
 def _visualise_metrics_prepare_paths(args: argparse.Namespace,
-                                     output_path: str,
-                                     evaluation_path: str) -> Tuple[str, str]:
+                                     conf_obj: conf.Config) -> Tuple[str, str]:
     import os
     
-    metrics_file = f"{evaluation_path}/{args.network}/results-{args.iteration}.bin"
-    output_path = f"{output_path}/{args.network}/visualise/{args.iteration}"
+    metrics_file = f"{conf_obj.paths.evaluation}/{args.network}/results-{args.iteration}"
+    output_path = f"{conf_obj.paths.output}/{args.network}/visualise/{args.iteration}"
     
     os.makedirs(output_path, exist_ok=True)
     
