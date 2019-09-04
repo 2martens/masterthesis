@@ -364,16 +364,16 @@ def _ssd_evaluate_entropy_loop(conf_obj: conf.Config, paths: AttributeDict,
         
         results = _ssd_evaluate_get_results(true_positives=true_positives,
                                             false_positives=false_positives,
-                                            cum_true_positives=cum_true_positives,
-                                            cum_false_positives=cum_false_positives,
-                                            cum_true_positives_overall=cum_true_positives_overall,
-                                            cum_false_positives_overall=cum_false_positives_overall,
-                                            cum_precisions=cum_precisions,
-                                            cum_recalls=cum_recalls,
-                                            cum_precisions_micro=cum_precisions_micro,
-                                            cum_recalls_micro=cum_recalls_micro,
-                                            cum_precisions_macro=cum_precisions_macro,
-                                            cum_recalls_macro=cum_recalls_macro,
+                                            cumulative_true_positives=cum_true_positives,
+                                            cumulative_false_positives=cum_false_positives,
+                                            cumulative_true_positives_overall=cum_true_positives_overall,
+                                            cumulative_false_positives_overall=cum_false_positives_overall,
+                                            cumulative_precisions=cum_precisions,
+                                            cumulative_recalls=cum_recalls,
+                                            cumulative_precisions_micro=cum_precisions_micro,
+                                            cumulative_recalls_micro=cum_recalls_micro,
+                                            cumulative_precisions_macro=cum_precisions_macro,
+                                            cumulative_recalls_macro=cum_recalls_macro,
                                             f1_scores=f1_scores,
                                             f1_scores_micro=f1_scores_micro,
                                             f1_scores_macro=f1_scores_macro,
@@ -460,14 +460,14 @@ def _visualise_metrics(visualise_precision_recall: callable,
                   else f"{metrics_file}.bin", "rb") as file:
             metrics = pickle.load(file)
         
-        precision_micro = metrics["cumulative_precision_micro"]
-        recall_micro = metrics["cumulative_recall_micro"]
+        precision_micro = metrics["cumulative_precisions_micro"]
+        recall_micro = metrics["cumulative_recalls_micro"]
         visualise_precision_recall(precision_micro, recall_micro,
                                    output_path, f"micro-{threshold}"
                                    if use_entropy_threshold else "micro")
     
-        precision_macro = metrics["cumulative_precision_macro"]
-        recall_macro = metrics["cumulative_recall_macro"]
+        precision_macro = metrics["cumulative_precisions_macro"]
+        recall_macro = metrics["cumulative_recalls_macro"]
         visualise_precision_recall(precision_macro, recall_macro,
                                    output_path, f"macro-{threshold}"
                                    if use_entropy_threshold else "macro")
