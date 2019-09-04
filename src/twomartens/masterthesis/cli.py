@@ -490,7 +490,7 @@ def _visualise_metrics(visualise_precision_recall: callable,
             "precision_at_max_f1_macro": precision_at_max_f1_macro,
             "recall_at_max_f1_macro":    recall_at_max_f1_macro,
             "ose_at_max_f1_macro":       int(ose_at_max_f1_macro),
-        }, file)
+        }, file, indent=2)
 
 
 def _init_eager_mode() -> None:
