@@ -274,7 +274,8 @@ def _ssd_test(args: argparse.Namespace) -> None:
                 paths.output_path,
                 conf_obj.paths.coco,
                 use_dropout,
-                nr_digits)
+                nr_digits,
+                conf_obj.parameters.nr_classes)
 
 
 def _ssd_evaluate(args: argparse.Namespace) -> None:
