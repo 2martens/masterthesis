@@ -218,7 +218,8 @@ def predict(generator: callable,
                   apply_entropy_threshold_func=functools.partial(
                       _apply_entropy_filtering,
                       confidence_threshold=confidence_threshold,
-                      nr_classes=nr_classes
+                      nr_classes=nr_classes,
+                      iou_threshold=iou_threshold
                   ),
                   apply_top_k_func=functools.partial(
                       _apply_top_k,
@@ -418,6 +419,7 @@ def _decode_predictions_dropout(predictions: np.ndarray,
 def _apply_entropy_filtering(observations: Sequence[np.ndarray],
                              entropy_threshold: float,
                              confidence_threshold: float,
+                             iou_threshold: float,
                              nr_classes: int) -> List[np.ndarray]:
     final_observations = []
     batch_size = len(observations)
@@ -432,10 +434,11 @@ def _apply_entropy_filtering(observations: Sequence[np.ndarray],
             single_class = filtered_image_observations[:, [class_id, -1, -5, -4, -3, -2]]
             threshold_met = single_class[single_class[:, 0] > confidence_threshold]
             if threshold_met.shape[0] > 0:
-                output = np.zeros((single_class.shape[0], single_class.shape[1] + 1))
-                output[:, 0] = class_id
-                output[:, 1:] = single_class
-                final_image_observations.append(output)
+                maxima = ssd_output_decoder._greedy_nms(threshold_met, iou_threshold=iou_threshold)
+                maxima_output = np.zeros((maxima.shape[0], maxima.shape[1] + 1))
+                maxima_output[:, 0] = class_id
+                maxima_output[:, 1:] = single_class
+                final_image_observations.append(maxima_output)
         if final_image_observations:
             final_image_observations = np.concatenate(final_image_observations, axis=0)
         else:
