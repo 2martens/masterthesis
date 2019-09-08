@@ -93,6 +93,8 @@ def save_ssd_train_images(images: Union[np.ndarray, Sequence[str]], labels: np.n
                 ymin = instance[3]
                 xmax = instance[4]
                 ymax = instance[5]
+            elif not len(instance):
+                continue
             else:
                 instance = np.copy(instance)
                 class_id = np.argmax(instance[:-12], axis=0)
