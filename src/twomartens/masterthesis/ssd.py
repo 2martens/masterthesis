@@ -431,7 +431,7 @@ def _apply_entropy_filtering(observations: Sequence[np.ndarray],
         filtered_image_observations = observations[i][observations[i][:, -1] < entropy_threshold]
         final_image_observations = []
         for class_id in range(1, nr_classes):
-            single_class = filtered_image_observations[:, [class_id, -1, -5, -4, -3, -2]]
+            single_class = filtered_image_observations[:, [class_id, -5, -4, -3, -2]]
             threshold_met = single_class[single_class[:, 0] > confidence_threshold]
             if threshold_met.shape[0] > 0:
                 maxima = ssd_output_decoder._greedy_nms(threshold_met, iou_threshold=iou_threshold)
