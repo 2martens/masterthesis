@@ -437,7 +437,7 @@ def _apply_entropy_filtering(observations: Sequence[np.ndarray],
                 maxima = ssd_output_decoder._greedy_nms(threshold_met, iou_threshold=iou_threshold)
                 maxima_output = np.zeros((maxima.shape[0], maxima.shape[1] + 1))
                 maxima_output[:, 0] = class_id
-                maxima_output[:, 1:] = single_class
+                maxima_output[:, 1:] = maxima
                 final_image_observations.append(maxima_output)
         if final_image_observations:
             final_image_observations = np.concatenate(final_image_observations, axis=0)
