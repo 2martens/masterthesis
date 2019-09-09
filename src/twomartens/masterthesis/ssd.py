@@ -453,7 +453,6 @@ def _apply_top_k(detections: Sequence[np.ndarray], top_k: float) -> List[np.ndar
     batch_size = len(detections)
     data_type = np.dtype([('class_id', np.int32),
                           ('confidence', 'f4'),
-                          ('entropy', 'f4'),
                           ('xmin', 'f4'),
                           ('ymin', 'f4'),
                           ('xmax', 'f4'),
