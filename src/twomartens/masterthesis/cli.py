@@ -1075,7 +1075,7 @@ def _visualise_precision_recall_all(precision: Sequence[np.ndarray],
         pyplot.plot(rec, prec)
     
     pyplot.legend(legend, loc="upper right")
-    
+    pyplot.xlim(xmax=1)
     pyplot.savefig(f"{output_path}/precision-recall-all-{file_suffix}.png")
     pyplot.close(figure)
 
@@ -1101,13 +1101,15 @@ def _visualise_ose_f1_all(open_set_error: Sequence[np.ndarray],
     from matplotlib import pyplot
     
     figure = pyplot.figure()
-    
+    axis = pyplot.gca()
+    axis.set_autoscale_on(False)
     pyplot.ylabel("absolute ose")
     pyplot.xlabel("f1 score")
     
     for ose, f1 in zip(open_set_error, f1_scores):
         pyplot.plot(f1, ose)
     
+    axis.axis([0, 0.4, 0, 8000])
     pyplot.legend(legend, loc="upper right")
     
     pyplot.savefig(f"{output_path}/ose-f1-all-{file_suffix}.png")
