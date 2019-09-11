@@ -119,7 +119,6 @@ def visualise_all(args: argparse.Namespace) -> None:
     conf_obj = conf.Config()
     output_path, metrics_files = _visualise_all_prepare_paths(args, conf_obj)
     _visualise_all(_visualise_precision_recall_all, _visualise_ose_f1_all,
-                   conf_obj,
                    output_path, metrics_files)
     
 
@@ -523,7 +522,6 @@ def _visualise_metrics(visualise_precision_recall: callable,
 
 def _visualise_all(visualise_precision_recall: callable,
                    visualise_ose_f1: callable,
-                   conf_obj: conf.Config,
                    output_path: str,
                    metrics_files: Sequence[str]) -> None:
     
