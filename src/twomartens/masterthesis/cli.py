@@ -576,8 +576,13 @@ def _visualise_all(visualise_precision_recall: callable,
     f1_scores_micro = []
     ose_values_micro = []
     for metrics in metrics_micro:
-        precisions_micro.append(metrics["cumulative_precisions_micro"])
-        recalls_micro.append(metrics["cumulative_recalls_micro"])
+        try:
+            precisions_micro.append(metrics["cumulative_precisions_micro"])
+            recalls_micro.append(metrics["cumulative_recalls_micro"])
+        except KeyError:
+            precisions_micro.append(metrics["cumulative_precision_micro"])
+            recalls_micro.append(metrics["cumulative_recall_micro"])
+        
         f1_scores_micro.append(metrics["f1_scores_micro"])
         ose_values_micro.append(metrics["cumulative_open_set_error"])
     
@@ -597,8 +602,12 @@ def _visualise_all(visualise_precision_recall: callable,
     f1_scores_macro = []
     ose_values_macro = []
     for metrics in metrics_macro:
-        precisions_macro.append(metrics["cumulative_precisions_macro"])
-        recalls_macro.append(metrics["cumulative_recalls_macro"])
+        try:
+            precisions_macro.append(metrics["cumulative_precisions_macro"])
+            recalls_macro.append(metrics["cumulative_recalls_macro"])
+        except KeyError:
+            precisions_macro.append(metrics["cumulative_precision_macro"])
+            recalls_macro.append(metrics["cumulative_recall_macro"])
         f1_scores_macro.append(metrics["f1_scores_macro"])
         ose_values_macro.append(metrics["cumulative_open_set_error"])
 
