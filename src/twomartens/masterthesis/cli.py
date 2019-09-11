@@ -114,6 +114,15 @@ def visualise_metrics(args: argparse.Namespace) -> None:
                        output_path, metrics_file)
 
 
+def visualise_all(args: argparse.Namespace) -> None:
+    """Executes the visualise_all action from the CLI."""
+    conf_obj = conf.Config()
+    output_path, metrics_files = _visualise_all_prepare_paths(args, conf_obj)
+    _visualise_all(_visualise_precision_recall_all, _visualise_ose_f1_all,
+                   conf_obj,
+                   output_path, metrics_files)
+    
+
 def measure_mapping(args: argparse.Namespace) -> None:
     """Executes the measure_mapping action from the CLI."""
     from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
@@ -512,6 +521,101 @@ def _visualise_metrics(visualise_precision_recall: callable,
             }, file, indent=2)
 
 
+def _visualise_all(visualise_precision_recall: callable,
+                   visualise_ose_f1: callable,
+                   conf_obj: conf.Config,
+                   output_path: str,
+                   metrics_files: Sequence[str]) -> None:
+    
+    import pickle
+    
+    metrics_micro = []
+    metrics_macro = []
+    with open(f"{metrics_files[0]}.bin", "rb") as file:
+        metrics_vanilla_ssd_001 = pickle.load(file)
+        metrics_micro.append(metrics_vanilla_ssd_001)
+        metrics_macro.append(metrics_vanilla_ssd_001)
+    with open(f"{metrics_files[1]}.bin", "rb") as file:
+        metrics_vanilla_ssd_02 = pickle.load(file)
+        metrics_micro.append(metrics_vanilla_ssd_02)
+        metrics_macro.append(metrics_vanilla_ssd_02)
+    with open(f"{metrics_files[2]}-1.7.bin", "rb") as file:
+        metrics_entropy_ssd_001_macro = pickle.load(file)
+        metrics_macro.append(metrics_entropy_ssd_001_macro)
+    with open(f"{metrics_files[2]}-2.4.bin", "rb") as file:
+        metrics_entropy_ssd_001_micro = pickle.load(file)
+        metrics_micro.append(metrics_entropy_ssd_001_micro)
+    with open(f"{metrics_files[3]}-1.4.bin", "rb") as file:
+        metrics_bayesian_ssd_no_do_micro = pickle.load(file)
+        metrics_micro.append(metrics_bayesian_ssd_no_do_micro)
+    with open(f"{metrics_files[3]}-1.5.bin", "rb") as file:
+        metrics_bayesian_ssd_no_do_macro = pickle.load(file)
+        metrics_macro.append(metrics_bayesian_ssd_no_do_macro)
+    with open(f"{metrics_files[4]}-1.4.bin", "rb") as file:
+        metrics_bayesian_ssd_do_09_micro = pickle.load(file)
+        metrics_micro.append(metrics_bayesian_ssd_do_09_micro)
+    with open(f"{metrics_files[4]}-1.7.bin", "rb") as file:
+        metrics_bayesian_ssd_do_09_macro = pickle.load(file)
+        metrics_macro.append(metrics_bayesian_ssd_do_09_macro)
+    with open(f"{metrics_files[5]}-1.3.bin", "rb") as file:
+        metrics_bayesian_ssd_do_05_micro = pickle.load(file)
+        metrics_micro.append(metrics_bayesian_ssd_do_05_micro)
+    with open(f"{metrics_files[5]}-2.0.bin", "rb") as file:
+        metrics_bayesian_ssd_do_05_macro = pickle.load(file)
+        metrics_macro.append(metrics_bayesian_ssd_do_05_macro)
+    
+    legend = [
+        "Vanilla SSD, 0.01 conf thresh",
+        "Vanilla SSD, 0.2 conf thresh",
+        "Vanilla SSD, 0.01 conf thresh, entropy thresh",
+        "Bayesian SSD, 0.2 conf thresh, no dropout",
+        "Bayesian SSD, 0.2 conf thresh, dropout keep rate 0.9",
+        "Bayesian SSD, 0.2 conf thresh, dropout keep rate 0.5",
+    ]
+    
+    # micro
+    precisions_micro = []
+    recalls_micro = []
+    f1_scores_micro = []
+    ose_values_micro = []
+    for metrics in metrics_micro:
+        precisions_micro.append(metrics["cumulative_precisions_micro"])
+        recalls_micro.append(metrics["cumulative_recalls_micro"])
+        f1_scores_micro.append(metrics["f1_scores_micro"])
+        ose_values_micro.append(metrics["cumulative_open_set_error"])
+    
+    visualise_precision_recall(precisions_micro,
+                               recalls_micro,
+                               legend,
+                               output_path, "micro")
+
+    visualise_ose_f1(ose_values_micro,
+                     f1_scores_micro,
+                     legend,
+                     output_path, "micro")
+
+    # macro
+    precisions_macro = []
+    recalls_macro = []
+    f1_scores_macro = []
+    ose_values_macro = []
+    for metrics in metrics_macro:
+        precisions_macro.append(metrics["cumulative_precisions_macro"])
+        recalls_macro.append(metrics["cumulative_recalls_macro"])
+        f1_scores_macro.append(metrics["f1_scores_macro"])
+        ose_values_macro.append(metrics["cumulative_open_set_error"])
+
+    visualise_precision_recall(precisions_macro,
+                               recalls_macro,
+                               legend,
+                               output_path, "macro")
+
+    visualise_ose_f1(ose_values_macro,
+                     f1_scores_macro,
+                     legend,
+                     output_path, "macro")
+    
+
 def _init_eager_mode() -> None:
     tf.enable_eager_execution()
     
@@ -733,6 +837,25 @@ def _visualise_metrics_prepare_paths(args: argparse.Namespace,
     return output_path, metrics_file
 
 
+def _visualise_all_prepare_paths(args: argparse.Namespace,
+                                 conf_obj: conf.Config) -> Tuple[str, List[str]]:
+    import os
+    
+    metrics_files = [
+        f"{conf_obj.paths.evaluation}/ssd/results-{args.vanilla_ssd_001_iteration}",
+        f"{conf_obj.paths.evaluation}/ssd/results-{args.vanilla_ssd_02_iteration}",
+        f"{conf_obj.paths.evaluation}/ssd/results-{args.entropy_ssd_001_iteration}",
+        f"{conf_obj.paths.evaluation}/bayesian_ssd/results-{args.bayesian_ssd_no_do_iteration}",
+        f"{conf_obj.paths.evaluation}/bayesian_ssd/results-{args.bayesian_ssd_do_09_iteration}",
+        f"{conf_obj.paths.evaluation}/bayesian_ssd/results-{args.bayesian_ssd_do_05_iteration}"
+    ]
+    output_path = f"{conf_obj.paths.output}/all/visualise/"
+    
+    os.makedirs(output_path, exist_ok=True)
+    
+    return output_path, metrics_files
+
+
 def _ssd_train_load_gt(conf_obj: conf.Config) -> AttributeDict:
 
     import pickle
@@ -931,6 +1054,26 @@ def _visualise_precision_recall(precision: np.ndarray, recall: np.ndarray,
     pyplot.close(figure)
 
 
+def _visualise_precision_recall_all(precision: Sequence[np.ndarray],
+                                    recall: Sequence[np.ndarray],
+                                    legend: Sequence[str],
+                                    output_path: str, file_suffix: str) -> None:
+    from matplotlib import pyplot
+    
+    figure = pyplot.figure()
+    
+    pyplot.ylabel("precision")
+    pyplot.xlabel("recall")
+    
+    for prec, rec in zip(precision, recall):
+        pyplot.plot(rec, prec)
+    
+    pyplot.legend(legend, loc="upper right")
+    
+    pyplot.savefig(f"{output_path}/precision-recall-all-{file_suffix}.png")
+    pyplot.close(figure)
+
+
 def _visualise_ose_f1(open_set_error: np.ndarray, f1_scores: np.ndarray,
                       output_path: str, file_suffix: str) -> None:
     from matplotlib import pyplot
@@ -942,4 +1085,24 @@ def _visualise_ose_f1(open_set_error: np.ndarray, f1_scores: np.ndarray,
     pyplot.plot(f1_scores, open_set_error)
     
     pyplot.savefig(f"{output_path}/ose-f1-{file_suffix}.png")
+    pyplot.close(figure)
+
+
+def _visualise_ose_f1_all(open_set_error: Sequence[np.ndarray],
+                          f1_scores: Sequence[np.ndarray],
+                          legend: Sequence[str],
+                          output_path: str, file_suffix: str) -> None:
+    from matplotlib import pyplot
+    
+    figure = pyplot.figure()
+    
+    pyplot.ylabel("absolute ose")
+    pyplot.xlabel("f1 score")
+    
+    for ose, f1 in zip(open_set_error, f1_scores):
+        pyplot.plot(f1, ose)
+    
+    pyplot.legend(legend, loc="upper right")
+    
+    pyplot.savefig(f"{output_path}/ose-f1-all-{file_suffix}.png")
     pyplot.close(figure)

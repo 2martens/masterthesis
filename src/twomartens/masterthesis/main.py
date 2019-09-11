@@ -44,7 +44,8 @@ def main() -> None:
     _build_evaluate(sub_parsers[4])
     _build_visualise(sub_parsers[5])
     _build_visualise_metrics(sub_parsers[6])
-    _build_measure(sub_parsers[7])
+    _build_visualise_all(sub_parsers[7])
+    _build_measure(sub_parsers[8])
     
     args = _get_user_input(parser)
     _execute_action(args)
@@ -66,6 +67,8 @@ def _build_sub_parsers(parser: argparse.ArgumentParser) -> List[argparse.Argumen
     evaluate_parser = sub_parsers.add_parser("evaluate", help="Evaluate a network")
     visualise_parser = sub_parsers.add_parser("visualise", help="Visualise the ground truth")
     visualise_metrics_parser = sub_parsers.add_parser("visualise_metrics", help="Visualise the evaluation results")
+    visualise_all_parser = sub_parsers.add_parser("visualise_all",
+                                                  help="Visualise evaluation results of multiple runs ")
     measure_parser = sub_parsers.add_parser("measure_mapping", help="Measure the number of instances per COCO category")
     
     return [
@@ -76,6 +79,7 @@ def _build_sub_parsers(parser: argparse.ArgumentParser) -> List[argparse.Argumen
         evaluate_parser,
         visualise_parser,
         visualise_metrics_parser,
+        visualise_all_parser,
         measure_parser
     ]
 
@@ -181,6 +185,21 @@ def _build_visualise_metrics(parser: argparse.ArgumentParser) -> None:
     
     ssd_bayesian_parser.add_argument("iteration", type=int, help="the validation iteration to use")
     ssd_parser.add_argument("iteration", type=int, help="the validation iteration to use")
+
+
+def _build_visualise_all(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("vanilla_ssd_001_iteration", type=int,
+                        help="validation iteration of vanilla SSD with 0.01 conf threshold")
+    parser.add_argument("vanilla_ssd_02_iteration", type=int,
+                        help="validation iteration of vanilla SSD with 0.2 conf threshold")
+    parser.add_argument("entropy_ssd_001_iteration", type=int,
+                        help="validation iteration of vanilla SSD with 0.01 conf threshold and entropy threshold")
+    parser.add_argument("bayesian_ssd_no_do_iteration", type=int,
+                        help="validation iteration of Bayesian SSD with disabled dropout")
+    parser.add_argument("bayesian_ssd_do_09_iteration", type=int,
+                        help="validation iteration of Bayesian SSD with dropout keep rate 0.9")
+    parser.add_argument("bayesian_ssd_do_05_iteration", type=int,
+                        help="validation iteration of Bayesian SSD with dropout keep rate 0.5")
 
 
 def _build_measure(parser: argparse.ArgumentParser) -> None:
