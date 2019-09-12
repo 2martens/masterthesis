@@ -341,6 +341,9 @@ def _predict_loop(generator: Generator, use_dropout: bool, steps_per_epoch: int,
             if use_dropout:
                 decoded_predictions = apply_entropy_threshold_func(observations,
                                                                    entropy_threshold=entropy_threshold)
+                save_func(decoded_predictions, original_labels, filenames,
+                          batch_nr=batch_counter, entropy_threshold=entropy_threshold,
+                          suffix="_entropy")
                 decoded_predictions = apply_top_k_func(decoded_predictions)
             else:
                 decoded_predictions = decode_func(predictions, entropy_threshold=entropy_threshold)
