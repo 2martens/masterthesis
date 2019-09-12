@@ -194,6 +194,8 @@ def _build_visualise_all(parser: argparse.ArgumentParser) -> None:
                         help="validation iteration of vanilla SSD with 0.2 conf threshold")
     parser.add_argument("entropy_ssd_001_iteration", type=int,
                         help="validation iteration of vanilla SSD with 0.01 conf threshold and entropy threshold")
+    parser.add_argument("bayesian_ssd_no_do_no_nms_iteration", type=int,
+                        help="validation iteration of Bayesian SSD with disabled dropout and without NMS")
     parser.add_argument("bayesian_ssd_no_do_iteration", type=int,
                         help="validation iteration of Bayesian SSD with disabled dropout")
     parser.add_argument("bayesian_ssd_do_09_iteration", type=int,

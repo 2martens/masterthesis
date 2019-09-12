@@ -542,22 +542,28 @@ def _visualise_all(visualise_precision_recall: callable,
     with open(f"{metrics_files[2]}-2.4.bin", "rb") as file:
         metrics_entropy_ssd_001_micro = pickle.load(file)
         metrics_micro.append(metrics_entropy_ssd_001_micro)
-    with open(f"{metrics_files[3]}-1.4.bin", "rb") as file:
+    with open(f"{metrics_files[3]}-1.0.bin", "rb") as file:
+        metrics_bayesian_ssd_no_do_no_nms_micro = pickle.load(file)
+        metrics_micro.append(metrics_bayesian_ssd_no_do_no_nms_micro)
+    with open(f"{metrics_files[3]}-1.5.bin", "rb") as file:
+        metrics_bayesian_ssd_no_do_no_nms_macro = pickle.load(file)
+        metrics_macro.append(metrics_bayesian_ssd_no_do_no_nms_macro)
+    with open(f"{metrics_files[4]}-1.4.bin", "rb") as file:
         metrics_bayesian_ssd_no_do_micro = pickle.load(file)
         metrics_micro.append(metrics_bayesian_ssd_no_do_micro)
-    with open(f"{metrics_files[3]}-1.5.bin", "rb") as file:
+    with open(f"{metrics_files[4]}-1.5.bin", "rb") as file:
         metrics_bayesian_ssd_no_do_macro = pickle.load(file)
         metrics_macro.append(metrics_bayesian_ssd_no_do_macro)
-    with open(f"{metrics_files[4]}-1.4.bin", "rb") as file:
+    with open(f"{metrics_files[5]}-1.4.bin", "rb") as file:
         metrics_bayesian_ssd_do_09_micro = pickle.load(file)
         metrics_micro.append(metrics_bayesian_ssd_do_09_micro)
-    with open(f"{metrics_files[4]}-1.7.bin", "rb") as file:
+    with open(f"{metrics_files[5]}-1.7.bin", "rb") as file:
         metrics_bayesian_ssd_do_09_macro = pickle.load(file)
         metrics_macro.append(metrics_bayesian_ssd_do_09_macro)
-    with open(f"{metrics_files[5]}-1.3.bin", "rb") as file:
+    with open(f"{metrics_files[6]}-1.3.bin", "rb") as file:
         metrics_bayesian_ssd_do_05_micro = pickle.load(file)
         metrics_micro.append(metrics_bayesian_ssd_do_05_micro)
-    with open(f"{metrics_files[5]}-2.0.bin", "rb") as file:
+    with open(f"{metrics_files[6]}-2.0.bin", "rb") as file:
         metrics_bayesian_ssd_do_05_macro = pickle.load(file)
         metrics_macro.append(metrics_bayesian_ssd_do_05_macro)
     
@@ -565,9 +571,10 @@ def _visualise_all(visualise_precision_recall: callable,
         "Vanilla SSD, 0.01 conf thresh",
         "Vanilla SSD, 0.2 conf thresh",
         "Vanilla SSD, 0.01 conf thresh, entropy thresh",
-        "Bayesian SSD, 0.2 conf thresh, no dropout",
-        "Bayesian SSD, 0.2 conf thresh, dropout keep rate 0.9",
-        "Bayesian SSD, 0.2 conf thresh, dropout keep rate 0.5",
+        "Bay. SSD, 0.2 conf thresh, no dropout",
+        "Bay. SSD, 0.2 conf thresh, no dropout, NMS",
+        "Bay. SSD, 0.2 conf thresh, dropout keep rate 0.9",
+        "Bay. SSD, 0.2 conf thresh, dropout keep rate 0.5",
     ]
     
     # micro
@@ -851,6 +858,7 @@ def _visualise_all_prepare_paths(args: argparse.Namespace,
         f"{conf_obj.paths.evaluation}/ssd/results-{args.vanilla_ssd_001_iteration}",
         f"{conf_obj.paths.evaluation}/ssd/results-{args.vanilla_ssd_02_iteration}",
         f"{conf_obj.paths.evaluation}/ssd/results-{args.entropy_ssd_001_iteration}",
+        f"{conf_obj.paths.evaluation}/bayesian_ssd/results-{args.bayesian_ssd_no_do_no_nms_iteration}",
         f"{conf_obj.paths.evaluation}/bayesian_ssd/results-{args.bayesian_ssd_no_do_iteration}",
         f"{conf_obj.paths.evaluation}/bayesian_ssd/results-{args.bayesian_ssd_do_09_iteration}",
         f"{conf_obj.paths.evaluation}/bayesian_ssd/results-{args.bayesian_ssd_do_05_iteration}"
