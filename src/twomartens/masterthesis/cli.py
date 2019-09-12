@@ -785,7 +785,7 @@ def _ssd_evaluate_prepare_paths(args: argparse.Namespace,
     filenames_file = f"{output_path}/filenames.bin"
     predictions_file = f"{output_path}/predictions"
     predictions_per_class_file = f"{output_path}/predictions_class"
-    predictions_glob_string = f"{output_path}/*ssd_prediction*"
+    predictions_glob_string = f"{output_path}/*ssd_predictions_transformed*"
     label_glob_string = f"{output_path}/*ssd_label*"
     
     os.makedirs(evaluation_path, exist_ok=True)
