@@ -91,14 +91,23 @@ def prepare_predictions(predictions: Sequence[Sequence[Sequence[Union[int, float
                 ymin += 1
                 xmax += 1
                 ymax += 1
+            
+            if len(box) > nr_classes:
+                class_id = np.argmax(box[:-5])
+                confidence = np.amax(box[:-5])
+                xmin = -5
+                ymin = -4
+                xmax = -3
+                ymax = -2
+            else:
+                class_id = int(box[0])
+                # Round the box coordinates to reduce the required memory.
+                confidence = box[1]
                 
-            class_id = int(box[0])
-            # Round the box coordinates to reduce the required memory.
-            confidence = box[1]
-            xmin = round(box[2])
-            ymin = round(box[3])
-            xmax = round(box[4])
-            ymax = round(box[5])
+            xmin = round(box[xmin])
+            ymin = round(box[ymin])
+            xmax = round(box[xmax])
+            ymax = round(box[ymax])
             prediction = (image_id, confidence, xmin, ymin, xmax, ymax)
             # Append the predicted box to the results list for its class.
             results[class_id].append(prediction)
