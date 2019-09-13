@@ -50,53 +50,48 @@ K = tf.keras.backend
 tfe = tf.contrib.eager
 
 
-def get_model(use_dropout: bool,
-              dropout_model: callable, vanilla_model: callable,
-              image_size: int, nr_classes: int, mode: str,
-              dropout_rate: float, top_k: int,
-              pre_trained_weights_file: Optional[str] = None,
-              iou_threshold: Optional[float] = None) -> Tuple[tf.keras.models.Model, np.ndarray]:
+def get_model(use_bayesian: bool,
+              bayesian_model: callable, vanilla_model: callable,
+              conf_obj: config.Config,
+              mode: str,
+              pre_trained_weights_file: Optional[str] = None) -> Tuple[tf.keras.models.Model, np.ndarray]:
     """
     Returns the correct SSD model and the corresponding predictor sizes.
     
     Args:
-        use_dropout: True if dropout variant should be used, False otherwise
-        dropout_model: function to build dropout SSD model
+        use_bayesian: True if Bayesian variant should be used, False otherwise
+        bayesian_model: function to build Bayesian SSD model
         vanilla_model: function to build vanilla SSD model
-        image_size: size of the resized images
-        nr_classes: number of classes
+        conf_obj: configuration object
         mode: one of "training", "inference", "inference_fast"
-        dropout_rate: rate for dropout layers (only applies if dropout is used)
-        top_k: number of highest scoring predictions kept for each batch item
         pre_trained_weights_file: path to h5 file with pre-trained weights
-        iou_threshold: all boxes with higher iou to local maximum box are suppressed
-                       (only relevant for inference modes)
 
     Returns:
         SSD model, predictor_sizes
     """
     
-    image_size = (image_size, image_size, 3)
+    image_size = (conf_obj.parameters.ssd_image_size, conf_obj.parameters.ssd_image_size, 3)
     scales = [0.07, 0.15, 0.33, 0.51, 0.69, 0.87, 1.05]
-    if use_dropout:
-        model, predictor_sizes = dropout_model(
+    if use_bayesian:
+        model, predictor_sizes = bayesian_model(
             image_size=image_size,
-            n_classes=nr_classes,
+            n_classes=conf_obj.parameters.nr_classes,
             mode=mode,
-            iou_threshold=iou_threshold,
-            dropout_rate=dropout_rate,
-            top_k=top_k,
+            iou_threshold=conf_obj.parameters.ssd_iou_threshold,
+            dropout_rate=conf_obj.parameters.ssd_dropout_rate,
+            top_k=conf_obj.parameters.ssd_top_k,
             scales=scales,
             return_predictor_sizes=True,
-            coords="corners"
+            coords="corners",
+            use_dropout=conf_obj.parameters.ssd_use_dropout
         )
     else:
         model, predictor_sizes = vanilla_model(
             image_size=image_size,
-            n_classes=nr_classes,
+            n_classes=conf_obj.parameters.nr_classes,
             mode=mode,
-            iou_threshold=iou_threshold,
-            top_k=top_k,
+            iou_threshold=conf_obj.parameters.ssd_iou_threshold,
+            top_k=conf_obj.parameters.ssd_top_k,
             scales=scales,
             return_predictor_sizes=True,
             coords="corners"
@@ -150,7 +145,7 @@ def predict(generator: callable,
             model: tf.keras.models.Model,
             conf_obj: config.Config,
             steps_per_epoch: int,
-            use_dropout: bool,
+            use_bayesian: bool,
             nr_digits: int,
             output_path: str) -> None:
     """
@@ -163,13 +158,13 @@ def predict(generator: callable,
         model: compiled and trained Keras model
         conf_obj: configuration object
         steps_per_epoch: number of batches per epoch
-        use_dropout: if True, multiple forward passes and observations will be used
+        use_bayesian: if True, multiple forward passes and observations will be used
         nr_digits: number of digits needed to print largest batch number
         output_path: the path in which the results should be saved
     """
-    output_file, label_output_file = _predict_prepare_paths(output_path, use_dropout)
+    output_file, label_output_file = _predict_prepare_paths(output_path, use_bayesian)
     
-    _predict_loop(generator, use_dropout, steps_per_epoch,
+    _predict_loop(generator, use_bayesian, steps_per_epoch,
                   dropout_step=functools.partial(
                       _predict_dropout_step,
                       model=model,

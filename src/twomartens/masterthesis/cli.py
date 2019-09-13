@@ -185,7 +185,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
     
     conf_obj = conf.Config()
     
-    use_dropout = _ssd_is_dropout(args)
+    use_dropout = _ssd_is_bayesian(args)
     paths = _ssd_train_prepare_paths(args, conf_obj)
     
     ground_truth = _ssd_train_load_gt(conf_obj)
@@ -240,19 +240,16 @@ def _ssd_test(args: argparse.Namespace) -> None:
     _init_eager_mode()
     
     conf_obj = conf.Config()
-    use_dropout = _ssd_is_dropout(args)
+    use_bayesian = _ssd_is_bayesian(args)
     paths = _ssd_test_prepare_paths(args, conf_obj)
     ground_truth = _ssd_test_load_gt(conf_obj)
 
-    ssd_model, predictor_sizes = ssd.get_model(use_dropout,
-                                               keras_ssd300_dropout.ssd_300_dropout,
-                                               keras_ssd300.ssd_300,
-                                               conf_obj.parameters.ssd_image_size,
-                                               conf_obj.parameters.nr_classes,
-                                               "training",
-                                               conf_obj.parameters.ssd_dropout_rate,
-                                               conf_obj.parameters.ssd_top_k,
-                                               paths.weights_file)
+    ssd_model, predictor_sizes = ssd.get_model(use_bayesian=use_bayesian,
+                                               bayesian_model=keras_ssd300_dropout.ssd_300_dropout,
+                                               vanilla_model=keras_ssd300.ssd_300,
+                                               conf_obj=conf_obj,
+                                               mode="training",
+                                               pre_trained_weights_file=paths.weights_file)
 
     loss_func = ssd.get_loss_func()
     ssd.compile_model(ssd_model, conf_obj.parameters.learning_rate, loss_func)
@@ -270,7 +267,7 @@ def _ssd_test(args: argparse.Namespace) -> None:
                 model=ssd_model,
                 conf_obj=conf_obj,
                 steps_per_epoch=steps_per_epoch,
-                use_dropout=use_dropout,
+                use_bayesian=use_bayesian,
                 nr_digits=nr_digits,
                 output_path=paths.output_path)
 
@@ -730,7 +727,7 @@ def _visualise_get_config_values(config_get: Callable[[str], Union[str, int, flo
     return output_path, coco_path, ground_truth_path
 
 
-def _ssd_is_dropout(args: argparse.Namespace) -> bool:
+def _ssd_is_bayesian(args: argparse.Namespace) -> bool:
     return False if args.network == "ssd" else True
 
 
