@@ -185,20 +185,17 @@ def _ssd_train(args: argparse.Namespace) -> None:
     
     conf_obj = conf.Config()
     
-    use_dropout = _ssd_is_bayesian(args)
+    use_bayesian = _ssd_is_bayesian(args)
     paths = _ssd_train_prepare_paths(args, conf_obj)
     
     ground_truth = _ssd_train_load_gt(conf_obj)
     
-    ssd_model, predictor_sizes = ssd.get_model(use_dropout,
-                                               keras_ssd300_dropout.ssd_300_dropout,
-                                               keras_ssd300.ssd_300,
-                                               conf_obj.parameters.ssd_image_size,
-                                               conf_obj.parameters.nr_classes,
-                                               "training",
-                                               conf_obj.parameters.ssd_dropout_rate,
-                                               conf_obj.parameters.ssd_top_k,
-                                               paths.pre_trained_weights_file)
+    ssd_model, predictor_sizes = ssd.get_model(use_bayesian=use_bayesian,
+                                               bayesian_model=keras_ssd300_dropout.ssd_300_dropout,
+                                               vanilla_model=keras_ssd300.ssd_300,
+                                               conf_obj=conf_obj,
+                                               mode="training",
+                                               pre_trained_weights_file=paths.pre_trained_weights_file)
     loss_func = ssd.get_loss_func()
     ssd.compile_model(ssd_model, conf_obj.parameters.learning_rate, loss_func)
     
