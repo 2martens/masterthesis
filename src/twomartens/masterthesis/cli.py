@@ -268,22 +268,11 @@ def _ssd_test(args: argparse.Namespace) -> None:
     steps_per_epoch = _get_nr_batches(generators.length, conf_obj.parameters.batch_size)
     ssd.predict(generator=generators.generator,
                 model=ssd_model,
+                conf_obj=conf_obj,
                 steps_per_epoch=steps_per_epoch,
-                image_size=conf_obj.parameters.ssd_image_size,
-                batch_size=conf_obj.parameters.batch_size,
-                forward_passes_per_image=conf_obj.parameters.ssd_forward_passes_per_image,
-                use_nms=conf_obj.parameters.ssd_use_nms,
-                use_entropy_threshold=conf_obj.parameters.ssd_use_entropy_threshold,
-                entropy_threshold_min=conf_obj.parameters.ssd_entropy_threshold_min,
-                entropy_threshold_max=conf_obj.parameters.ssd_entropy_threshold_max,
-                confidence_threshold=conf_obj.parameters.ssd_confidence_threshold,
-                iou_threshold=conf_obj.parameters.ssd_iou_threshold,
-                top_k=conf_obj.parameters.ssd_top_k,
-                output_path=paths.output_path,
-                coco_path=conf_obj.paths.coco,
                 use_dropout=use_dropout,
                 nr_digits=nr_digits,
-                nr_classes=conf_obj.parameters.nr_classes)
+                output_path=paths.output_path)
 
 
 def _ssd_evaluate(args: argparse.Namespace) -> None:

@@ -37,6 +37,7 @@ import math
 import numpy as np
 import tensorflow as tf
 
+from twomartens.masterthesis import config
 from twomartens.masterthesis import debug
 from twomartens.masterthesis.ssd_keras.bounding_box_utils import bounding_box_utils
 from twomartens.masterthesis.ssd_keras.data_generator import object_detection_2d_misc_utils
@@ -146,22 +147,11 @@ def compile_model(model: tf.keras.models.Model, learning_rate: float, loss_func:
 
 def predict(generator: callable,
             model: tf.keras.models.Model,
+            conf_obj: config.Config,
             steps_per_epoch: int,
-            image_size: int,
-            batch_size: int,
-            forward_passes_per_image: int,
-            use_nms: bool,
-            use_entropy_threshold: bool,
-            entropy_threshold_min: float,
-            entropy_threshold_max: float,
-            confidence_threshold: float,
-            iou_threshold: float,
-            top_k: int,
-            output_path: str,
-            coco_path: str,
             use_dropout: bool,
             nr_digits: int,
-            nr_classes: int) -> None:
+            output_path: str) -> None:
     """
     Run trained SSD on the given data set.
     
@@ -170,63 +160,52 @@ def predict(generator: callable,
     Args:
         generator: generator of test data
         model: compiled and trained Keras model
+        conf_obj: configuration object
         steps_per_epoch: number of batches per epoch
-        image_size: size of input images to model
-        batch_size: number of items in every batch
-        forward_passes_per_image: specifies number of forward passes per image
-            used by DropoutSSD
-        use_nms: if True non-maximum suppression will be used for Bayesian SSD
-        use_entropy_threshold: if True entropy thresholding is applied
-        entropy_threshold_min: specifies the minimum threshold for the entropy
-        entropy_threshold_max: specifies the maximum threshold for the entropy
-        confidence_threshold: minimum confidence required for box to count as positive
-        iou_threshold: all boxes with iou overlap larger than threshold to local maximum box
-                       will be suppressed
-        top_k: a maximum of top_k boxes remain after NMS
-        output_path: the path in which the results should be saved
-        coco_path: the path to the COCO data set
         use_dropout: if True, multiple forward passes and observations will be used
         nr_digits: number of digits needed to print largest batch number
-        nr_classes: number of classes
+        output_path: the path in which the results should be saved
     """
     output_file, label_output_file = _predict_prepare_paths(output_path, use_dropout)
     
     _predict_loop(generator, use_dropout, steps_per_epoch,
-                  dropout_step=functools.partial(_predict_dropout_step,
-                                                 model=model,
-                                                 batch_size=batch_size,
-                                                 forward_passes_per_image=forward_passes_per_image),
+                  dropout_step=functools.partial(
+                      _predict_dropout_step,
+                      model=model,
+                      batch_size=conf_obj.parameters.batch_size,
+                      forward_passes_per_image=conf_obj.parameters.ssd_forward_passes_per_image
+                  ),
                   vanilla_step=functools.partial(_predict_vanilla_step, model=model),
                   save_images=functools.partial(_predict_save_images,
                                                 save_images=debug.save_ssd_train_images,
                                                 get_coco_cat_maps_func=coco_utils.get_coco_category_maps,
                                                 output_path=output_path,
-                                                coco_path=coco_path,
-                                                image_size=image_size),
+                                                coco_path=conf_obj.paths.coco,
+                                                image_size=conf_obj.parameters.ssd_image_size),
                   decode_func=functools.partial(
                       _decode_predictions,
                       decode_func=ssd_output_decoder.decode_detections,
-                      image_size=image_size,
-                      confidence_threshold=confidence_threshold,
-                      iou_threshold=iou_threshold,
-                      top_k=top_k
+                      image_size=conf_obj.parameters.ssd_image_size,
+                      confidence_threshold=conf_obj.parameters.ssd_confidence_threshold,
+                      iou_threshold=conf_obj.parameters.ssd_iou_threshold,
+                      top_k=conf_obj.parameters.ssd_top_k
                   ),
                   decode_func_dropout=functools.partial(
                       _decode_predictions_dropout,
                       decode_func=ssd_output_decoder.decode_detections_dropout,
-                      image_size=image_size,
-                      confidence_threshold=confidence_threshold,
+                      image_size=conf_obj.parameters.ssd_image_size,
+                      confidence_threshold=conf_obj.parameters.ssd_confidence_threshold,
                   ),
                   apply_entropy_threshold_func=functools.partial(
                       _apply_entropy_filtering,
-                      confidence_threshold=confidence_threshold,
-                      nr_classes=nr_classes,
-                      iou_threshold=iou_threshold,
-                      use_nms=use_nms
+                      confidence_threshold=conf_obj.parameters.ssd_confidence_threshold,
+                      nr_classes=conf_obj.parameters.nr_classes,
+                      iou_threshold=conf_obj.parameters.ssd_iou_threshold,
+                      use_nms=conf_obj.parameters.ssd_use_nms
                   ),
                   apply_top_k_func=functools.partial(
                       _apply_top_k,
-                      top_k=top_k
+                      top_k=conf_obj.parameters.ssd_top_k
                   ),
                   get_observations_func=_get_observations,
                   transform_func=functools.partial(
@@ -236,9 +215,9 @@ def predict(generator: callable,
                                               output_file=output_file,
                                               label_output_file=label_output_file,
                                               nr_digits=nr_digits),
-                  use_entropy_threshold=use_entropy_threshold,
-                  entropy_threshold_min=entropy_threshold_min,
-                  entropy_threshold_max=entropy_threshold_max)
+                  use_entropy_threshold=conf_obj.parameters.ssd_use_entropy_threshold,
+                  entropy_threshold_min=conf_obj.parameters.ssd_entropy_threshold_min,
+                  entropy_threshold_max=conf_obj.parameters.ssd_entropy_threshold_max)
 
 
 def train(train_generator: callable,
