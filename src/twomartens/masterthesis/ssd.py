@@ -304,7 +304,6 @@ def _predict_loop(generator: Generator, use_dropout: bool, steps_per_epoch: int,
     if use_entropy_threshold:
         nr_steps = math.floor((entropy_threshold_max - entropy_threshold_min) * 10)
         entropy_thresholds = [round(i / 10 + entropy_threshold_min, 1) for i in range(nr_steps)]
-        # entropy_thresholds = [1.4]
     else:
         entropy_thresholds = [0]
     
