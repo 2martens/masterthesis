@@ -150,6 +150,7 @@ def predict(generator: callable,
             image_size: int,
             batch_size: int,
             forward_passes_per_image: int,
+            use_nms: bool,
             use_entropy_threshold: bool,
             entropy_threshold_min: float,
             entropy_threshold_max: float,
@@ -174,6 +175,7 @@ def predict(generator: callable,
         batch_size: number of items in every batch
         forward_passes_per_image: specifies number of forward passes per image
             used by DropoutSSD
+        use_nms: if True non-maximum suppression will be used for Bayesian SSD
         use_entropy_threshold: if True entropy thresholding is applied
         entropy_threshold_min: specifies the minimum threshold for the entropy
         entropy_threshold_max: specifies the maximum threshold for the entropy
@@ -219,7 +221,8 @@ def predict(generator: callable,
                       _apply_entropy_filtering,
                       confidence_threshold=confidence_threshold,
                       nr_classes=nr_classes,
-                      iou_threshold=iou_threshold
+                      iou_threshold=iou_threshold,
+                      use_nms=use_nms
                   ),
                   apply_top_k_func=functools.partial(
                       _apply_top_k,
@@ -322,6 +325,7 @@ def _predict_loop(generator: Generator, use_dropout: bool, steps_per_epoch: int,
     if use_entropy_threshold:
         nr_steps = math.floor((entropy_threshold_max - entropy_threshold_min) * 10)
         entropy_thresholds = [round(i / 10 + entropy_threshold_min, 1) for i in range(nr_steps)]
+        # entropy_thresholds = [1.4]
     else:
         entropy_thresholds = [0]
     
