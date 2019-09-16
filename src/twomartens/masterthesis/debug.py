@@ -150,7 +150,7 @@ def _draw_bboxes(instances: Sequence[np.ndarray], axis: pyplot.Axes,
         if class_id == 0:
             continue
         
-        if type(colors) is float:
+        if len(np.shape(colors)) == 1:
             color = colors
         else:
             color = colors[class_id]
