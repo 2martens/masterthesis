@@ -111,7 +111,7 @@ def draw_bbox_figure(image_filename: str, labels: Sequence[np.ndarray],
     image = Image.fromarray(np_image)
     figure_filename = f"{output_path}/{os.path.basename(image_filename)}_bboxes_{suffix}.png"
     drawables = [(colors[i], _instances) for i, _instances in enumerate(instances)]
-    drawables.append(([0.23970412205706326, 1.0, 0.0, 1.0], labels))
+    drawables.append(([35/255, 45/255, 215/255, 1.0], labels))
     _draw_bbox_image(image=image,
                      filename=figure_filename,
                      draw_func=functools.partial(
