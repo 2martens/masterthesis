@@ -86,7 +86,8 @@ def draw_bbox_figure(image_filename: str, labels: Sequence[np.ndarray],
                      instances: Sequence[Sequence[np.ndarray]],
                      image_size: int,
                      output_path: str, coco_path: str,
-                     get_coco_cat_maps_func: callable) -> None:
+                     get_coco_cat_maps_func: callable,
+                     suffix: str) -> None:
     """
     Draws a bounding box figure and saves it under the image file name under the output path.
     
@@ -98,6 +99,7 @@ def draw_bbox_figure(image_filename: str, labels: Sequence[np.ndarray],
         output_path: path to save the images in
         coco_path: path to the COCO data set
         get_coco_cat_maps_func: callable that returns the COCO category maps for a given annotation file
+        suffix: suffix of the saved figure file
     """
     annotation_file_train = f"{coco_path}/annotations/instances_minival2014.json"
     _, _, _, classes_to_names = get_coco_cat_maps_func(annotation_file_train)
@@ -107,7 +109,7 @@ def draw_bbox_figure(image_filename: str, labels: Sequence[np.ndarray],
     with Image.open(image_filename) as _image:
         np_image = np.array(_image, dtype=np.uint8)
     image = Image.fromarray(np_image)
-    figure_filename = f"{output_path}/{os.path.basename(image_filename)}_bboxes.png"
+    figure_filename = f"{output_path}/{os.path.basename(image_filename)}_bboxes_{suffix}.png"
     drawables = [(colors[i], _instances) for i, _instances in enumerate(instances)]
     drawables.append((colors[-9], labels))
     _draw_bbox_image(image=image,
