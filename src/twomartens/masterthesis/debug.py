@@ -133,7 +133,7 @@ def _draw_bbox_image(image: Image,
                   axis=current_axis,
                   colors=colors)
     
-    pyplot.savefig(filename)
+    pyplot.savefig(filename, bbox_inches='tight')
     pyplot.close(figure)
 
 
