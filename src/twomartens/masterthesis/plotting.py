@@ -16,11 +16,13 @@
 #   limitations under the License.
 
 """
-Handle debug functionality.
+Handle plotting functionality.
 
 Functions:
     save_ssd_train_images(...):
         saves the first batch of SSD train images with overlaid ground truth bounding boxes
+    draw_bbox_figure(...):
+        draws a bounding box figure and saves it under the image file name under the output path
 """
 import functools
 import os

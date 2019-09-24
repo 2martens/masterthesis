@@ -40,7 +40,7 @@ import tensorflow as tf
 from attributedict.collections import AttributeDict
 
 from twomartens.masterthesis import config
-from twomartens.masterthesis import debug
+from twomartens.masterthesis import plotting
 from twomartens.masterthesis.ssd_keras.bounding_box_utils import bounding_box_utils
 from twomartens.masterthesis.ssd_keras.data_generator import object_detection_2d_misc_utils
 from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
@@ -181,7 +181,7 @@ def predict(generator: callable,
             "vanilla_step": functools.partial(_predict_vanilla_step, model=model),
             "save_images": functools.partial(
                 _predict_save_images,
-                save_images=debug.save_ssd_train_images,
+                save_images=plotting.save_ssd_train_images,
                 get_coco_cat_maps_func=coco_utils.get_coco_category_maps,
                 output_path=output_path,
                 conf_obj=conf_obj

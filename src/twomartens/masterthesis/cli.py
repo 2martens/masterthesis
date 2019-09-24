@@ -174,7 +174,7 @@ def _train_execute_action(args: argparse.Namespace, on_ssd: callable) -> None:
 
 def _ssd_train(args: argparse.Namespace) -> None:
     from twomartens.masterthesis import data
-    from twomartens.masterthesis import debug
+    from twomartens.masterthesis import plotting
     from twomartens.masterthesis import ssd
     
     from twomartens.masterthesis.ssd_keras.eval_utils import coco_utils
@@ -205,7 +205,7 @@ def _ssd_train(args: argparse.Namespace) -> None:
                                            predictor_sizes)
     
     _ssd_debug_save_images(args, conf_obj, paths,
-                           debug.save_ssd_train_images, coco_utils.get_coco_category_maps,
+                           plotting.save_ssd_train_images, coco_utils.get_coco_category_maps,
                            generators.train_debug_generator)
     
     nr_batches_train = _get_nr_batches(generators.train_length, conf_obj.parameters.batch_size)
@@ -299,7 +299,7 @@ def _ssd_evaluate_entropy_loop(conf_obj: conf.Config, paths: AttributeDict,
                                entropy_thresholds: Sequence[float],
                                labels: Sequence[Sequence], filenames: Sequence[str]) -> None:
     
-    from twomartens.masterthesis import debug
+    from twomartens.masterthesis import plotting
     from twomartens.masterthesis import evaluate
     
     from twomartens.masterthesis.ssd_keras.bounding_box_utils import bounding_box_utils
@@ -317,7 +317,7 @@ def _ssd_evaluate_entropy_loop(conf_obj: conf.Config, paths: AttributeDict,
                 if conf_obj.parameters.ssd_use_entropy_threshold else f"{paths.predictions_file}.bin", predictions)
         
         _ssd_evaluate_save_images(filenames, predictions,
-                                  coco_utils.get_coco_category_maps, debug.save_ssd_train_images,
+                                  coco_utils.get_coco_category_maps, plotting.save_ssd_train_images,
                                   conf_obj, paths)
         
         predictions_per_class = evaluate.prepare_predictions(predictions, conf_obj.parameters.nr_classes)
