@@ -452,14 +452,23 @@ def _visualise_metrics(visualise_precision_recall: callable,
                   else f"{metrics_file}.bin", "rb") as file:
             metrics = pickle.load(file)
         
-        precision_micro = metrics["cumulative_precisions_micro"]
-        recall_micro = metrics["cumulative_recalls_micro"]
+        try:
+            precision_micro = metrics["cumulative_precisions_micro"]
+            recall_micro = metrics["cumulative_recalls_micro"]
+        except KeyError:
+            precision_micro = metrics["cumulative_precision_micro"]
+            recall_micro = metrics["cumulative_recall_micro"]
+        
         visualise_precision_recall(precision_micro, recall_micro,
                                    output_path, f"micro-{threshold}"
                                    if use_entropy_threshold else "micro")
-    
-        precision_macro = metrics["cumulative_precisions_macro"]
-        recall_macro = metrics["cumulative_recalls_macro"]
+
+        try:
+            precision_macro = metrics["cumulative_precisions_macro"]
+            recall_macro = metrics["cumulative_recalls_macro"]
+        except KeyError:
+            precision_macro = metrics["cumulative_precision_macro"]
+            recall_macro = metrics["cumulative_recall_macro"]
         visualise_precision_recall(precision_macro, recall_macro,
                                    output_path, f"macro-{threshold}"
                                    if use_entropy_threshold else "macro")
