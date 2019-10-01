@@ -1,5 +1,5 @@
 # Masterthesis
-> Allows reproduction of results in my masterthesis.
+> Allows reproduction of results in my master thesis.
 
 [![Downloads][pypi-downloads]][pypi-url]
 ![License][pypi-license]
@@ -68,7 +68,7 @@ it. The score JSON and the figure images are stored under `iteration`
 in a `visualise` folder under the output path.
 
 There are more commands but the rest can be very tightly linked to requirements
-in the masterthesis and might therefore not be of interest generally.
+in the master thesis and might therefore not be of interest generally.
 
 ## Development setup
 
