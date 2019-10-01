@@ -1,4 +1,4 @@
-# Masterthesis
+# Master Thesis
 > Allows reproduction of results in my master thesis.
 
 [![Downloads][pypi-downloads]][pypi-url]
