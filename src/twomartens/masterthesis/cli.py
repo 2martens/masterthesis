@@ -20,10 +20,14 @@ Provides CLI actions.
 
 Functions:
     config(...): handles the config component
-    train(...): trains a network
-    test(...): evaluates a network
-    val(...): runs predictions on the validation data
     prepare(...): prepares the SceneNet ground truth data
+    train(...): trains a network
+    test(...): tests a network
+    evaluate(...): evaluates prediction results
+    visualise(...): visualises ground truth
+    visualise_metrics(...): visualises evaluation results
+    visualise_all(...): creates figure for specific variants and thresholds
+    measure_mapping(...): measures the number of instances per COCO class
 """
 import argparse
 from typing import Any

@@ -20,8 +20,11 @@ Functionality to load data into Tensorflow data sets.
 Functions:
     load_coco_train(...): loads the COCO training data into a Tensorflow data set
     load_coco_val(...): loads the COCO validation data into a Tensorflow data set
+    load_coco_val_ssd(...): loads the COCO validation data using the ssd_keras data pipeline
     load_scenenet_data(...): loads the SceneNet RGB-D data into a Tensorflow data set
     prepare_scenenet_data(...): prepares the SceneNet RGB-D data and returns it in Python format
+    group_bboxes_to_images(...): groups bounding boxes to images
+    clean_dataset(...): cleans a COCO data set and returns cleaned version
 """
 from typing import Callable
 from typing import Generator
@@ -248,6 +251,16 @@ def _load_images_callback(resized_shape: Sequence[int]) -> Callable[
 
 def group_bboxes_to_images(file_names: Sequence[str], bboxes: Sequence[Sequence[int]]) -> Tuple[List[str],
                                                                                                 List[List[List[int]]]]:
+    """
+    Groups bounding boxes to images.
+    
+    Args:
+        file_names: list of image file names
+        bboxes: list of bounding boxes
+    
+    Returns:
+        tuple of file names and corresponding lists of bounding boxes
+    """
     return_labels = {}
     for file_name, bbox in zip(file_names, bboxes):
         if file_name not in return_labels:
