@@ -92,6 +92,7 @@ pip install git+https://github.com/philferriere/cocoapi.git#egg=pycocotools&subd
 Jim Martens – [@2martens](https://twitter.com/2martens) – github@2martens.de
 
 Distributed under the Apache 2.0 license. See ``LICENSE`` for more information.
+The package contains the [ssd_keras][ssd_keras] implementation of Pierluigi Ferrari.
 
 [https://github.com/2martens/](https://github.com/2martens/)
 
@@ -110,3 +111,4 @@ Distributed under the Apache 2.0 license. See ``LICENSE`` for more information.
 [pypi-downloads]: https://img.shields.io/pypi/dm/twomartens.masterthesis.svg
 [pypi-python-versions]: https://img.shields.io/pypi/pyversions/twomartens.masterthesis.svg
 [tf-gpu-support]: https://www.tensorflow.org/install/gpu
+[ssd_keras]: https://github.com/pierluigiferrari/ssd_keras
