@@ -43,7 +43,7 @@ setup(
     license="Apache License 2.0",
     classifiers=[
         "Operating System :: OS Independent",
-        "Development Status :: 1 - Planning",
+        "Development Status :: 2 - Pre-Alpha",
         "License :: OSI Approved :: Apache Software License",
         "Environment :: Console",
         "Intended Audience :: Science/Research",
