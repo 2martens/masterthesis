@@ -84,6 +84,8 @@ pip install git+https://github.com/philferriere/cocoapi.git#egg=pycocotools&subd
 
 ## Release History
 
+* 0.2.0
+    * added python 3.8 classifier
 * 0.1.0
     * first release
 
