@@ -29,7 +29,7 @@ setup(
     author="Jim Martens",
     author_email="github@2martens.de",
     url="https://git.2martens.de/2martens/masterthesis",
-    version="0.1.0",
+    version="0.3.0",
     namespace_packages=["twomartens"],
     packages=find_packages('src', exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     package_dir={'': 'src'},
@@ -39,7 +39,7 @@ setup(
     },
     python_requires="~=3.6",
     install_requires=["tensorflow", "Pillow", "h5py", "numpy", "opencv-python", "scikit-learn", "tqdm",
-                      "beautifulsoup4", "matplotlib", "protobuf", "imutils", "attributedict"],
+                      "beautifulsoup4", "matplotlib", "protobuf", "imutils", "attributedict", "cython"],
     license="Apache License 2.0",
     classifiers=[
         "Operating System :: OS Independent",

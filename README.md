@@ -10,9 +10,12 @@ can be visualised.
 
 ## Installation
 
+Please install python header files of your Python version. 
+Those are needed to compile the pycocotools with Cython upon installation.
+
 ```sh
 pip install twomartens.masterthesis
-pip install git+https://github.com/philferriere/cocoapi.git#egg=pycocotools&subdirectory=PythonAPI
+pip install 'git+https://github.com/philferriere/cocoapi.git#egg=pycocotools&subdirectory=PythonAPI'
 ```
 
 The second line is important as Git dependencies cannot be specified in the `setup.py`
@@ -79,11 +82,13 @@ the repository:
 git submodule init
 git submodule update
 pip install -e .
-pip install git+https://github.com/philferriere/cocoapi.git#egg=pycocotools&subdirectory=PythonAPI
+pip install 'git+https://github.com/philferriere/cocoapi.git#egg=pycocotools&subdirectory=PythonAPI'
 ```
 
 ## Release History
 
+* 0.3.0
+    * added cython dependency and information about required python header files
 * 0.2.0
     * added python 3.8 classifier
 * 0.1.0
