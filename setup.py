@@ -38,7 +38,7 @@ setup(
         "console_scripts": ["tm-masterthesis = twomartens.masterthesis.main:main"]
     },
     python_requires="~=3.6",
-    install_requires=["tensorflow-gpu", "Pillow", "h5py", "numpy", "opencv-python", "scikit-learn", "tqdm",
+    install_requires=["tensorflow", "Pillow", "h5py", "numpy", "opencv-python", "scikit-learn", "tqdm",
                       "beautifulsoup4", "matplotlib", "protobuf", "imutils", "attributedict"],
     license="Apache License 2.0",
     classifiers=[
@@ -52,5 +52,6 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
 )
